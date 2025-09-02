@@ -18,13 +18,13 @@ router.get('/test', (req, res) => {
 });
 
 // Inscription patient
-router.post('/inscription/patient', AuthController.inscrirePatient);
+router.post('/register/patient', AuthController.inscrirePatient);
 
 // Inscription médecin
-router.post('/inscription/medecin', AuthController.inscrireMedecin);
+router.post('/register/doctor', AuthController.inscrireMedecin);
 
 // Connexion
-router.post('/connexion', AuthController.connecter);
+router.post('/login', AuthController.connecter);
 
 // Vérification OTP
 router.post('/verify-otp', AuthController.verifierOTP);
@@ -43,7 +43,7 @@ router.post('/change-password', AuthController.changerMotDePasse);
 router.post('/refresh-token', AuthController.rafraichirToken);
 
 // Déconnexion
-router.post('/deconnexion', AuthController.deconnexion);
+router.post('/logout', AuthController.deconnexion);
 
 // ================================
 // ROUTES ADMIN
