@@ -18,58 +18,58 @@ router.get('/test', (req, res) => {
 });
 
 // Inscription patient
-router.post('/inscription/patient', AuthController.inscrirePatient);
+router.post('/register/patient', AuthController.inscrirePatient);
 
 // Inscription médecin
-router.post('/inscription/medecin', AuthController.inscrireMedecin);
+router.post('/register/doctor', AuthController.inscrireMedecin);
 
 // Connexion
-router.post('/connexion', AuthController.connecter);
+router.post('/login', AuthController.connecter);
 
 // Vérification OTP
-router.post('/verifier-otp', AuthController.verifierOTP);
+router.post('/verify-otp', AuthController.verifierOTP);
 
 // Renvoi OTP
-router.post('/renvoyer-otp', AuthController.renvoyerOTP);
+router.post('/resend-otp', AuthController.renvoyerOTP);
 
 // ================================
 // ROUTES PROTÉGÉES
 // ================================
 
 // Changer mot de passe
-router.post('/changer-mot-de-passe', AuthController.changerMotDePasse);
+router.post('/change-password', AuthController.changerMotDePasse);
 
 // Rafraîchir token
-router.post('/rafraichir-token', AuthController.rafraichirToken);
+router.post('/refresh-token', AuthController.rafraichirToken);
 
 // Déconnexion
-router.post('/deconnexion', AuthController.deconnexion);
+router.post('/logout', AuthController.deconnexion);
 
 // ================================
 // ROUTES ADMIN
 // ================================
 
 // Créer médecin (Admin Cabinet)
-router.post('/admin/creer-medecin', AuthController.creerMedecinParAdmin);
+router.post('/admin/create-doctor', AuthController.creerMedecinParAdmin);
 
 // Lister médecins cabinet
-router.get('/admin/medecins-cabinet', AuthController.listerMedecinsCabinet);
+router.get('/admin/doctors-list', AuthController.listerMedecinsCabinet);
 
 // ================================
 // ROUTES SUPER ADMIN
 // ================================
 
 // Valider médecin
-router.post('/super-admin/valider-medecin', AuthController.validerMedecin);
+router.post('/super-admin/validate-doctor', AuthController.validerMedecin);
 
 // Lister médecins en attente
-router.get('/super-admin/medecins-en-attente', AuthController.listerMedecinsEnAttente);
+router.get('/super-admin/pending-doctors', AuthController.listerMedecinsEnAttente);
 
 // Créer cabinet
-router.post('/super-admin/creer-cabinet', AuthController.creerCabinet);
+router.post('/super-admin/create-cabinet', AuthController.creerCabinet);
 
 // Créer admin cabinet
-router.post('/super-admin/creer-admin-cabinet', AuthController.creerAdminCabinet);
+router.post('/super-admin/create-admin', AuthController.creerAdminCabinet);
 
 // ================================
 // ROUTES DEV
@@ -77,10 +77,10 @@ router.post('/super-admin/creer-admin-cabinet', AuthController.creerAdminCabinet
 
 if (process.env.NODE_ENV === 'development') {
   // Créer super admin
-  router.post('/dev/creer-super-admin', AuthController.creerSuperAdminDev);
+  router.post('/dev/create-super-admin', AuthController.creerSuperAdminDev);
   
   // Créer admin cabinet
-  router.post('/dev/creer-admin-cabinet', AuthController.creerAdminCabinetDev);
+  router.post('/dev/create-cabinet-admin', AuthController.creerAdminCabinetDev);
 }
 
 export { router as authRoutes };

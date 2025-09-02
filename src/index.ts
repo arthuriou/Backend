@@ -64,7 +64,7 @@ app.use("/api/auth", authRoutes);
 // ================================
 // GESTION DES ERREURS 404
 // ================================
-app.use("*", (req: Request, res: Response) => {
+app.use((req: Request, res: Response) => {
   res.status(404).json({
         success: false,
     message: "Route non trouvée",
