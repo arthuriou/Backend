@@ -1,24 +1,12 @@
-import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
-import { Request, Response } from "express";
+import app from "./app";
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT;
-const API_URL =  "http://localhost:3000";
-
-app.use(express.json());
-app.use(cors());
-
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Welcome to the Backend API");
-});
+const PORT = process.env.PORT ? parseInt(process.env.PORT as string, 10) : 3000;
 
 app.listen(PORT, () => {
-  console.log(`le serveur est lancé sur l'url : ${API_URL}`);
+  console.log(`le serveur est lancé sur l'url : http://localhost:${PORT}`);
 });
 
 
