@@ -16,8 +16,7 @@ const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 interface JWTPayload {
   userId: string;
   email: string;
-  role: string;
-  permissions: string[];
+  roles: string[];
   iat?: number;
   exp?: number;
 }
@@ -38,8 +37,7 @@ export const generateAccessToken = (user: AuthUser): string => {
   const payload: JWTPayload = {
     userId: user.id,
     email: user.email,
-    role: user.role,
-    permissions: user.permissions,
+    roles: user.roles,
   };
 
   return jwt.sign(payload, JWT_SECRET, {
@@ -56,8 +54,7 @@ export const generateRefreshToken = (user: AuthUser): string => {
   const payload: JWTPayload = {
     userId: user.id,
     email: user.email,
-    role: user.role,
-    permissions: user.permissions,
+    roles: user.roles,
   };
 
   return jwt.sign(payload, JWT_SECRET, {
@@ -156,8 +153,9 @@ export const refreshAccessToken = (refreshToken: string): string => {
     const user: AuthUser = {
       id: decoded.userId,
       email: decoded.email,
-      role: decoded.role,
-      permissions: decoded.permissions,
+      roles: decoded.roles,
+      nom: '', // Valeur par défaut
+      actif: true, // Valeur par défaut
     };
     
     return generateAccessToken(user);

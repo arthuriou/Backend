@@ -20,6 +20,7 @@ export interface BaseEntity {
 // ================================
 
 export interface Utilisateur extends BaseEntity {
+  idUtilisateur: string;
   email: string;
   motDePasse: string;
   nom: string;
@@ -72,6 +73,7 @@ export interface MedecinDiplome extends BaseEntity {
 // ================================
 
 export interface Role extends BaseEntity {
+  idRole: string;
   code: string;
   libelle: string;
   systeme: boolean;
@@ -302,8 +304,10 @@ export interface AuthTokens {
 export interface AuthUser {
   id: string;
   email: string;
-  role: string;
-  permissions: string[];
+  nom: string;
+  prenom?: string;
+  roles: string[];
+  actif: boolean;
 }
 
 export interface ValidationError {

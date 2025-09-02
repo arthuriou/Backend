@@ -5,7 +5,28 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, extractTokenFromHeader } from '../utils/jwt';
 import { AuthUser } from '../types';
+import { query } from '../config/database';
 import { ERROR_MESSAGES, HTTP_STATUS } from '../constants';
+
+/**
+ * Récupère les permissions d'un utilisateur depuis ses rôles
+ */
+async function getUserPermissions(userId: string): Promise<string[]> {
+  try {
+    const result = await query(`
+      SELECT DISTINCT p.code 
+      FROM permission p
+      INNER JOIN rolePermission rp ON p.idPermission = rp.permission_id
+      INNER JOIN utilisateurRole ur ON rp.role_id = ur.role_id
+      WHERE ur.utilisateur_id = $1 AND ur.actif = true
+    `, [userId]);
+    
+    return result.rows.map(row => row.code);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des permissions:', error);
+    return [];
+  }
+}
 
 // Extension de l'interface Request pour inclure l'utilisateur
 declare global {
@@ -44,8 +65,9 @@ export const authenticateToken = async (
       const user: AuthUser = {
         id: decoded.userId,
         email: decoded.email,
-        role: decoded.role,
-        permissions: decoded.permissions,
+        roles: decoded.roles,
+        nom: '', // Valeur par défaut
+        actif: true, // Valeur par défaut
       };
 
       // Attacher l'utilisateur à la requête
@@ -81,10 +103,10 @@ export const requireRole = (roles: string | string[]) => {
       return;
     }
 
-    const userRole = req.user.role;
+    const userRoles = req.user.roles;
     const requiredRoles = Array.isArray(roles) ? roles : [roles];
 
-    if (!requiredRoles.includes(userRole)) {
+    if (!userRoles.some(role => requiredRoles.includes(role))) {
       res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS,
@@ -101,7 +123,7 @@ export const requireRole = (roles: string | string[]) => {
  * Middleware de vérification des permissions
  */
 export const requirePermission = (permissions: string | string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user) {
       res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -111,23 +133,33 @@ export const requirePermission = (permissions: string | string[]) => {
       return;
     }
 
-    const userPermissions = req.user.permissions;
-    const requiredPermissions = Array.isArray(permissions) ? permissions : [permissions];
+    try {
+      // Récupérer les permissions depuis les rôles de l'utilisateur
+      const userPermissions = await getUserPermissions(req.user.id);
+      const requiredPermissions = Array.isArray(permissions) ? permissions : [permissions];
 
-    const hasAllPermissions = requiredPermissions.every(permission =>
-      userPermissions.includes(permission)
-    );
+      const hasAllPermissions = requiredPermissions.every(permission =>
+        userPermissions.includes(permission)
+      );
 
-    if (!hasAllPermissions) {
-      res.status(HTTP_STATUS.FORBIDDEN).json({
+      if (!hasAllPermissions) {
+        res.status(HTTP_STATUS.FORBIDDEN).json({
+          success: false,
+          message: ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS,
+          errors: [`Permissions requises: ${requiredPermissions.join(', ')}`]
+        });
+        return;
+      }
+
+      next();
+    } catch (error) {
+      console.error('Erreur lors de la vérification des permissions:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS,
-        errors: [`Permissions requises: ${requiredPermissions.join(', ')}`]
+        message: 'Erreur lors de la vérification des permissions',
+        errors: ['Erreur interne du serveur']
       });
-      return;
     }
-
-    next();
   };
 };
 
