@@ -108,7 +108,8 @@ CREATE TABLE IF NOT EXISTS cabinet (
     telephone TEXT,
     email TEXT,
     logo TEXT,
-    horairesOuverture JSONB
+    horairesOuverture JSONB,
+    actif BOOLEAN DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS specialite (
@@ -130,6 +131,7 @@ CREATE TABLE IF NOT EXISTS medecin_cabinet (
     cabinet_id UUID REFERENCES cabinet(idCabinet) ON DELETE CASCADE,
     dateAffectation TIMESTAMP DEFAULT now(),
     roleCabinet TEXT DEFAULT 'MEDECIN',
+    actif BOOLEAN DEFAULT true,
     PRIMARY KEY (medecin_id, cabinet_id)
 );
 

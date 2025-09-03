@@ -12,6 +12,13 @@
 - **PUT** `/api/auth/profile/:userId` - Mise à jour profil
 - **PUT** `/api/auth/profile` - Mise à jour profil (avec userId dans body)
 
+### 🏥 Gestion Cabinets
+- **GET** `/api/cabinets` - Liste tous les cabinets
+- **GET** `/api/cabinets/:id` - Récupérer un cabinet par ID
+- **POST** `/api/cabinets` - Créer un cabinet (SuperAdmin)
+- **POST** `/api/cabinets/:id/admin` - Créer AdminCabinet (SuperAdmin)
+- **GET** `/api/cabinets/:id/admins` - Liste AdminCabinet d'un cabinet (SuperAdmin)
+
 ### 🔄 Logique d'Authentification
 
 1. **Patient** :
@@ -29,30 +36,42 @@
 ## 🚧 À Implémenter
 
 ### 👨‍⚕️ Gestion Médecins
-- **POST** `/api/auth/admin/create-doctor` - Création médecin par AdminCabinet
-- **POST** `/api/auth/super-admin/validate-doctor` - Validation médecin par SuperAdmin
+- **POST** `/api/auth/admin/create-medecin` - Création médecin par AdminCabinet ✅
+- **POST** `/api/auth/super-admin/validate-medecin` - Validation médecin par SuperAdmin ✅
+- **GET** `/api/auth/super-admin/pending-medecins` - Liste médecins en attente ✅
 
 ### 🏥 Gestion Cabinets
-- **POST** `/api/cabinets` - Création cabinet par SuperAdmin
-- **POST** `/api/cabinets/:id/admin` - Création AdminCabinet
+- **POST** `/api/cabinets` - Création cabinet par SuperAdmin ✅
+- **POST** `/api/cabinets/:id/admin` - Création AdminCabinet ✅
 
 ## 📁 Structure des Fichiers
 
 ```
-src/features/auth/
-├── auth.model.ts      # Interfaces TypeScript
-├── auth.repository.ts # Requêtes base de données
-├── auth.service.ts    # Logique métier
-├── auth.controller.ts # Gestion des requêtes HTTP
-└── auth.route.ts      # Définition des routes
+src/features/
+├── auth/
+│   ├── auth.model.ts      # Interfaces TypeScript
+│   ├── auth.repository.ts # Requêtes base de données
+│   ├── auth.service.ts    # Logique métier
+│   ├── auth.controller.ts # Gestion des requêtes HTTP
+│   └── auth.route.ts      # Définition des routes
+└── cabinets/
+    ├── cabinet.model.ts      # Interfaces TypeScript
+    ├── cabinet.repository.ts # Requêtes base de données
+    ├── cabinet.service.ts    # Logique métier
+    ├── cabinet.controller.ts # Gestion des requêtes HTTP
+    └── cabinet.route.ts      # Définition des routes
 
-src/shared/utils/
-├── mail.ts           # Envoi d'emails (OTP)
-└── jwt.utils.ts      # Gestion JWT
+src/shared/
+├── utils/
+│   ├── mail.ts           # Envoi d'emails (OTP)
+│   └── jwt.utils.ts      # Gestion JWT
+└── middlewares/
+    └── auth.middleware.ts # Middleware JWT et rôles
 
 endpoints/
-├── auth-endpoints.md # Documentation détaillée
-└── README.md         # Ce fichier
+├── auth-endpoints.md     # Documentation auth
+├── cabinet-endpoints.md  # Documentation cabinets
+└── README.md             # Ce fichier
 ```
 
 ## 🔧 Configuration Requise
@@ -85,7 +104,8 @@ SMTP_FROM_EMAIL=SantéAfrik <no-reply@santeafrik.com>
 ## 🎯 Prochaines Étapes
 
 1. ✅ **Authentification Patient** - Terminé
-2. 🔄 **Authentification Médecin** - En cours (validation SuperAdmin)
-3. ⏳ **Gestion Cabinets** - À faire
+2. ✅ **Authentification Médecin** - Terminé (validation SuperAdmin)
+3. ✅ **Gestion Cabinets** - Terminé
 4. ⏳ **Gestion Rendez-vous** - À faire
 5. ⏳ **Messagerie** - À faire
+6. ⏳ **Gestion Spécialités** - À faire

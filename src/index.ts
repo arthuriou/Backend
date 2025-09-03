@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import pool from "./utils/database";
 import authRoutes from "./features/auth/auth.route";
+import cabinetRoutes from "./features/cabinets/cabinet.route";
+import rendezvousRoutes from "./features/rendezvous/rendezvous.route";
 
 dotenv.config();
 
@@ -33,6 +35,12 @@ app.get("/health", (req, res) => {
 
 // Routes d'authentification
 app.use("/api/auth", authRoutes);
+
+// Routes des cabinets
+app.use("/api/cabinets", cabinetRoutes);
+
+// Routes des rendez-vous
+app.use("/api/rendezvous", rendezvousRoutes);
 
 // Démarrage
 app.listen(PORT, () => {
