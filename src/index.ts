@@ -5,6 +5,8 @@ import pool from "./utils/database";
 import authRoutes from "./features/auth/auth.route";
 import cabinetRoutes from "./features/cabinets/cabinet.route";
 import { createRendezVousRoutes } from "./features/rendezvous/rendezvous.route";
+import { createMessagerieRoutes } from "./features/messagerie/messagerie.route";
+import notificationPreferencesRoutes from "./features/notifications/notification-preferences.route";
 import { SocketService } from "./shared/services/socket.service";
 
 dotenv.config();
@@ -48,6 +50,13 @@ app.use("/api/cabinets", cabinetRoutes);
 // Routes des rendez-vous avec Socket.IO
 const rendezvousRoutes = createRendezVousRoutes(socketService);
 app.use("/api/rendezvous", rendezvousRoutes);
+
+// Routes de messagerie avec Socket.IO
+const messagerieRoutes = createMessagerieRoutes(socketService);
+app.use("/api/messagerie", messagerieRoutes);
+
+// Routes des préférences de notification
+app.use("/api/notifications/preferences", notificationPreferencesRoutes);
 
 // Démarrage
 server.listen(PORT, () => {

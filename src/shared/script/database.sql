@@ -201,6 +201,71 @@ CREATE TABLE IF NOT EXISTS rappel (
     envoye BOOLEAN DEFAULT false
 );
 
+-- Table pour les préférences de notification des utilisateurs
+CREATE TABLE IF NOT EXISTS preferences_notification (
+    idPreference UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    utilisateur_id UUID REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
+    soundEnabled BOOLEAN DEFAULT true,
+    soundFile TEXT DEFAULT '/sounds/notification.mp3',
+    volume DECIMAL(3,2) DEFAULT 0.7 CHECK (volume >= 0 AND volume <= 1),
+    vibration BOOLEAN DEFAULT true,
+    pushEnabled BOOLEAN DEFAULT false,
+    emailEnabled BOOLEAN DEFAULT true,
+    smsEnabled BOOLEAN DEFAULT false,
+    dateCreation TIMESTAMP DEFAULT now(),
+    dateModification TIMESTAMP DEFAULT now(),
+    UNIQUE(utilisateur_id)
+);
+
+-- Table pour les conversations
+CREATE TABLE IF NOT EXISTS conversation (
+    idConversation UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type_conversation TEXT NOT NULL CHECK (type_conversation IN ('PRIVEE', 'GROUPE_CABINET', 'SUPPORT')),
+    titre TEXT,
+    cabinet_id UUID REFERENCES cabinet(idCabinet) ON DELETE CASCADE,
+    dateCreation TIMESTAMP DEFAULT now(),
+    dateModification TIMESTAMP DEFAULT now(),
+    actif BOOLEAN DEFAULT true
+);
+
+-- Table pour les participants aux conversations
+CREATE TABLE IF NOT EXISTS conversation_participant (
+    idParticipant UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID REFERENCES conversation(idConversation) ON DELETE CASCADE,
+    utilisateur_id UUID REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
+    role_participant TEXT DEFAULT 'MEMBRE' CHECK (role_participant IN ('MEMBRE', 'ADMIN', 'MODERATEUR')),
+    dateRejointe TIMESTAMP DEFAULT now(),
+    dateQuittee TIMESTAMP,
+    actif BOOLEAN DEFAULT true,
+    UNIQUE(conversation_id, utilisateur_id)
+);
+
+-- Table pour les messages
+CREATE TABLE IF NOT EXISTS message (
+    idMessage UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID REFERENCES conversation(idConversation) ON DELETE CASCADE,
+    expediteur_id UUID REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
+    contenu TEXT NOT NULL,
+    type_message TEXT DEFAULT 'TEXTE' CHECK (type_message IN ('TEXTE', 'IMAGE', 'FICHIER', 'SYSTEME')),
+    fichier_url TEXT,
+    fichier_nom TEXT,
+    fichier_taille INTEGER,
+    reponse_a UUID REFERENCES message(idMessage) ON DELETE SET NULL,
+    dateEnvoi TIMESTAMP DEFAULT now(),
+    dateModification TIMESTAMP,
+    supprime BOOLEAN DEFAULT false,
+    actif BOOLEAN DEFAULT true
+);
+
+-- Table pour le statut de lecture des messages
+CREATE TABLE IF NOT EXISTS message_lu (
+    idMessageLu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_id UUID REFERENCES message(idMessage) ON DELETE CASCADE,
+    utilisateur_id UUID REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
+    dateLecture TIMESTAMP DEFAULT now(),
+    UNIQUE(message_id, utilisateur_id)
+);
+
 CREATE TABLE IF NOT EXISTS consultation (
     idConsultation UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rendezvous_id UUID UNIQUE REFERENCES rendezvous(idRendezVous) ON DELETE CASCADE,
@@ -253,32 +318,6 @@ CREATE TABLE IF NOT EXISTS document (
 -- ================================
 -- MESSAGERIE
 -- ================================
-
-CREATE TABLE IF NOT EXISTS conversation (
-    idConversation UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    dateDebut TIMESTAMP DEFAULT now(),
-    sujet TEXT,
-    active BOOLEAN DEFAULT true
-);
-
-CREATE TABLE IF NOT EXISTS message (
-    idMessage UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conversation_id UUID REFERENCES conversation(idConversation) ON DELETE CASCADE,
-    auteur_id UUID REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
-    contenu TEXT,
-    dateEnvoi TIMESTAMP DEFAULT now(),
-    lu BOOLEAN DEFAULT false
-);
-
-CREATE TABLE IF NOT EXISTS message_media (
-    idMedia UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    message_id UUID REFERENCES message(idMessage) ON DELETE CASCADE,
-    type TEXT CHECK (type IN ('IMAGE','AUDIO')),
-    url TEXT NOT NULL,
-    mimeType TEXT,
-    tailleKo INT,
-    dateUpload TIMESTAMP DEFAULT now()
-);
 
 -- ================================
 -- INDEX POUR PERFORMANCE
