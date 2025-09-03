@@ -6,6 +6,7 @@ import authRoutes from "./features/auth/auth.route";
 import cabinetRoutes from "./features/cabinets/cabinet.route";
 import { createRendezVousRoutes } from "./features/rendezvous/rendezvous.route";
 import { createMessagerieRoutes } from "./features/messagerie/messagerie.route";
+import specialitesRoutes from "./features/specialites/specialites.route";
 import notificationPreferencesRoutes from "./features/notifications/notification-preferences.route";
 import { SocketService } from "./shared/services/socket.service";
 
@@ -54,6 +55,9 @@ app.use("/api/rendezvous", rendezvousRoutes);
 // Routes de messagerie avec Socket.IO
 const messagerieRoutes = createMessagerieRoutes(socketService);
 app.use("/api/messagerie", messagerieRoutes);
+
+// Routes des spécialités et maux
+app.use("/api/specialites", specialitesRoutes);
 
 // Routes des préférences de notification
 app.use("/api/notifications/preferences", notificationPreferencesRoutes);
