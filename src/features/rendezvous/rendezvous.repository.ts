@@ -285,6 +285,29 @@ export class RendezVousRepository {
     return (result.rowCount || 0) > 0;
   }
 
+  // Vérifier la disponibilité d'un créneau
+  async verifierDisponibiliteCreneau(creneauId: string): Promise<boolean> {
+    const query = `
+      SELECT c.*, 
+             COUNT(rv.idRendezVous) as reservations_count
+      FROM creneau c
+      LEFT JOIN rendezvous rv ON c.idCreneau = rv.creneau_id 
+        AND rv.statut NOT IN ('ANNULE', 'TERMINE')
+      WHERE c.idCreneau = $1 
+        AND c.disponible = true
+      GROUP BY c.idCreneau
+    `;
+    
+    const result = await db.query(query, [creneauId]);
+    
+    if (result.rows.length === 0) {
+      return false; // Créneau n'existe pas ou n'est pas disponible
+    }
+
+    const creneau = result.rows[0];
+    return creneau.reservations_count === 0; // Disponible si aucune réservation
+  }
+
   // ========================================
   // MÉTHODES UTILITAIRES
   // ========================================

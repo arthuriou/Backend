@@ -1,12 +1,13 @@
 import { RendezVousService } from "./rendezvous.service";
+import { SocketService } from "../../shared/services/socket.service";
 import { Request, Response } from "express";
 import { getMissingFields } from "../../shared/utils/validator";
 
 export class RendezVousController {
   private service: RendezVousService;
 
-  constructor() {
-    this.service = new RendezVousService();
+  constructor(socketService?: SocketService) {
+    this.service = new RendezVousService(socketService);
   }
 
   // ========================================

@@ -1,4 +1,5 @@
 import { RendezVousRepository } from "./rendezvous.repository";
+import { SocketService } from "../../shared/services/socket.service";
 import { 
   RendezVous, 
   Creneau, 
@@ -15,9 +16,11 @@ import {
 
 export class RendezVousService {
   private repository: RendezVousRepository;
+  private socketService: SocketService;
 
-  constructor() {
+  constructor(socketService?: SocketService) {
     this.repository = new RendezVousRepository();
+    this.socketService = socketService!;
   }
 
   // ========================================
@@ -46,7 +49,10 @@ export class RendezVousService {
 
     // Si un créneau est spécifié, vérifier qu'il est disponible
     if (creneau_id) {
-      // TODO: Vérifier la disponibilité du créneau
+      const isCreneauAvailable = await this.verifierDisponibiliteCreneau(creneau_id);
+      if (!isCreneauAvailable) {
+        throw new Error("Ce créneau n'est plus disponible");
+      }
     }
 
     const rendezVous = await this.repository.createRendezVous({
@@ -69,6 +75,11 @@ export class RendezVousService {
         dateEnvoi: dateRappel,
         canal: 'EMAIL'
       });
+    }
+
+    // Notifications temps réel
+    if (this.socketService) {
+      this.socketService.notifyNewRendezVous(patient_id, medecin_id, rendezVous);
     }
 
     return rendezVous;
@@ -156,7 +167,18 @@ export class RendezVousService {
       throw new Error("Seuls les rendez-vous en attente peuvent être confirmés");
     }
 
-    return await this.repository.updateRendezVous(id, { statut: 'CONFIRME' });
+    const updatedRDV = await this.repository.updateRendezVous(id, { statut: 'CONFIRME' });
+
+    // Notifications temps réel
+    if (this.socketService) {
+      this.socketService.notifyRendezVousConfirmed(
+        existingRDV.patient_id, 
+        existingRDV.medecin_id, 
+        updatedRDV
+      );
+    }
+
+    return updatedRDV;
   }
 
   // Annuler un rendez-vous
@@ -174,7 +196,18 @@ export class RendezVousService {
       throw new Error("Impossible d'annuler un rendez-vous terminé");
     }
 
-    return await this.repository.annulerRendezVous(id);
+    const success = await this.repository.annulerRendezVous(id);
+
+    // Notifications temps réel
+    if (this.socketService && success) {
+      this.socketService.notifyRendezVousCancelled(
+        existingRDV.patient_id, 
+        existingRDV.medecin_id, 
+        existingRDV
+      );
+    }
+
+    return success;
   }
 
   // Marquer un rendez-vous comme terminé
@@ -306,5 +339,24 @@ export class RendezVousService {
       dateEnvoi: date,
       canal
     });
+  }
+
+  // ========================================
+  // MÉTHODES UTILITAIRES
+  // ========================================
+
+  // Vérifier la disponibilité d'un créneau
+  async verifierDisponibiliteCreneau(creneauId: string): Promise<boolean> {
+    return await this.repository.verifierDisponibiliteCreneau(creneauId);
+  }
+
+  // Vérifier les conflits de créneaux en temps réel
+  async verifierConflitsCreneaux(creneauId: string, userId: string): Promise<void> {
+    const isAvailable = await this.verifierDisponibiliteCreneau(creneauId);
+    
+    if (!isAvailable && this.socketService) {
+      // Notifier l'utilisateur du conflit
+      this.socketService.notifyCreneauConflict(userId, { creneauId });
+    }
   }
 }

@@ -1,14 +1,20 @@
 import express from "express";
+import { createServer } from "http";
 import dotenv from "dotenv";
 import pool from "./utils/database";
 import authRoutes from "./features/auth/auth.route";
 import cabinetRoutes from "./features/cabinets/cabinet.route";
-import rendezvousRoutes from "./features/rendezvous/rendezvous.route";
+import { createRendezVousRoutes } from "./features/rendezvous/rendezvous.route";
+import { SocketService } from "./shared/services/socket.service";
 
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// Initialiser Socket.IO
+const socketService = new SocketService(server);
 
 // Middleware basique
 app.use(express.json());
@@ -39,12 +45,14 @@ app.use("/api/auth", authRoutes);
 // Routes des cabinets
 app.use("/api/cabinets", cabinetRoutes);
 
-// Routes des rendez-vous
+// Routes des rendez-vous avec Socket.IO
+const rendezvousRoutes = createRendezVousRoutes(socketService);
 app.use("/api/rendezvous", rendezvousRoutes);
 
 // Démarrage
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`🔌 Socket.IO activé pour le temps réel`);
 });
 
 export default app;
