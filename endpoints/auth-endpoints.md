@@ -504,7 +504,58 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
 
 ## 8. Gestion AdminCabinet
 
-### 8.1 Créer un médecin
+### 8.1 Créer un AdminCabinet (SuperAdmin)
+**POST** `/super-admin/create-admin`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`
+
+#### Body (JSON)
+```json
+{
+  "email": "admin@cabinet-central.tg",
+  "motdepasse": "password123",
+  "nom": "Dupont",
+  "prenom": "Marie",
+  "telephone": "0123456789",
+  "cabinetId": "uuid-du-cabinet",
+  "roleAdmin": "ADMIN_PRINCIPAL"
+}
+```
+
+#### Réponse (201)
+```json
+{
+  "message": "AdminCabinet créé avec succès",
+  "data": {
+    "user": {
+      "idUtilisateur": "uuid",
+      "email": "admin@cabinet-central.tg",
+      "nom": "Dupont",
+      "prenom": "Marie",
+      "telephone": "0123456789",
+      "dateCreation": "2024-01-15T10:30:00.000Z",
+      "statut": "ACTIF"
+    },
+    "adminCabinet": {
+      "idAdminCabinet": "uuid",
+      "utilisateur_id": "uuid",
+      "cabinet_id": "uuid-du-cabinet",
+      "roleAdmin": "ADMIN_PRINCIPAL",
+      "dateAttribution": "2024-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
+#### Erreur (400)
+```json
+{
+  "error": "Email déjà utilisé"
+}
+```
+
+### 8.3 Créer un médecin
 **POST** `/admin/create-medecin`
 
 - Auth: `Authorization: Bearer <token>`

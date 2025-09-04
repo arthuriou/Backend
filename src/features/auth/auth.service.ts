@@ -421,6 +421,26 @@ export class AuthService {
     await this.repository.updatePassword(userId, hashedNewPassword);
   }
 
+  async createAdminCabinet(
+    email: string,
+    motdepasse: string,
+    nom: string,
+    prenom: string,
+    telephone: string,
+    cabinetId: string,
+    roleAdmin: string = "ADMIN_PRINCIPAL"
+  ): Promise<any> {
+    return await this.repository.createAdminCabinet(
+      email,
+      motdepasse,
+      nom,
+      prenom,
+      telephone,
+      cabinetId,
+      roleAdmin
+    );
+  }
+
   // ========================================
   // GESTION DES CABINETS (SUPERADMIN)
   // ========================================

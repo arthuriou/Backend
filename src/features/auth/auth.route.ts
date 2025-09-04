@@ -126,6 +126,13 @@ router.post("/super-admin/change-password",
   controller.changeSuperAdminPassword.bind(controller)
 );
 
+// Créer un AdminCabinet
+router.post("/super-admin/create-admin", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.createAdminCabinet.bind(controller)
+);
+
 // ========================================
 // GESTION DES CABINETS (SUPERADMIN)
 // ========================================

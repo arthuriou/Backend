@@ -1,5 +1,6 @@
 import { User, Patient, Medecin } from "./auth.model";
 import db from "../../shared/database/client";
+import bcrypt from "bcrypt";
 
 export class AuthRepository {
   async createUser(
@@ -469,6 +470,78 @@ export class AuthRepository {
     return result.rows[0];
   }
 
+  async createAdminCabinet(
+    email: string,
+    motdepasse: string,
+    nom: string,
+    prenom: string,
+    telephone: string,
+    cabinetId: string,
+    roleAdmin: string = "ADMIN_PRINCIPAL"
+  ): Promise<any> {
+    // Vérifier que l'email n'existe pas déjà
+    const existingUser = await db.query(
+      'SELECT * FROM utilisateur WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      throw new Error("Email déjà utilisé");
+    }
+
+    // Vérifier que le cabinet existe
+    const cabinetResult = await db.query(
+      'SELECT * FROM cabinet WHERE idCabinet = $1',
+      [cabinetId]
+    );
+
+    if (cabinetResult.rows.length === 0) {
+      throw new Error("Cabinet non trouvé");
+    }
+
+    // Hacher le mot de passe
+    const hashedPassword = await bcrypt.hash(motdepasse, 10);
+
+    // Créer l'utilisateur
+    const userResult = await db.query(
+      `INSERT INTO utilisateur (email, motdepasse, nom, prenom, telephone, datecreation, actif)
+       VALUES ($1, $2, $3, $4, $5, NOW(), true)
+       RETURNING *`,
+      [email, hashedPassword, nom, prenom, telephone]
+    );
+
+    const user = userResult.rows[0];
+
+    // Créer l'AdminCabinet
+    const adminResult = await db.query(
+      `INSERT INTO admincabinet (utilisateur_id, cabinet_id, roleadmin, dateaffectation)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING *`,
+      [user.idUtilisateur, cabinetId, roleAdmin]
+    );
+
+    const adminCabinet = adminResult.rows[0];
+
+    return {
+      user: {
+        idUtilisateur: user.idUtilisateur,
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        telephone: user.telephone,
+        dateCreation: user.datecreation,
+        statut: user.actif ? "ACTIF" : "INACTIF"
+      },
+      adminCabinet: {
+        idAdminCabinet: adminCabinet.idAdminCabinet,
+        utilisateur_id: adminCabinet.utilisateur_id,
+        cabinet_id: adminCabinet.cabinet_id,
+        roleAdmin: adminCabinet.roleadmin,
+        dateAttribution: adminCabinet.dateaffectation
+      }
+    };
+  }
+
   // ========================================
   // GESTION DES CABINETS (SUPERADMIN)
   // ========================================
@@ -483,11 +556,18 @@ export class AuthRepository {
     specialites?: string[]
   ): Promise<any> {
     const query = `
-      INSERT INTO cabinet (nom, adresse, telephone, email, siteWeb, description, specialites, dateCreation)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      INSERT INTO cabinet (nom, adresse, telephone, email, logo, horairesouverture)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
-    const values = [nom, adresse, telephone, email, siteWeb, description, specialites ? JSON.stringify(specialites) : null];
+    const values = [
+      nom, 
+      adresse, 
+      telephone, 
+      email, 
+      siteWeb || null, // Utiliser siteWeb comme logo si fourni
+      description ? JSON.stringify({ description, specialites }) : null
+    ];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -572,31 +652,24 @@ export class AuthRepository {
 
     if (siteWeb !== undefined) {
       paramCount++;
-      updates.push(`siteWeb = $${paramCount}`);
+      updates.push(`logo = $${paramCount}`);
       values.push(siteWeb);
     }
 
-    if (description !== undefined) {
+    if (description !== undefined || specialites !== undefined) {
       paramCount++;
-      updates.push(`description = $${paramCount}`);
-      values.push(description);
-    }
-
-    if (specialites !== undefined) {
-      paramCount++;
-      updates.push(`specialites = $${paramCount}`);
-      values.push(JSON.stringify(specialites));
+      const horairesData = { description, specialites };
+      updates.push(`horairesouverture = $${paramCount}`);
+      values.push(JSON.stringify(horairesData));
     }
 
     if (updates.length === 0) {
       throw new Error("Aucune donnée à mettre à jour");
     }
 
-    paramCount++;
-    updates.push(`dateModification = NOW()`);
     values.push(cabinetId);
 
-    const query = `UPDATE cabinet SET ${updates.join(', ')} WHERE idCabinet = $${paramCount} RETURNING *`;
+    const query = `UPDATE cabinet SET ${updates.join(', ')} WHERE idCabinet = $${paramCount + 1} RETURNING *`;
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -687,7 +760,7 @@ export class AuthRepository {
 
   async getAdminCabinets(adminId: string): Promise<any> {
     const result = await db.query(
-      `SELECT c.*, ac.dateAttribution
+      `SELECT c.*, ac.dateaffectation as dateAttribution
        FROM cabinet c
        JOIN admincabinet ac ON c.idCabinet = ac.cabinet_id
        WHERE ac.utilisateur_id = $1`,
@@ -699,7 +772,7 @@ export class AuthRepository {
 
   async getCabinetAdmins(cabinetId: string): Promise<any> {
     const result = await db.query(
-      `SELECT u.*, ac.idAdminCabinet, ac.dateAttribution
+      `SELECT u.*, ac.idAdminCabinet, ac.dateaffectation as dateAttribution
        FROM utilisateur u
        JOIN admincabinet ac ON u.idUtilisateur = ac.utilisateur_id
        WHERE ac.cabinet_id = $1`,

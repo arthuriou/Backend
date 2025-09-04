@@ -695,6 +695,51 @@ export class AuthController {
     }
   }
 
+  async createAdminCabinet(req: Request, res: Response): Promise<void> {
+    try {
+      const requiredFields = ["email", "motdepasse", "nom", "prenom", "telephone", "cabinetId"];
+      const missingFields = getMissingFields(req.body, requiredFields);
+      if (missingFields.length > 0) {
+        res.status(400).json({
+          error: "Champ(s) manquant(s)",
+          missingFields,
+        });
+        return;
+      }
+
+      const {
+        email,
+        motdepasse,
+        nom,
+        prenom,
+        telephone,
+        cabinetId,
+        roleAdmin = "ADMIN_PRINCIPAL"
+      } = req.body;
+
+      const result = await this.service.createAdminCabinet(
+        email,
+        motdepasse,
+        nom,
+        prenom,
+        telephone,
+        cabinetId,
+        roleAdmin
+      );
+
+      res.status(201).json({
+        message: "AdminCabinet créé avec succès",
+        data: result
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la création de l'AdminCabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
   // ========================================
   // GESTION DES CABINETS (SUPERADMIN)
   // ========================================
