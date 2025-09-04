@@ -56,4 +56,145 @@ router.post("/admin/create-medecin",
   controller.createMedecinByAdmin.bind(controller)
 );
 
+// ========================================
+// ENDPOINTS DE RÉCUPÉRATION D'INFORMATIONS
+// ========================================
+
+// Récupérer le profil de l'utilisateur connecté
+router.get("/profile", 
+  authenticateToken, 
+  controller.getProfile.bind(controller)
+);
+
+// Récupérer un utilisateur par ID (pour les admins)
+router.get("/user/:id", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN', 'ADMINCABINET', 'MEDECIN']), 
+  controller.getUserById.bind(controller)
+);
+
+// Récupérer tous les patients (avec pagination et recherche)
+router.get("/patients", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN', 'ADMINCABINET', 'MEDECIN']), 
+  controller.getAllPatients.bind(controller)
+);
+
+// Récupérer tous les médecins (avec pagination, recherche et filtres)
+router.get("/medecins", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN', 'ADMINCABINET']), 
+  controller.getAllMedecins.bind(controller)
+);
+
+// Récupérer tous les administrateurs (avec pagination et recherche)
+router.get("/admins", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.getAllAdmins.bind(controller)
+);
+
+// Récupérer les utilisateurs par rôle (générique)
+router.get("/users/role/:role", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN', 'ADMINCABINET']), 
+  controller.getUsersByRole.bind(controller)
+);
+
+// ========================================
+// GESTION SUPERADMIN
+// ========================================
+
+// Récupérer le profil SuperAdmin
+router.get("/super-admin/profile", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.getSuperAdminProfile.bind(controller)
+);
+
+// Mettre à jour le profil SuperAdmin
+router.patch("/super-admin/profile", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.updateSuperAdminProfile.bind(controller)
+);
+
+// Changer le mot de passe SuperAdmin
+router.post("/super-admin/change-password", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.changeSuperAdminPassword.bind(controller)
+);
+
+// ========================================
+// GESTION DES CABINETS (SUPERADMIN)
+// ========================================
+
+// Créer un cabinet
+router.post("/super-admin/cabinets", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.createCabinet.bind(controller)
+);
+
+// Récupérer tous les cabinets
+router.get("/super-admin/cabinets", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.getAllCabinets.bind(controller)
+);
+
+// Récupérer un cabinet par ID
+router.get("/super-admin/cabinets/:id", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.getCabinetById.bind(controller)
+);
+
+// Mettre à jour un cabinet
+router.put("/super-admin/cabinets/:id", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.updateCabinet.bind(controller)
+);
+
+// Supprimer un cabinet
+router.delete("/super-admin/cabinets/:id", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.deleteCabinet.bind(controller)
+);
+
+// ========================================
+// GESTION DES ATTRIBUTIONS CABINET (SUPERADMIN)
+// ========================================
+
+// Attribuer un cabinet à un AdminCabinet
+router.post("/super-admin/assign-cabinet", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.assignCabinetToAdmin.bind(controller)
+);
+
+// Retirer un cabinet d'un AdminCabinet
+router.delete("/super-admin/assign-cabinet/:adminId", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.unassignCabinetFromAdmin.bind(controller)
+);
+
+// Récupérer les cabinets d'un AdminCabinet
+router.get("/super-admin/admin-cabinets/:adminId", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.getAdminCabinets.bind(controller)
+);
+
+// Récupérer les AdminCabinet d'un cabinet
+router.get("/super-admin/cabinets/:cabinetId/admins", 
+  authenticateToken, 
+  requireRole(['SUPERADMIN']), 
+  controller.getCabinetAdmins.bind(controller)
+);
+
 export default router;

@@ -101,53 +101,7 @@ Authorization: Bearer <token>
 }
 ```
 
-## 4. Créer un AdminCabinet (SuperAdmin)
-**POST** `/:id/admin`
-
-### Headers
-```
-Authorization: Bearer <token>
-```
-
-### Body (JSON)
-```json
-{
-  "email": "admin@cabinet-central.com",
-  "motdepasse": "password123",
-  "nom": "Admin",
-  "prenom": "Cabinet",
-  "telephone": "0987654321",
-  "cabinetId": "uuid",
-  "roleAdmin": "ADMIN_PRINCIPAL"
-}
-```
-
-### Réponse (201)
-```json
-{
-  "message": "AdminCabinet créé avec succès",
-  "data": {
-    "user": {
-      "idUtilisateur": "uuid",
-      "email": "admin@cabinet-central.com",
-      "nom": "Admin",
-      "prenom": "Cabinet",
-      "telephone": "0987654321",
-      "dateCreation": "2025-01-03T00:00:00.000Z",
-      "actif": true
-    },
-    "adminCabinet": {
-      "idAdminCabinet": "uuid",
-      "utilisateur_id": "uuid",
-      "cabinet_id": "uuid",
-      "roleAdmin": "ADMIN_PRINCIPAL",
-      "dateAffectation": "2025-01-03T00:00:00.000Z"
-    }
-  }
-}
-```
-
-## 5. Récupérer les AdminCabinet d'un cabinet (SuperAdmin)
+## 4. Récupérer les AdminCabinet d'un cabinet (SuperAdmin)
 **GET** `/:id/admins`
 
 ### Headers
@@ -176,7 +130,7 @@ Authorization: Bearer <token>
 }
 ```
 
-## 6. Modifier un cabinet (SuperAdmin/AdminCabinet)
+## 5. Modifier un cabinet (SuperAdmin/AdminCabinet)
 **PUT** `/:id`
 
 ### Headers
@@ -217,7 +171,7 @@ Notes:
 - Gestion des médecins du cabinet: un médecin peut être archivé via `medecin_cabinet.actif = false`.
 - Les spécialités du cabinet sont maintenues via `cabinet_specialite`.
 
-## 7. Archiver un cabinet (SuperAdmin)
+## 6. Archiver un cabinet (SuperAdmin)
 **PUT** `/:id/archive`
 
 ### Headers
@@ -232,16 +186,16 @@ Authorization: Bearer <token>
 }
 ```
 
-## 8. Gestion des spécialités du cabinet
+## 7. Gestion des spécialités du cabinet
 **GET** `/:id/specialites` - Liste des spécialités
 **POST** `/:id/specialites` - Ajouter une spécialité
 **DELETE** `/:id/specialites/:specialiteId` - Retirer une spécialité
 
-## 9. Gestion des médecins du cabinet
+## 8. Gestion des médecins du cabinet
 **GET** `/:id/medecins` - Liste des médecins
 **PUT** `/:id/medecins/:medecinId/archive` - Archiver un médecin
 
-## 10. Statistiques du cabinet
+## 9. Statistiques du cabinet
 **GET** `/:id/stats`
 
 ### Headers

@@ -466,4 +466,472 @@ export class AuthController {
       });
     }
   }
+
+  // ========================================
+  // ENDPOINTS DE RÉCUPÉRATION D'INFORMATIONS
+  // ========================================
+
+  async getProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ error: "Token invalide" });
+        return;
+      }
+
+      const profile = await this.service.getProfile(userId);
+      res.status(200).json({
+        message: "Profil récupéré avec succès",
+        data: profile
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération du profil:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = await this.service.getUserById(id);
+      
+      if (!user) {
+        res.status(404).json({ error: "Utilisateur non trouvé" });
+        return;
+      }
+
+      res.status(200).json({
+        message: "Utilisateur récupéré avec succès",
+        data: user
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération de l'utilisateur:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getAllPatients(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10, search } = req.query;
+      const patients = await this.service.getAllPatients(
+        Number(page),
+        Number(limit),
+        search as string
+      );
+
+      res.status(200).json({
+        message: "Patients récupérés avec succès",
+        data: patients
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des patients:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getAllMedecins(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10, search, specialite, cabinetId } = req.query;
+      const medecins = await this.service.getAllMedecins(
+        Number(page),
+        Number(limit),
+        search as string,
+        specialite as string,
+        cabinetId as string
+      );
+
+      res.status(200).json({
+        message: "Médecins récupérés avec succès",
+        data: medecins
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des médecins:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getAllAdmins(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10, search, cabinetId } = req.query;
+      const admins = await this.service.getAllAdmins(
+        Number(page),
+        Number(limit),
+        search as string,
+        cabinetId as string
+      );
+
+      res.status(200).json({
+        message: "Administrateurs récupérés avec succès",
+        data: admins
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des administrateurs:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getUsersByRole(req: Request, res: Response): Promise<void> {
+    try {
+      const { role } = req.params;
+      const { page = 1, limit = 10, search } = req.query;
+      
+      const users = await this.service.getUsersByRole(
+        role.toUpperCase(),
+        Number(page),
+        Number(limit),
+        search as string
+      );
+
+      res.status(200).json({
+        message: `Utilisateurs ${role} récupérés avec succès`,
+        data: users
+      });
+    } catch (error: any) {
+      console.error(`Erreur lors de la récupération des utilisateurs ${req.params.role}:`, error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  // ========================================
+  // GESTION SUPERADMIN
+  // ========================================
+
+  async getSuperAdminProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ error: "Token invalide" });
+        return;
+      }
+
+      const profile = await this.service.getSuperAdminProfile(userId);
+      res.status(200).json({
+        message: "Profil SuperAdmin récupéré avec succès",
+        data: profile
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération du profil SuperAdmin:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async updateSuperAdminProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ error: "Token invalide" });
+        return;
+      }
+
+      const { nom, prenom, telephone, email } = req.body;
+      const updatedProfile = await this.service.updateSuperAdminProfile(
+        userId,
+        nom,
+        prenom,
+        telephone,
+        email
+      );
+
+      res.status(200).json({
+        message: "Profil SuperAdmin mis à jour avec succès",
+        data: updatedProfile
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la mise à jour du profil SuperAdmin:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async changeSuperAdminPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ error: "Token invalide" });
+        return;
+      }
+
+      const { ancienMotdepasse, nouveauMotdepasse } = req.body;
+      
+      if (!ancienMotdepasse || !nouveauMotdepasse) {
+        res.status(400).json({ error: "Ancien et nouveau mot de passe requis" });
+        return;
+      }
+
+      await this.service.changeSuperAdminPassword(userId, ancienMotdepasse, nouveauMotdepasse);
+
+      res.status(200).json({
+        message: "Mot de passe SuperAdmin changé avec succès"
+      });
+    } catch (error: any) {
+      console.error("Erreur lors du changement de mot de passe SuperAdmin:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  // ========================================
+  // GESTION DES CABINETS (SUPERADMIN)
+  // ========================================
+
+  async createCabinet(req: Request, res: Response): Promise<void> {
+    try {
+      const requiredFields = ["nom", "adresse", "telephone"];
+      const missingFields = getMissingFields(req.body, requiredFields);
+      if (missingFields.length > 0) {
+        res.status(400).json({
+          error: "Champ(s) manquant(s)",
+          missingFields,
+        });
+        return;
+      }
+
+      const {
+        nom,
+        adresse,
+        telephone,
+        email,
+        siteWeb,
+        description,
+        specialites
+      } = req.body;
+
+      const cabinet = await this.service.createCabinet(
+        nom,
+        adresse,
+        telephone,
+        email,
+        siteWeb,
+        description,
+        specialites
+      );
+
+      res.status(201).json({
+        message: "Cabinet créé avec succès",
+        data: cabinet
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la création du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getAllCabinets(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10, search } = req.query;
+      const cabinets = await this.service.getAllCabinets(
+        Number(page),
+        Number(limit),
+        search as string
+      );
+
+      res.status(200).json({
+        message: "Cabinets récupérés avec succès",
+        data: cabinets
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des cabinets:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getCabinetById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const cabinet = await this.service.getCabinetById(id);
+      
+      if (!cabinet) {
+        res.status(404).json({ error: "Cabinet non trouvé" });
+        return;
+      }
+
+      res.status(200).json({
+        message: "Cabinet récupéré avec succès",
+        data: cabinet
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async updateCabinet(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const {
+        nom,
+        adresse,
+        telephone,
+        email,
+        siteWeb,
+        description,
+        specialites
+      } = req.body;
+
+      const cabinet = await this.service.updateCabinet(
+        id,
+        nom,
+        adresse,
+        telephone,
+        email,
+        siteWeb,
+        description,
+        specialites
+      );
+
+      res.status(200).json({
+        message: "Cabinet mis à jour avec succès",
+        data: cabinet
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la mise à jour du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async deleteCabinet(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      await this.service.deleteCabinet(id);
+
+      res.status(200).json({
+        message: "Cabinet supprimé avec succès"
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  // ========================================
+  // GESTION DES ATTRIBUTIONS CABINET (SUPERADMIN)
+  // ========================================
+
+  async assignCabinetToAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { adminId, cabinetId } = req.body;
+      
+      if (!adminId || !cabinetId) {
+        res.status(400).json({ 
+          error: "adminId et cabinetId sont requis" 
+        });
+        return;
+      }
+
+      const assignment = await this.service.assignCabinetToAdmin(adminId, cabinetId);
+
+      res.status(200).json({
+        message: "Cabinet attribué avec succès à l'AdminCabinet",
+        data: assignment
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de l'attribution du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async unassignCabinetFromAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { adminId } = req.params;
+      const { cabinetId } = req.body;
+      
+      if (!cabinetId) {
+        res.status(400).json({ 
+          error: "cabinetId est requis dans le body" 
+        });
+        return;
+      }
+
+      await this.service.unassignCabinetFromAdmin(adminId, cabinetId);
+
+      res.status(200).json({
+        message: "Cabinet retiré avec succès de l'AdminCabinet"
+      });
+    } catch (error: any) {
+      console.error("Erreur lors du retrait du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getAdminCabinets(req: Request, res: Response): Promise<void> {
+    try {
+      const { adminId } = req.params;
+      const cabinets = await this.service.getAdminCabinets(adminId);
+
+      res.status(200).json({
+        message: "Cabinets de l'AdminCabinet récupérés avec succès",
+        data: cabinets
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des cabinets de l'admin:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
+
+  async getCabinetAdmins(req: Request, res: Response): Promise<void> {
+    try {
+      const { cabinetId } = req.params;
+      const admins = await this.service.getCabinetAdmins(cabinetId);
+
+      res.status(200).json({
+        message: "AdminCabinet du cabinet récupérés avec succès",
+        data: admins
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de la récupération des admins du cabinet:", error);
+      res.status(500).json({
+        error: "Erreur interne du serveur",
+        details: error.message
+      });
+    }
+  }
 }

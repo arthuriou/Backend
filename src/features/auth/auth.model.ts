@@ -13,6 +13,7 @@ export interface User {
   datecreation?: Date;
   derniereconnexion?: Date;
   actif: boolean;
+  role?: string;
 }
 
 export interface Patient {

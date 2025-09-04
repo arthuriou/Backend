@@ -1,28 +1,20 @@
 # Endpoints d'Authentification - SantéAfrik
 
-## Upload photo de profil
-POST `/api/auth/profile/photo`
-
-- Auth: `Authorization: Bearer <token>`
-- Content-Type: `multipart/form-data`
-- Body (form-data):
-  - `file`: image (jpg/png/webp/gif), max 10MB
-
-Réponse 201:
-```json
-{
-  "message": "Photo de profil mise à jour",
-  "data": {
-    "url": "/uploads/profile/<fichier>",
-    "user": { "idutilisateur": "...", "photoprofil": "/uploads/profile/<fichier>", "nom": "..." }
-  }
-}
-```
-
 ## Base URL
 ```
 http://localhost:3000/api/auth
 ```
+
+## Table des matières
+1. [Inscription](#1-inscription-patient)
+2. [Connexion](#2-connexion)
+3. [Gestion OTP](#3-gestion-otp)
+4. [Gestion des mots de passe](#4-gestion-des-mots-de-passe)
+5. [Gestion des profils](#5-gestion-des-profils)
+6. [Upload photo de profil](#6-upload-photo-de-profil)
+7. [Récupération d'informations](#7-récupération-dinformations)
+8. [Gestion SuperAdmin](#8-gestion-superadmin)
+9. [Gestion AdminCabinet](#9-gestion-admincabinet)
 
 ## 1. Inscription Patient
 **POST** `/register-patient`
@@ -305,9 +297,374 @@ Authorization: Bearer <token>
 }
 ```
 
+## 7. Récupération d'informations
+
+### 7.1 Récupérer le profil de l'utilisateur connecté
+**GET** `/profile`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: Tous
+
+#### Réponse (200)
+```json
+{
+  "message": "Profil récupéré avec succès",
+  "data": {
+    "idutilisateur": "uuid",
+    "email": "user@example.com",
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "telephone": "0123456789",
+    "photoprofil": "/uploads/profile/photo.jpg",
+    "actif": true,
+    "role": "PATIENT",
+    "patient": {
+      "idpatient": "uuid",
+      "datenaissance": "1990-01-15",
+      "genre": "M",
+      "adresse": "123 Rue de la Paix",
+      "groupesanguin": "O+",
+      "poids": 70,
+      "taille": 175,
+      "statut": "ACTIF"
+    }
+  }
+}
+```
+
+### 7.2 Récupérer un utilisateur par ID
+**GET** `/user/:id`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`, `ADMINCABINET`, `MEDECIN`
+- Paramètres:
+  - `id`: ID de l'utilisateur
+
+#### Réponse (200)
+```json
+{
+  "message": "Utilisateur récupéré avec succès",
+  "data": {
+    "idutilisateur": "uuid",
+    "email": "user@example.com",
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "role": "PATIENT",
+    "patient": { /* données patient */ }
+  }
+}
+```
+
+### 7.3 Récupérer tous les patients
+**GET** `/patients`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`, `ADMINCABINET`, `MEDECIN`
+- Query parameters:
+  - `page`: Numéro de page (défaut: 1)
+  - `limit`: Nombre d'éléments par page (défaut: 10)
+  - `search`: Recherche par nom, prénom ou email
+
+#### Exemple
+```
+GET /api/auth/patients?page=1&limit=20&search=Dupont
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Patients récupérés avec succès",
+  "data": [
+    {
+      "idutilisateur": "uuid",
+      "email": "patient1@example.com",
+      "nom": "Dupont",
+      "prenom": "Jean",
+      "role": "PATIENT",
+      "statut_utilisateur": "ACTIF",
+      "idpatient": "uuid",
+      "datenaissance": "1990-01-15",
+      "genre": "M",
+      "adresse": "123 Rue de la Paix",
+      "groupesanguin": "O+",
+      "poids": 70,
+      "taille": 175,
+      "statut": "ACTIF"
+    }
+  ]
+}
+```
+
+### 7.4 Récupérer tous les médecins
+**GET** `/medecins`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`, `ADMINCABINET`
+- Query parameters:
+  - `page`: Numéro de page (défaut: 1)
+  - `limit`: Nombre d'éléments par page (défaut: 10)
+  - `search`: Recherche par nom, prénom ou email
+  - `specialite`: Filtrer par spécialité
+  - `cabinetId`: Filtrer par cabinet
+
+#### Exemple
+```
+GET /api/auth/medecins?page=1&limit=20&specialite=Cardiologie&cabinetId=uuid
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Médecins récupérés avec succès",
+  "data": [
+    {
+      "idutilisateur": "uuid",
+      "email": "medecin@example.com",
+      "nom": "Martin",
+      "prenom": "Dr. Pierre",
+      "role": "MEDECIN",
+      "statut_utilisateur": "ACTIF",
+      "idmedecin": "uuid",
+      "numordre": "12345",
+      "experience": 10,
+      "biographie": "Spécialiste en cardiologie",
+      "statut": "APPROVED",
+      "cabinet_nom": "Cabinet Médical Central",
+      "cabinet_adresse": "456 Avenue de la Santé"
+    }
+  ]
+}
+```
+
+### 7.5 Récupérer tous les administrateurs
+**GET** `/admins`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`
+- Query parameters:
+  - `page`: Numéro de page (défaut: 1)
+  - `limit`: Nombre d'éléments par page (défaut: 10)
+  - `search`: Recherche par nom, prénom ou email
+  - `cabinetId`: Filtrer par cabinet
+
+#### Réponse (200)
+```json
+{
+  "message": "Administrateurs récupérés avec succès",
+  "data": [
+    {
+      "idutilisateur": "uuid",
+      "email": "admin@example.com",
+      "nom": "Admin",
+      "prenom": "Cabinet",
+      "role": "ADMINCABINET",
+      "statut_utilisateur": "ACTIF",
+      "idadmincabinet": "uuid",
+      "roleadmin": "GESTIONNAIRE",
+      "cabinet_nom": "Cabinet Médical Central",
+      "cabinet_adresse": "456 Avenue de la Santé"
+    }
+  ]
+}
+```
+
+### 7.6 Récupérer les utilisateurs par rôle
+**GET** `/users/role/:role`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`, `ADMINCABINET`
+- Paramètres:
+  - `role`: Rôle à rechercher (`PATIENT`, `MEDECIN`, `ADMINCABINET`, `SUPERADMIN`)
+- Query parameters:
+  - `page`: Numéro de page (défaut: 1)
+  - `limit`: Nombre d'éléments par page (défaut: 10)
+  - `search`: Recherche par nom, prénom ou email
+
+#### Exemple
+```
+GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Utilisateurs PATIENT récupérés avec succès",
+  "data": [
+    {
+      "idutilisateur": "uuid",
+      "email": "patient@example.com",
+      "nom": "Dupont",
+      "prenom": "Jean",
+      "role": "PATIENT",
+      "statut_utilisateur": "ACTIF"
+    }
+  ]
+}
+```
+
+## 8. Gestion AdminCabinet
+
+### 8.1 Créer un médecin
+**POST** `/admin/create-medecin`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `ADMINCABINET`
+
+#### Body (JSON)
+```json
+{
+  "email": "medecin@example.com",
+  "motdepasse": "password123",
+  "nom": "Martin",
+  "prenom": "Dr. Pierre",
+  "telephone": "0123456789",
+  "numordre": "12345",
+  "cabinetId": "uuid",
+  "experience": 10,
+  "biographie": "Spécialiste en cardiologie"
+}
+```
+
+#### Réponse (201)
+```json
+{
+  "message": "Médecin créé avec succès et approuvé automatiquement",
+  "data": {
+    "idutilisateur": "uuid",
+    "email": "medecin@example.com",
+    "nom": "Martin",
+    "prenom": "Dr. Pierre",
+    "role": "MEDECIN"
+  }
+}
+```
+
+## 9. Gestion des Attributions Cabinet (SuperAdmin)
+
+### 9.1 Attribuer un cabinet à un AdminCabinet
+**POST** `/super-admin/assign-cabinet`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`
+
+#### Body (JSON)
+```json
+{
+  "adminId": "uuid-de-l-admincabinet",
+  "cabinetId": "uuid-du-cabinet"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Cabinet attribué avec succès à l'AdminCabinet",
+  "data": {
+    "idAdminCabinet": "uuid",
+    "utilisateur_id": "uuid-de-l-admincabinet",
+    "cabinet_id": "uuid-du-cabinet",
+    "niveauAcces": "FULL",
+    "dateAttribution": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+#### Erreur (400)
+```json
+{
+  "error": "Ce cabinet est déjà attribué à cet AdminCabinet"
+}
+```
+
+### 9.2 Retirer un cabinet d'un AdminCabinet
+**DELETE** `/super-admin/assign-cabinet/:adminId`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`
+- Paramètres:
+  - `adminId`: ID de l'AdminCabinet
+
+#### Body (JSON)
+```json
+{
+  "cabinetId": "uuid-du-cabinet"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Cabinet retiré avec succès de l'AdminCabinet"
+}
+```
+
+#### Erreur (400)
+```json
+{
+  "error": "Cette attribution n'existe pas"
+}
+```
+
+### 9.3 Récupérer les cabinets d'un AdminCabinet
+**GET** `/super-admin/admin-cabinets/:adminId`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`
+- Paramètres:
+  - `adminId`: ID de l'AdminCabinet
+
+#### Réponse (200)
+```json
+{
+  "message": "Cabinets de l'AdminCabinet récupérés avec succès",
+  "data": [
+    {
+      "idCabinet": "uuid",
+      "nom": "Cabinet Médical Central",
+      "adresse": "123 Avenue de la Santé, Lomé",
+      "telephone": "+228 22 12 34 56",
+      "email": "contact@cabinet-central.tg",
+      "siteWeb": "https://cabinet-central.tg",
+      "description": "Cabinet médical moderne",
+      "specialites": "[\"Cardiologie\", \"Dermatologie\"]",
+      "dateCreation": "2024-01-15T10:30:00.000Z",
+      "dateAttribution": "2024-01-20T14:30:00.000Z"
+    }
+  ]
+}
+```
+
+### 9.4 Récupérer les AdminCabinet d'un cabinet
+**GET** `/super-admin/cabinets/:cabinetId/admins`
+
+- Auth: `Authorization: Bearer <token>`
+- Rôles: `SUPERADMIN`
+- Paramètres:
+  - `cabinetId`: ID du cabinet
+
+#### Réponse (200)
+```json
+{
+  "message": "AdminCabinet du cabinet récupérés avec succès",
+  "data": [
+    {
+      "idUtilisateur": "uuid",
+      "email": "admin@cabinet-central.tg",
+      "nom": "Dupont",
+      "prenom": "Marie",
+      "telephone": "0123456789",
+      "statut": "ACTIF",
+      "idAdminCabinet": "uuid",
+      "dateAttribution": "2024-01-20T14:30:00.000Z"
+    }
+  ]
+}
+```
+
 ## Codes d'erreur
 - **400** : Champs manquants ou invalides
-- **401** : Email/mot de passe incorrect
-- **403** : Compte désactivé
+- **401** : Email/mot de passe incorrect ou token invalide
+- **403** : Compte désactivé ou accès refusé
+- **404** : Utilisateur ou cabinet non trouvé
 - **409** : Email déjà utilisé
 - **500** : Erreur serveur

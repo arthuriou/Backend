@@ -255,6 +255,11 @@ export class AuthService {
     }
   }
 
+  async getPatientProfile(userId: string): Promise<Patient> {
+    return await this.repository.getPatientProfile(userId);
+  }
+
+
   // Récupérer médecins en attente
   async getPendingMedecins(): Promise<any[]> {
     return await this.repository.getPendingMedecins();
@@ -305,5 +310,193 @@ export class AuthService {
     await this.repository.associateMedecinToCabinet(medecin.idmedecin as any, cabinetId);
 
     return newUser;
+  }
+
+  // ========================================
+  // MÉTHODES DE RÉCUPÉRATION D'INFORMATIONS
+  // ========================================
+
+  async getProfile(userId: string): Promise<any> {
+    const user = await this.repository.getUserById(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    // Récupérer les informations spécifiques selon le rôle
+    if (user.role === 'PATIENT') {
+      const patient = await this.repository.getPatientByUserId(userId);
+      return { ...user, patient };
+    } else if (user.role === 'MEDECIN') {
+      const medecin = await this.repository.getMedecinByUserId(userId);
+      return { ...user, medecin };
+    } else if (user.role === 'ADMINCABINET') {
+      const admin = await this.repository.getAdminByUserId(userId);
+      return { ...user, admin };
+    }
+
+    return user;
+  }
+
+  async getUserById(userId: string): Promise<any> {
+    const user = await this.repository.getUserById(userId);
+    if (!user) {
+      return null;
+    }
+
+    // Récupérer les informations spécifiques selon le rôle
+    if (user.role === 'PATIENT') {
+      const patient = await this.repository.getPatientByUserId(userId);
+      return { ...user, patient };
+    } else if (user.role === 'MEDECIN') {
+      const medecin = await this.repository.getMedecinByUserId(userId);
+      return { ...user, medecin };
+    } else if (user.role === 'ADMINCABINET') {
+      const admin = await this.repository.getAdminByUserId(userId);
+      return { ...user, admin };
+    }
+
+    return user;
+  }
+
+  async getAllPatients(page: number = 1, limit: number = 10, search?: string): Promise<any> {
+    const offset = (page - 1) * limit;
+    return await this.repository.getAllPatients(offset, limit, search);
+  }
+
+  async getAllMedecins(page: number = 1, limit: number = 10, search?: string, specialite?: string, cabinetId?: string): Promise<any> {
+    const offset = (page - 1) * limit;
+    return await this.repository.getAllMedecins(offset, limit, search, specialite, cabinetId);
+  }
+
+  async getAllAdmins(page: number = 1, limit: number = 10, search?: string, cabinetId?: string): Promise<any> {
+    const offset = (page - 1) * limit;
+    return await this.repository.getAllAdmins(offset, limit, search, cabinetId);
+  }
+
+  async getUsersByRole(role: string, page: number = 1, limit: number = 10, search?: string): Promise<any> {
+    const offset = (page - 1) * limit;
+    return await this.repository.getUsersByRole(role, offset, limit, search);
+  }
+
+  // ========================================
+  // GESTION SUPERADMIN
+  // ========================================
+
+  async getSuperAdminProfile(userId: string): Promise<any> {
+    const user = await this.repository.getUserById(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    const superAdmin = await this.repository.getSuperAdminByUserId(userId);
+    return { ...user, superAdmin };
+  }
+
+  async updateSuperAdminProfile(
+    userId: string,
+    nom?: string,
+    prenom?: string,
+    telephone?: string,
+    email?: string
+  ): Promise<any> {
+    return await this.repository.updateSuperAdminProfile(userId, nom, prenom, telephone, email);
+  }
+
+  async changeSuperAdminPassword(userId: string, ancienMotdepasse: string, nouveauMotdepasse: string): Promise<void> {
+    // Vérifier l'ancien mot de passe
+    const user = await this.repository.getUserById(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(ancienMotdepasse, user.motdepasse);
+    if (!isOldPasswordValid) {
+      throw new Error("Ancien mot de passe incorrect");
+    }
+
+    // Hacher le nouveau mot de passe
+    const hashedNewPassword = await bcrypt.hash(nouveauMotdepasse, 10);
+    
+    // Mettre à jour le mot de passe
+    await this.repository.updatePassword(userId, hashedNewPassword);
+  }
+
+  // ========================================
+  // GESTION DES CABINETS (SUPERADMIN)
+  // ========================================
+
+  async createCabinet(
+    nom: string,
+    adresse: string,
+    telephone: string,
+    email?: string,
+    siteWeb?: string,
+    description?: string,
+    specialites?: string[]
+  ): Promise<any> {
+    return await this.repository.createCabinet(
+      nom,
+      adresse,
+      telephone,
+      email,
+      siteWeb,
+      description,
+      specialites
+    );
+  }
+
+  async getAllCabinets(page: number = 1, limit: number = 10, search?: string): Promise<any> {
+    const offset = (page - 1) * limit;
+    return await this.repository.getAllCabinets(offset, limit, search);
+  }
+
+  async getCabinetById(cabinetId: string): Promise<any> {
+    return await this.repository.getCabinetById(cabinetId);
+  }
+
+  async updateCabinet(
+    cabinetId: string,
+    nom?: string,
+    adresse?: string,
+    telephone?: string,
+    email?: string,
+    siteWeb?: string,
+    description?: string,
+    specialites?: string[]
+  ): Promise<any> {
+    return await this.repository.updateCabinet(
+      cabinetId,
+      nom,
+      adresse,
+      telephone,
+      email,
+      siteWeb,
+      description,
+      specialites
+    );
+  }
+
+  async deleteCabinet(cabinetId: string): Promise<void> {
+    return await this.repository.deleteCabinet(cabinetId);
+  }
+
+  // ========================================
+  // GESTION DES ATTRIBUTIONS CABINET (SUPERADMIN)
+  // ========================================
+
+  async assignCabinetToAdmin(adminId: string, cabinetId: string): Promise<any> {
+    return await this.repository.assignCabinetToAdmin(adminId, cabinetId);
+  }
+
+  async unassignCabinetFromAdmin(adminId: string, cabinetId: string): Promise<void> {
+    return await this.repository.unassignCabinetFromAdmin(adminId, cabinetId);
+  }
+
+  async getAdminCabinets(adminId: string): Promise<any> {
+    return await this.repository.getAdminCabinets(adminId);
+  }
+
+  async getCabinetAdmins(cabinetId: string): Promise<any> {
+    return await this.repository.getCabinetAdmins(cabinetId);
   }
 }

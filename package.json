@@ -6,7 +6,8 @@
   "scripts": {
     "start": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run",
+    "create-superadmin": "node src/shared/script/create-superadmin.js"
   },
   "keywords": [],
   "author": "",

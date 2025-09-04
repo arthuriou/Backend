@@ -127,6 +127,13 @@ export class AuthRepository {
     await db.query(q, values);
   }
 
+  async getPatientProfile(userId: string): Promise<Patient> {
+    const query = `SELECT * FROM patient WHERE utilisateur_id = $1`;
+    const result = await db.query<Patient>(query, [userId]);
+    return result.rows[0];
+  }
+
+
   // Déterminer le rôle d'un utilisateur
   async getUserRole(userId: string): Promise<string> {
     // Vérifier si c'est un SuperAdmin
@@ -204,7 +211,13 @@ export class AuthRepository {
   // Password & users
   async getUserById(userId: string): Promise<User | null> {
     const r = await db.query<User>(`SELECT * FROM utilisateur WHERE idUtilisateur = $1`, [userId]);
-    return r.rows[0] || null;
+    const user = r.rows[0] || null;
+    if (user) {
+      // Déterminer le rôle de l'utilisateur
+      const role = await this.getUserRole(userId);
+      user.role = role;
+    }
+    return user;
   }
 
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {
@@ -233,5 +246,466 @@ export class AuthRepository {
     const r = await db.query(`SELECT utilisateur_id FROM medecin WHERE idMedecin = $1`, [medecinId]);
     if (r.rows.length === 0) return null;
     return r.rows[0].utilisateur_id as string;
+  }
+
+  // ========================================
+  // MÉTHODES DE RÉCUPÉRATION D'INFORMATIONS
+  // ========================================
+
+  async getPatientByUserId(userId: string): Promise<Patient | null> {
+    const result = await db.query(
+      "SELECT * FROM patient WHERE utilisateur_id = $1",
+      [userId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async getMedecinByUserId(userId: string): Promise<Medecin | null> {
+    const result = await db.query(
+      "SELECT * FROM medecin WHERE utilisateur_id = $1",
+      [userId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async getAdminByUserId(userId: string): Promise<any> {
+    const result = await db.query(
+      `SELECT a.*, c.nom as cabinet_nom, c.adresse as cabinet_adresse 
+       FROM admincabinet a 
+       LEFT JOIN cabinet c ON a.cabinet_id = c.idCabinet 
+       WHERE a.utilisateur_id = $1`,
+      [userId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async getAllPatients(offset: number, limit: number, search?: string): Promise<any> {
+    let query = `
+      SELECT u.*, p.*, 'PATIENT' as role,
+             CASE WHEN u.actif = true THEN 'ACTIF' ELSE 'INACTIF' END as statut_utilisateur
+      FROM utilisateur u
+      INNER JOIN patient p ON u.idUtilisateur = p.utilisateur_id
+      WHERE EXISTS (SELECT 1 FROM patient p2 WHERE p2.utilisateur_id = u.idUtilisateur)
+    `;
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (search) {
+      paramCount++;
+      query += ` AND (u.nom ILIKE $${paramCount} OR u.prenom ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+    }
+
+    query += ` ORDER BY u.nom, u.prenom LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    return result.rows;
+  }
+
+  async getAllMedecins(offset: number, limit: number, search?: string, specialite?: string, cabinetId?: string): Promise<any> {
+    let query = `
+      SELECT u.*, m.*, c.nom as cabinet_nom, c.adresse as cabinet_adresse, 'MEDECIN' as role,
+             CASE WHEN u.actif = true THEN 'ACTIF' ELSE 'INACTIF' END as statut_utilisateur
+      FROM utilisateur u
+      INNER JOIN medecin m ON u.idUtilisateur = m.utilisateur_id
+      LEFT JOIN medecin_cabinet mc ON m.idMedecin = mc.medecin_id
+      LEFT JOIN cabinet c ON mc.cabinet_id = c.idCabinet
+      WHERE EXISTS (SELECT 1 FROM medecin m2 WHERE m2.utilisateur_id = u.idUtilisateur)
+    `;
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (search) {
+      paramCount++;
+      query += ` AND (u.nom ILIKE $${paramCount} OR u.prenom ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+    }
+
+    if (specialite) {
+      paramCount++;
+      query += ` AND m.specialite = $${paramCount}`;
+      params.push(specialite);
+    }
+
+    if (cabinetId) {
+      paramCount++;
+      query += ` AND mc.cabinet_id = $${paramCount}`;
+      params.push(cabinetId);
+    }
+
+    query += ` ORDER BY u.nom, u.prenom LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    return result.rows;
+  }
+
+  async getAllAdmins(offset: number, limit: number, search?: string, cabinetId?: string): Promise<any> {
+    let query = `
+      SELECT u.*, a.*, c.nom as cabinet_nom, c.adresse as cabinet_adresse, 'ADMINCABINET' as role,
+             CASE WHEN u.actif = true THEN 'ACTIF' ELSE 'INACTIF' END as statut_utilisateur
+      FROM utilisateur u
+      INNER JOIN admincabinet a ON u.idUtilisateur = a.utilisateur_id
+      LEFT JOIN cabinet c ON a.cabinet_id = c.idCabinet
+      WHERE EXISTS (SELECT 1 FROM admincabinet a2 WHERE a2.utilisateur_id = u.idUtilisateur)
+    `;
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (search) {
+      paramCount++;
+      query += ` AND (u.nom ILIKE $${paramCount} OR u.prenom ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+    }
+
+    if (cabinetId) {
+      paramCount++;
+      query += ` AND a.cabinet_id = $${paramCount}`;
+      params.push(cabinetId);
+    }
+
+    query += ` ORDER BY u.nom, u.prenom LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    return result.rows;
+  }
+
+  async getUsersByRole(role: string, offset: number, limit: number, search?: string): Promise<any> {
+    // Mapper les rôles aux noms de tables corrects
+    const tableMap: { [key: string]: string } = {
+      'PATIENT': 'patient',
+      'MEDECIN': 'medecin',
+      'ADMINCABINET': 'admincabinet',
+      'SUPERADMIN': 'superadmin'
+    };
+    
+    const tableName = tableMap[role.toUpperCase()] || role.toLowerCase();
+    
+    let query = `
+      SELECT u.*, $1 as role,
+             CASE WHEN u.actif = true THEN 'ACTIF' ELSE 'INACTIF' END as statut_utilisateur
+      FROM utilisateur u
+      WHERE EXISTS (
+        SELECT 1 FROM ${tableName} r WHERE r.utilisateur_id = u.idUtilisateur
+      )
+    `;
+    const params: any[] = [role];
+    let paramCount = 1;
+
+    if (search) {
+      paramCount++;
+      query += ` AND (u.nom ILIKE $${paramCount} OR u.prenom ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+    }
+
+    query += ` ORDER BY u.nom, u.prenom LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    return result.rows;
+  }
+
+  // ========================================
+  // GESTION SUPERADMIN
+  // ========================================
+
+  async getSuperAdminByUserId(userId: string): Promise<any> {
+    const result = await db.query(
+      `SELECT s.*, 'SUPERADMIN' as role
+       FROM superAdmin s 
+       WHERE s.utilisateur_id = $1`,
+      [userId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async updateSuperAdminProfile(
+    userId: string,
+    nom?: string,
+    prenom?: string,
+    telephone?: string,
+    email?: string
+  ): Promise<any> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 0;
+
+    if (nom !== undefined) {
+      paramCount++;
+      updates.push(`nom = $${paramCount}`);
+      values.push(nom);
+    }
+
+    if (prenom !== undefined) {
+      paramCount++;
+      updates.push(`prenom = $${paramCount}`);
+      values.push(prenom);
+    }
+
+    if (telephone !== undefined) {
+      paramCount++;
+      updates.push(`telephone = $${paramCount}`);
+      values.push(telephone);
+    }
+
+    if (email !== undefined) {
+      paramCount++;
+      updates.push(`email = $${paramCount}`);
+      values.push(email);
+    }
+
+    if (updates.length === 0) {
+      throw new Error("Aucune donnée à mettre à jour");
+    }
+
+    paramCount++;
+    updates.push(`derniereconnexion = NOW()`);
+    values.push(userId);
+
+    const query = `UPDATE utilisateur SET ${updates.join(', ')} WHERE idUtilisateur = $${paramCount} RETURNING *`;
+    const result = await db.query(query, values);
+    return result.rows[0];
+  }
+
+  // ========================================
+  // GESTION DES CABINETS (SUPERADMIN)
+  // ========================================
+
+  async createCabinet(
+    nom: string,
+    adresse: string,
+    telephone: string,
+    email?: string,
+    siteWeb?: string,
+    description?: string,
+    specialites?: string[]
+  ): Promise<any> {
+    const query = `
+      INSERT INTO cabinet (nom, adresse, telephone, email, siteWeb, description, specialites, dateCreation)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      RETURNING *
+    `;
+    const values = [nom, adresse, telephone, email, siteWeb, description, specialites ? JSON.stringify(specialites) : null];
+    const result = await db.query(query, values);
+    return result.rows[0];
+  }
+
+  async getAllCabinets(offset: number, limit: number, search?: string): Promise<any> {
+    let query = `
+      SELECT c.*, 
+             COUNT(DISTINCT mc.medecin_id) as nombre_medecins,
+             COUNT(DISTINCT a.utilisateur_id) as nombre_admins
+      FROM cabinet c
+      LEFT JOIN medecin_cabinet mc ON c.idCabinet = mc.cabinet_id
+      LEFT JOIN admincabinet a ON c.idCabinet = a.cabinet_id
+    `;
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (search) {
+      paramCount++;
+      query += ` WHERE (c.nom ILIKE $${paramCount} OR c.adresse ILIKE $${paramCount} OR c.telephone ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+    }
+
+    query += ` GROUP BY c.idCabinet ORDER BY c.nom LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    return result.rows;
+  }
+
+  async getCabinetById(cabinetId: string): Promise<any> {
+    const result = await db.query(
+      `SELECT c.*, 
+              COUNT(DISTINCT mc.medecin_id) as nombre_medecins,
+              COUNT(DISTINCT a.utilisateur_id) as nombre_admins
+       FROM cabinet c
+       LEFT JOIN medecin_cabinet mc ON c.idCabinet = mc.cabinet_id
+       LEFT JOIN admincabinet a ON c.idCabinet = a.cabinet_id
+       WHERE c.idCabinet = $1
+       GROUP BY c.idCabinet`,
+      [cabinetId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async updateCabinet(
+    cabinetId: string,
+    nom?: string,
+    adresse?: string,
+    telephone?: string,
+    email?: string,
+    siteWeb?: string,
+    description?: string,
+    specialites?: string[]
+  ): Promise<any> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 0;
+
+    if (nom !== undefined) {
+      paramCount++;
+      updates.push(`nom = $${paramCount}`);
+      values.push(nom);
+    }
+
+    if (adresse !== undefined) {
+      paramCount++;
+      updates.push(`adresse = $${paramCount}`);
+      values.push(adresse);
+    }
+
+    if (telephone !== undefined) {
+      paramCount++;
+      updates.push(`telephone = $${paramCount}`);
+      values.push(telephone);
+    }
+
+    if (email !== undefined) {
+      paramCount++;
+      updates.push(`email = $${paramCount}`);
+      values.push(email);
+    }
+
+    if (siteWeb !== undefined) {
+      paramCount++;
+      updates.push(`siteWeb = $${paramCount}`);
+      values.push(siteWeb);
+    }
+
+    if (description !== undefined) {
+      paramCount++;
+      updates.push(`description = $${paramCount}`);
+      values.push(description);
+    }
+
+    if (specialites !== undefined) {
+      paramCount++;
+      updates.push(`specialites = $${paramCount}`);
+      values.push(JSON.stringify(specialites));
+    }
+
+    if (updates.length === 0) {
+      throw new Error("Aucune donnée à mettre à jour");
+    }
+
+    paramCount++;
+    updates.push(`dateModification = NOW()`);
+    values.push(cabinetId);
+
+    const query = `UPDATE cabinet SET ${updates.join(', ')} WHERE idCabinet = $${paramCount} RETURNING *`;
+    const result = await db.query(query, values);
+    return result.rows[0];
+  }
+
+  async deleteCabinet(cabinetId: string): Promise<void> {
+    // Vérifier s'il y a des médecins ou admins associés
+    const medecinsResult = await db.query(
+      'SELECT COUNT(*) as count FROM medecin_cabinet WHERE cabinet_id = $1',
+      [cabinetId]
+    );
+    
+    const adminsResult = await db.query(
+      'SELECT COUNT(*) as count FROM admincabinet WHERE cabinet_id = $1',
+      [cabinetId]
+    );
+
+    if (parseInt(medecinsResult.rows[0].count) > 0 || parseInt(adminsResult.rows[0].count) > 0) {
+      throw new Error("Impossible de supprimer le cabinet : il contient encore des médecins ou administrateurs");
+    }
+
+    await db.query('DELETE FROM cabinet WHERE idCabinet = $1', [cabinetId]);
+  }
+
+  // ========================================
+  // GESTION DES ATTRIBUTIONS CABINET (SUPERADMIN)
+  // ========================================
+
+  async assignCabinetToAdmin(adminId: string, cabinetId: string): Promise<any> {
+    // Vérifier que l'admin existe et est bien un AdminCabinet
+    const adminResult = await db.query(
+      `SELECT u.*, ac.idAdminCabinet 
+       FROM utilisateur u 
+       JOIN admincabinet ac ON u.idUtilisateur = ac.utilisateur_id 
+       WHERE u.idUtilisateur = $1`,
+      [adminId]
+    );
+
+    if (adminResult.rows.length === 0) {
+      throw new Error("AdminCabinet non trouvé");
+    }
+
+    // Vérifier que le cabinet existe
+    const cabinetResult = await db.query(
+      'SELECT * FROM cabinet WHERE idCabinet = $1',
+      [cabinetId]
+    );
+
+    if (cabinetResult.rows.length === 0) {
+      throw new Error("Cabinet non trouvé");
+    }
+
+    // Vérifier si l'attribution existe déjà
+    const existingResult = await db.query(
+      'SELECT * FROM admincabinet WHERE utilisateur_id = $1 AND cabinet_id = $2',
+      [adminId, cabinetId]
+    );
+
+    if (existingResult.rows.length > 0) {
+      throw new Error("Ce cabinet est déjà attribué à cet AdminCabinet");
+    }
+
+    // Attribuer le cabinet à l'AdminCabinet
+    const result = await db.query(
+      'UPDATE admincabinet SET cabinet_id = $1 WHERE utilisateur_id = $2 RETURNING *',
+      [cabinetId, adminId]
+    );
+
+    return result.rows[0];
+  }
+
+  async unassignCabinetFromAdmin(adminId: string, cabinetId: string): Promise<void> {
+    // Vérifier que l'attribution existe
+    const existingResult = await db.query(
+      'SELECT * FROM admincabinet WHERE utilisateur_id = $1 AND cabinet_id = $2',
+      [adminId, cabinetId]
+    );
+
+    if (existingResult.rows.length === 0) {
+      throw new Error("Cette attribution n'existe pas");
+    }
+
+    // Retirer l'attribution (mettre cabinet_id à NULL)
+    await db.query(
+      'UPDATE admincabinet SET cabinet_id = NULL WHERE utilisateur_id = $1 AND cabinet_id = $2',
+      [adminId, cabinetId]
+    );
+  }
+
+  async getAdminCabinets(adminId: string): Promise<any> {
+    const result = await db.query(
+      `SELECT c.*, ac.dateAttribution
+       FROM cabinet c
+       JOIN admincabinet ac ON c.idCabinet = ac.cabinet_id
+       WHERE ac.utilisateur_id = $1`,
+      [adminId]
+    );
+
+    return result.rows;
+  }
+
+  async getCabinetAdmins(cabinetId: string): Promise<any> {
+    const result = await db.query(
+      `SELECT u.*, ac.idAdminCabinet, ac.dateAttribution
+       FROM utilisateur u
+       JOIN admincabinet ac ON u.idUtilisateur = ac.utilisateur_id
+       WHERE ac.cabinet_id = $1`,
+      [cabinetId]
+    );
+
+    return result.rows;
   }
 }
