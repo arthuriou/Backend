@@ -110,12 +110,14 @@ app.use("/api/v1/dashboard/dossier-medical", dossierMedicalRoutes);
 // Routes Ordonnances
 app.use("/api/ordonnances", ordonnancesRoutes);
 
-// Démarrage
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-  console.log(`🔌 Socket.IO activé pour le temps réel`);
-  // Scheduler
-  new SchedulerService().start();
-});
+// Démarrage (pas d'écoute en mode test)
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+    console.log(`🔌 Socket.IO activé pour le temps réel`);
+    // Scheduler
+    new SchedulerService().start();
+  });
+}
 
 export default app;

@@ -23,6 +23,10 @@ export function generateOTP(): string {
 // Envoyer un email OTP
 export async function sendOTPEmail(email: string, otp: string, nom: string): Promise<boolean> {
   try {
+    if (process.env.NODE_ENV === 'test' || process.env.SMTP_DISABLE === 'true') {
+      console.log(`[TEST|DISABLED] OTP ${otp} destiné à ${email}`);
+      return true;
+    }
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.error('❌ SMTP_USER/SMTP_PASS manquants dans les variables d\'environnement');
       return false;
