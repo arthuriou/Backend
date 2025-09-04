@@ -80,7 +80,9 @@ CREATE TABLE IF NOT EXISTS medecin (
 CREATE TABLE IF NOT EXISTS adminCabinet (
     idAdminCabinet UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     utilisateur_id UUID UNIQUE REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
-    roleAdmin TEXT
+    cabinet_id UUID REFERENCES cabinet(idCabinet) ON DELETE CASCADE,
+    roleAdmin TEXT,
+    dateAffectation TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS superAdmin (

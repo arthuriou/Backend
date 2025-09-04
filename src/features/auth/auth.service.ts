@@ -294,15 +294,15 @@ export class AuthService {
     await this.repository.setMustChangePassword(newUser.idutilisateur!, true);
 
     // Créer le médecin avec statut APPROVED
-    await this.repository.createMedecinApproved(
+    const medecin = await this.repository.createMedecinApproved(
       newUser.idutilisateur!,
       numordre,
       experience,
       biographie
     );
 
-    // Associer le médecin au cabinet
-    await this.repository.associateMedecinToCabinet(newUser.idutilisateur!, cabinetId);
+    // Associer le médecin au cabinet (avec idMedecin)
+    await this.repository.associateMedecinToCabinet(medecin.idmedecin as any, cabinetId);
 
     return newUser;
   }
