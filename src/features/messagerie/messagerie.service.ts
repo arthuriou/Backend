@@ -1,5 +1,6 @@
 import { MessagerieRepository } from "./messagerie.repository";
 import { SocketService } from "../../shared/services/socket.service";
+import { PushService } from "../../shared/services/push.service";
 import { 
   Conversation, 
   Message, 
@@ -18,6 +19,7 @@ import {
 export class MessagerieService {
   private repository: MessagerieRepository;
   private socketService: SocketService;
+  private pushService: PushService = new PushService();
 
   constructor(socketService?: SocketService) {
     this.repository = new MessagerieRepository();
@@ -256,6 +258,12 @@ export class MessagerieService {
       conversation.participants.forEach(participant => {
         if (participant.utilisateur_id !== senderId) {
           this.socketService.notifyNewMessage(data.conversation_id, messageWithDetails);
+          // Push notification (si activée)
+          this.pushService.sendToUser(participant.utilisateur_id, {
+            title: "Nouveau message",
+            body: messageWithDetails.contenu || "Pièce jointe",
+            data: { conversation_id: data.conversation_id, message_id: messageWithDetails.idMessage }
+          });
         }
       });
     }

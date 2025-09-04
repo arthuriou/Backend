@@ -8,6 +8,7 @@ import { createRendezVousRoutes } from "./features/rendezvous/rendezvous.route";
 import { createMessagerieRoutes } from "./features/messagerie/messagerie.route";
 import specialitesRoutes from "./features/specialites/specialites.route";
 import notificationPreferencesRoutes from "./features/notifications/notification-preferences.route";
+import devicesRoutes from "./features/notifications/devices.route";
 import dossierMedicalRoutes from "./features/dossier-medical/dossier-medical.route";
 import ordonnancesRoutes from "./features/ordonnances/ordonnances.route";
 import { SocketService } from "./shared/services/socket.service";
@@ -66,6 +67,7 @@ app.use("/api/specialites", specialitesRoutes);
 
 // Routes des préférences de notification
 app.use("/api/notifications/preferences", notificationPreferencesRoutes);
+app.use("/api/notifications", devicesRoutes);
 
 // Routes Dossier Médical
 app.use("/api/dossier-medical", dossierMedicalRoutes);

@@ -175,3 +175,23 @@ const resetPreferences = async () => {
   return response.json();
 };
 ```
+
+## 5. Gestion des devices (push)
+
+- Enregistrer un device
+  - **POST** `/api/notifications/devices`
+  - Body JSON:
+  ```json
+  {
+    "platform": "EXPO",
+    "token": "ExponentPushToken[xxx]",
+    "appVersion": "1.0.0",
+    "deviceInfo": "Android 14, Pixel 7"
+  }
+  ```
+
+- Lister mes devices
+  - **GET** `/api/notifications/devices`
+
+- Supprimer un device
+  - **DELETE** `/api/notifications/devices/:token`

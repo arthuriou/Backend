@@ -219,6 +219,19 @@ CREATE TABLE IF NOT EXISTS preferences_notification (
     UNIQUE(utilisateur_id)
 );
 
+-- Table des appareils (device tokens) pour notifications push
+CREATE TABLE IF NOT EXISTS notification_device (
+    idDevice UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    utilisateur_id UUID REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
+    platform TEXT CHECK (platform IN ('EXPO','FCM','APNS','WEB')),
+    token TEXT NOT NULL,
+    appVersion TEXT,
+    deviceInfo TEXT,
+    dateCreation TIMESTAMP DEFAULT now(),
+    dateModification TIMESTAMP DEFAULT now(),
+    UNIQUE(utilisateur_id, token)
+);
+
 -- Table pour les conversations
 CREATE TABLE IF NOT EXISTS conversation (
     idConversation UUID PRIMARY KEY DEFAULT gen_random_uuid(),

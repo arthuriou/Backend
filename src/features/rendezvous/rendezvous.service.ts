@@ -1,5 +1,6 @@
 import { RendezVousRepository } from "./rendezvous.repository";
 import { SocketService } from "../../shared/services/socket.service";
+import { PushService } from "../../shared/services/push.service";
 import { 
   RendezVous, 
   Creneau, 
@@ -17,6 +18,7 @@ import {
 export class RendezVousService {
   private repository: RendezVousRepository;
   private socketService: SocketService;
+  private pushService: PushService = new PushService();
 
   constructor(socketService?: SocketService) {
     this.repository = new RendezVousRepository();
@@ -81,6 +83,18 @@ export class RendezVousService {
     if (this.socketService) {
       this.socketService.notifyNewRendezVous(patient_id, medecin_id, rendezVous);
     }
+
+    // Push: notifier patient et médecin s'ils l'ont activé
+    this.pushService.sendToUser(patient_id, {
+      title: 'Nouveau rendez-vous',
+      body: motif || 'Vous avez un nouveau rendez-vous',
+      data: { rendezvous_id: rendezVous.idRendezVous }
+    });
+    this.pushService.sendToUser(medecin_id, {
+      title: 'Nouveau rendez-vous',
+      body: motif || 'Vous avez un nouveau rendez-vous',
+      data: { rendezvous_id: rendezVous.idRendezVous }
+    });
 
     return rendezVous;
   }
@@ -178,6 +192,17 @@ export class RendezVousService {
       );
     }
 
+    this.pushService.sendToUser(existingRDV.patient_id, {
+      title: 'Rendez-vous confirmé',
+      body: existingRDV.motif || 'Votre rendez-vous a été confirmé',
+      data: { rendezvous_id: updatedRDV.idRendezVous }
+    });
+    this.pushService.sendToUser(existingRDV.medecin_id, {
+      title: 'Rendez-vous confirmé',
+      body: existingRDV.motif || 'Un rendez-vous a été confirmé',
+      data: { rendezvous_id: updatedRDV.idRendezVous }
+    });
+
     return updatedRDV;
   }
 
@@ -205,6 +230,19 @@ export class RendezVousService {
         existingRDV.medecin_id, 
         existingRDV
       );
+    }
+
+    if (success) {
+      this.pushService.sendToUser(existingRDV.patient_id, {
+        title: 'Rendez-vous annulé',
+        body: existingRDV.motif || 'Votre rendez-vous a été annulé',
+        data: { rendezvous_id: existingRDV.idRendezVous }
+      });
+      this.pushService.sendToUser(existingRDV.medecin_id, {
+        title: 'Rendez-vous annulé',
+        body: existingRDV.motif || 'Un rendez-vous a été annulé',
+        data: { rendezvous_id: existingRDV.idRendezVous }
+      });
     }
 
     return success;
