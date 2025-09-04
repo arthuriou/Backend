@@ -398,4 +398,10 @@ export class RendezVousRepository {
     
     return Array.from(agendaMap.values());
   }
+
+  // Utilitaire pour requêtes brutes (scheduler)
+  async queryRaw<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+    const res = await db.query(sql, params);
+    return res.rows as T[];
+  }
 }

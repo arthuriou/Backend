@@ -13,6 +13,7 @@ import dossierMedicalRoutes from "./features/dossier-medical/dossier-medical.rou
 import ordonnancesRoutes from "./features/ordonnances/ordonnances.route";
 import { SocketService } from "./shared/services/socket.service";
 import path from "path";
+import { SchedulerService } from "./shared/services/scheduler.service";
 
 dotenv.config();
 
@@ -79,6 +80,8 @@ app.use("/api/ordonnances", ordonnancesRoutes);
 server.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`🔌 Socket.IO activé pour le temps réel`);
+  // Scheduler
+  new SchedulerService().start();
 });
 
 export default app;
