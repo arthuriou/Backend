@@ -188,18 +188,27 @@ export class MessagerieController {
         return;
       }
 
-      const requiredFields = ["conversation_id", "contenu"];
-      const missingFields = getMissingFields(req.body, requiredFields);
-      
-      if (missingFields.length > 0) {
-        res.status(400).json({
-          error: "Champ(s) manquant(s)",
-          missingFields,
-        });
+      const file = (req as any).file as any;
+      const body = req.body || {};
+      if (!body.conversation_id && !body.conversationId) {
+        res.status(400).json({ message: 'conversation_id requis' });
+        return;
+      }
+      if (!body.contenu && !file) {
+        res.status(400).json({ message: 'contenu ou fichier requis' });
         return;
       }
 
-      const message = await this.service.sendMessage(req.body, userId, userRole);
+      const payload = {
+        conversation_id: body.conversation_id || body.conversationId,
+        contenu: body.contenu || (file ? '' : undefined),
+        type_message: file ? 'FICHIER' : 'TEXTE',
+        fichier_url: file ? `/uploads/messages/${file.filename}` : undefined,
+        fichier_nom: file ? file.originalname : undefined,
+        fichier_taille: file ? file.size : undefined
+      };
+
+      const message = await this.service.sendMessage(payload as any, userId, userRole);
       
       res.status(201).json({
         message: "Message envoyé avec succès",

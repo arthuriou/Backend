@@ -173,18 +173,24 @@ Authorization: Bearer <token>
 ### Headers
 ```
 Authorization: Bearer <token>
-Content-Type: application/json
 ```
 
-### Body (JSON)
+### Deux modes
+1) JSON (texte)
 ```json
 {
   "conversation_id": "uuid",
   "contenu": "Bonjour, j'ai une question concernant mon rendez-vous",
   "type_message": "TEXTE",
-  "reponse_a": "uuid" // Optionnel - ID du message auquel on répond
+  "reponse_a": "uuid"
 }
 ```
+
+2) Multipart (fichier)
+- Content-Type: `multipart/form-data`
+- form-data:
+  - `conversation_id`: uuid
+  - `file`: image/pdf/doc...
 
 ### Réponse (201)
 ```json

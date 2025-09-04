@@ -1,5 +1,24 @@
 # Endpoints d'Authentification - SantéAfrik
 
+## Upload photo de profil
+POST `/api/auth/profile/photo`
+
+- Auth: `Authorization: Bearer <token>`
+- Content-Type: `multipart/form-data`
+- Body (form-data):
+  - `file`: image (jpg/png/webp/gif), max 10MB
+
+Réponse 201:
+```json
+{
+  "message": "Photo de profil mise à jour",
+  "data": {
+    "url": "/uploads/profile/<fichier>",
+    "user": { "idutilisateur": "...", "photoprofil": "/uploads/profile/<fichier>", "nom": "..." }
+  }
+}
+```
+
 ## Base URL
 ```
 http://localhost:3000/api/auth

@@ -53,16 +53,16 @@ GET `/:dossierId/documents`
 ## 3) Ajouter un document
 POST `/documents`
 
+- Auth: `Authorization: Bearer <token>`
+- Content-Type: `multipart/form-data`
 - Body:
 ```json
 {
   "dossier_id": "uuid",
   "nom": "Compte rendu",
   "type": "PDF",
-  "url": "https://...",
-  "mimetype": "application/pdf",
-  "taillekb": 320,
-  "ispublic": false
+  "ispublic": false,
+  "file": "<fichier>"
 }
 ```
 - Response 201: document créé
