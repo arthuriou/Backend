@@ -28,11 +28,20 @@ export class DossierMedicalController {
 
   async addDocument(req: Request, res: Response) {
     try {
-      const payload = req.body;
-      if (!payload?.dossier_id || !payload?.nom) {
+      const file = (req as any).file as any;
+      const body = req.body || {};
+      if (!body?.dossier_id || !body?.nom) {
         return res.status(400).json({ message: "dossier_id et nom requis" });
       }
-      const doc = await service.addDocument(payload);
+      const doc = await service.addDocument({
+        dossier_id: body.dossier_id,
+        nom: body.nom,
+        type: body.type,
+        url: file ? `/uploads/documents/${file.filename}` : body.url,
+        mimetype: file ? file.mimetype : body.mimetype,
+        taillekb: file ? Math.ceil((file.size || 0) / 1024) : body.taillekb,
+        ispublic: body.ispublic
+      });
       res.status(201).json(doc);
     } catch (error: any) {
       res.status(500).json({ message: "Erreur serveur", error: error.message });

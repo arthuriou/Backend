@@ -1,5 +1,5 @@
 import { User, Patient, Medecin } from "./auth.model";
-import db from "../../utils/database";
+import db from "../../shared/database/client";
 
 export class AuthRepository {
   async createUser(

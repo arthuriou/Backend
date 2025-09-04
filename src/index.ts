@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import dotenv from "dotenv";
-import pool from "./utils/database";
+import pool from "./shared/database/client";
 import authRoutes from "./features/auth/auth.route";
 import cabinetRoutes from "./features/cabinets/cabinet.route";
 import { createRendezVousRoutes } from "./features/rendezvous/rendezvous.route";
@@ -11,6 +11,7 @@ import notificationPreferencesRoutes from "./features/notifications/notification
 import dossierMedicalRoutes from "./features/dossier-medical/dossier-medical.route";
 import ordonnancesRoutes from "./features/ordonnances/ordonnances.route";
 import { SocketService } from "./shared/services/socket.service";
+import path from "path";
 
 dotenv.config();
 
@@ -23,6 +24,8 @@ const socketService = new SocketService(server);
 
 // Middleware basique
 app.use(express.json());
+// Fichiers statiques /uploads
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Routes simples
 app.get("/", (req, res) => {

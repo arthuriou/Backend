@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AuthController } from "./auth.controller";
 import { authenticateToken, requireRole } from "../../shared/middlewares/auth.middleware";
+import { upload, setUploadSegment } from "../../shared/utils/upload";
 
 const router = Router();
 const controller = new AuthController();
@@ -21,6 +22,15 @@ router.patch("/profile/:userId", authenticateToken, controller.updateProfile.bin
 router.patch("/profile", authenticateToken, controller.updateProfile.bind(controller));
 router.patch("/profile/medecin", authenticateToken, controller.updateMedecinProfile.bind(controller));
 router.patch("/profile/patient", authenticateToken, controller.updatePatientProfile.bind(controller));
+
+// Upload photo de profil
+router.post(
+  "/profile/photo",
+  authenticateToken,
+  setUploadSegment('profile'),
+  upload.single('file'),
+  (req, res) => controller.uploadProfilePhoto(req, res)
+);
 
 // Sécurité mot de passe
 router.post("/change-password", authenticateToken, controller.changePassword.bind(controller));

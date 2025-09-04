@@ -1,6 +1,7 @@
 import { Router } from "express";
 import controller from "./dossier-medical.controller";
 import { authenticateToken } from "../../shared/middlewares/auth.middleware";
+import { upload, setUploadSegment } from "../../shared/utils/upload";
 
 const router = Router();
 
@@ -9,7 +10,13 @@ router.get("/dossier/:patientId", authenticateToken, (req, res) => controller.ge
 
 // Documents du dossier
 router.get("/:dossierId/documents", authenticateToken, (req, res) => controller.listDocuments(req, res));
-router.post("/documents", authenticateToken, (req, res) => controller.addDocument(req, res));
+router.post(
+  "/documents",
+  authenticateToken,
+  setUploadSegment('documents'),
+  upload.single('file'),
+  (req, res) => controller.addDocument(req, res)
+);
 router.delete("/documents/:id", authenticateToken, (req, res) => controller.deleteDocument(req, res));
 router.patch("/documents/:id", authenticateToken, (req, res) => controller.updateDocument(req, res));
 

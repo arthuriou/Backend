@@ -3,7 +3,7 @@ import { User, Patient, Medecin } from "./auth.model";
 import bcrypt from 'bcrypt';
 import { generateOTP, sendOTPEmail } from '../../shared/utils/mail';
 import { generateToken, JWTPayload, generateRefreshToken, verifyRefreshToken } from '../../shared/utils/jwt.utils';
-import db from '../../utils/database';
+import db from '../../shared/database/client';
 
 export class AuthService {
   private repository: AuthRepository;
