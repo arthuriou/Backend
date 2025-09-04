@@ -51,27 +51,54 @@ app.get("/health", (req, res) => {
 
 // Routes d'authentification
 app.use("/api/auth", authRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 // Routes des cabinets
 app.use("/api/cabinets", cabinetRoutes);
+app.use("/api/v1/cabinets", cabinetRoutes);
 
 // Routes des rendez-vous avec Socket.IO
 const rendezvousRoutes = createRendezVousRoutes(socketService);
 app.use("/api/rendezvous", rendezvousRoutes);
+app.use("/api/v1/rendezvous", rendezvousRoutes);
 
 // Routes de messagerie avec Socket.IO
 const messagerieRoutes = createMessagerieRoutes(socketService);
 app.use("/api/messagerie", messagerieRoutes);
+app.use("/api/v1/messagerie", messagerieRoutes);
 
 // Routes des spécialités et maux
 app.use("/api/specialites", specialitesRoutes);
+app.use("/api/v1/specialites", specialitesRoutes);
 
 // Routes des préférences de notification
 app.use("/api/notifications/preferences", notificationPreferencesRoutes);
 app.use("/api/notifications", devicesRoutes);
+app.use("/api/v1/notifications/preferences", notificationPreferencesRoutes);
+app.use("/api/v1/notifications", devicesRoutes);
 
 // Routes Dossier Médical
 app.use("/api/dossier-medical", dossierMedicalRoutes);
+app.use("/api/v1/dossier-medical", dossierMedicalRoutes);
+
+// Aliases Mobile/Dashboard (pointent vers les mêmes routes pour l'instant)
+app.use("/api/v1/mobile/auth", authRoutes);
+app.use("/api/v1/mobile/cabinets", cabinetRoutes);
+app.use("/api/v1/mobile/rendezvous", rendezvousRoutes);
+app.use("/api/v1/mobile/messagerie", messagerieRoutes);
+app.use("/api/v1/mobile/specialites", specialitesRoutes);
+app.use("/api/v1/mobile/notifications/preferences", notificationPreferencesRoutes);
+app.use("/api/v1/mobile/notifications", devicesRoutes);
+app.use("/api/v1/mobile/dossier-medical", dossierMedicalRoutes);
+
+app.use("/api/v1/dashboard/auth", authRoutes);
+app.use("/api/v1/dashboard/cabinets", cabinetRoutes);
+app.use("/api/v1/dashboard/rendezvous", rendezvousRoutes);
+app.use("/api/v1/dashboard/messagerie", messagerieRoutes);
+app.use("/api/v1/dashboard/specialites", specialitesRoutes);
+app.use("/api/v1/dashboard/notifications/preferences", notificationPreferencesRoutes);
+app.use("/api/v1/dashboard/notifications", devicesRoutes);
+app.use("/api/v1/dashboard/dossier-medical", dossierMedicalRoutes);
 
 // Routes Ordonnances
 app.use("/api/ordonnances", ordonnancesRoutes);
