@@ -6,6 +6,23 @@
 -- Extension UUID
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- Types ENUM nécessaires avant la création des tables qui les référencent
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'canal_enum') THEN
+        CREATE TYPE canal_enum AS ENUM ('SMS','EMAIL','PUSH');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'statut_patient_enum') THEN
+        CREATE TYPE statut_patient_enum AS ENUM ('PENDING','APPROVED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'statut_medecin_enum') THEN
+        CREATE TYPE statut_medecin_enum AS ENUM ('PENDING','APPROVED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'statut_rdv_enum') THEN
+        CREATE TYPE statut_rdv_enum AS ENUM ('EN_ATTENTE','CONFIRME','ANNULE','TERMINE','EN_COURS');
+    END IF;
+END$$;
+
 -- ================================
 -- TABLE UTILISATEUR + HERITAGE
 -- ================================
@@ -33,8 +50,23 @@ CREATE TABLE IF NOT EXISTS patient (
     groupeSanguin TEXT,
     poids NUMERIC,
     taille NUMERIC,
-    statut TEXT DEFAULT 'APPROVED'   -- validé direct après OTP
+    statut statut_patient_enum DEFAULT 'APPROVED'   -- validé direct après OTP
 );
+
+
+CREATE TABLE IF NOT EXISTS otp_verification (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    code TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Index pour les performances
+CREATE INDEX IF NOT EXISTS idx_otp_email ON otp_verification(email);
+CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_verification(expires_at);
+
+
 
 CREATE TABLE IF NOT EXISTS medecin (
     idMedecin UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,7 +74,7 @@ CREATE TABLE IF NOT EXISTS medecin (
     numOrdre TEXT UNIQUE NOT NULL,
     experience INT,
     biographie TEXT,
-    statut TEXT DEFAULT 'PENDING'   -- validé par SuperAdmin ou direct APPROVED si créé par AdminCabinet
+    statut statut_medecin_enum DEFAULT 'PENDING'   -- validé par SuperAdmin ou direct APPROVED si créé par AdminCabinet
 );
 
 CREATE TABLE IF NOT EXISTS adminCabinet (
@@ -170,7 +202,8 @@ CREATE TABLE IF NOT EXISTS creneau (
     agenda_id UUID REFERENCES agenda(idAgenda) ON DELETE CASCADE,
     debut TIMESTAMP NOT NULL,
     fin TIMESTAMP NOT NULL,
-    disponible BOOLEAN DEFAULT true
+    disponible BOOLEAN DEFAULT true,
+    CONSTRAINT creneau_debut_fin_chk CHECK (fin > debut)
 );
 
 -- ================================
@@ -182,6 +215,15 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'canal_enum') THEN
         CREATE TYPE canal_enum AS ENUM ('SMS','EMAIL','PUSH');
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'statut_patient_enum') THEN
+        CREATE TYPE statut_patient_enum AS ENUM ('PENDING','APPROVED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'statut_medecin_enum') THEN
+        CREATE TYPE statut_medecin_enum AS ENUM ('PENDING','APPROVED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'statut_rdv_enum') THEN
+        CREATE TYPE statut_rdv_enum AS ENUM ('EN_ATTENTE','CONFIRME','ANNULE','TERMINE','EN_COURS');
+    END IF;
 END$$;
 
 CREATE TABLE IF NOT EXISTS rendezvous (
@@ -192,8 +234,45 @@ CREATE TABLE IF NOT EXISTS rendezvous (
     dateHeure TIMESTAMP,
     duree INT,
     motif TEXT,
-    statut TEXT
+    statut statut_rdv_enum
 );
+
+-- Migration sûre: convertir colonnes statut TEXT vers ENUM si déjà existantes
+DO $$
+BEGIN
+    -- patient.statut -> statut_patient_enum
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'patient' AND column_name = 'statut' AND data_type = 'text'
+    ) THEN
+        ALTER TABLE patient ALTER COLUMN statut TYPE statut_patient_enum USING statut::statut_patient_enum;
+    END IF;
+
+    -- medecin.statut -> statut_medecin_enum
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'medecin' AND column_name = 'statut' AND data_type = 'text'
+    ) THEN
+        ALTER TABLE medecin ALTER COLUMN statut TYPE statut_medecin_enum USING statut::statut_medecin_enum;
+    END IF;
+
+    -- rendezvous.statut -> statut_rdv_enum
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'rendezvous' AND column_name = 'statut' AND data_type = 'text'
+    ) THEN
+        ALTER TABLE rendezvous ALTER COLUMN statut TYPE statut_rdv_enum USING statut::statut_rdv_enum;
+    END IF;
+
+    -- Contrainte creneau fin > debut si manquante
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+        WHERE t.relname = 'creneau' AND c.conname = 'creneau_debut_fin_chk'
+    ) THEN
+        ALTER TABLE creneau ADD CONSTRAINT creneau_debut_fin_chk CHECK (fin > debut);
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS rappel (
     idRappel UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -354,7 +433,7 @@ CREATE INDEX IF NOT EXISTS idx_rendezvous_medecin ON rendezvous(medecin_id);
 
 -- Index sur les messages
 CREATE INDEX IF NOT EXISTS idx_message_conversation ON message(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_message_auteur ON message(auteur_id);
+CREATE INDEX IF NOT EXISTS idx_message_expediteur ON message(expediteur_id);
 CREATE INDEX IF NOT EXISTS idx_message_date ON message(dateEnvoi);
 
 -- Index sur les créneaux
