@@ -1,6 +1,9 @@
 import express from "express";
 import { createServer } from "http";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 import pool from "./shared/database/client";
 import authRoutes from "./features/auth/auth.route";
 import cabinetRoutes from "./features/cabinets/cabinet.route";
@@ -26,6 +29,10 @@ const socketService = new SocketService(server);
 
 // Middleware basique
 app.use(express.json());
+app.use(helmet());
+app.use(cors({ origin: '*', methods: ['GET','POST','PUT','PATCH','DELETE'], allowedHeaders: ['Content-Type','Authorization'] }));
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+app.use('/api/auth', authLimiter);
 // Fichiers statiques /uploads
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
