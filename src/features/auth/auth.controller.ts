@@ -201,6 +201,26 @@ export class AuthController {
     }
   }
 
+  // Mise à jour profil Patient (dateNaissance, genre, adresse, groupeSanguin, poids, taille)
+  async updatePatientProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId || req.body.userId;
+      if (!userId) { res.status(400).json({ message: 'userId requis' }); return; }
+      const { datenaissance, genre, adresse, groupesanguin, poids, taille } = req.body;
+      await this.service.updatePatientProfile(userId, {
+        datenaissance: datenaissance ? new Date(datenaissance) : undefined,
+        genre,
+        adresse,
+        groupesanguin,
+        poids,
+        taille
+      });
+      res.status(200).json({ message: 'Profil patient mis à jour' });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });
+    }
+  }
+
   // Envoyer OTP
   async sendOTP(req: Request, res: Response): Promise<void> {
     const requiredFields = ["email"];

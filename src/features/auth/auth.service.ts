@@ -171,6 +171,11 @@ export class AuthService {
     return true;
   }
 
+  async updatePatientProfile(userId: string, update: { datenaissance?: Date; genre?: string; adresse?: string; groupesanguin?: string; poids?: number; taille?: number }) {
+    await this.repository.updatePatientProfile(userId, update);
+    return true;
+  }
+
   // Envoyer OTP
   async sendOTP(email: string): Promise<boolean> {
     try {
@@ -217,7 +222,7 @@ export class AuthService {
 
   // Mettre à jour le profil utilisateur
   async updateProfile(userId: string, updateData: Partial<User>): Promise<User> {
-    const allowedFields = ['nom', 'prenom', 'telephone'];
+    const allowedFields = ['nom', 'prenom', 'telephone', 'photoProfil'];
     const fieldsToUpdate = Object.keys(updateData).filter(field => 
       allowedFields.includes(field) && updateData[field as keyof User] !== undefined
     );

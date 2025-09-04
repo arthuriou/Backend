@@ -98,6 +98,27 @@ export class AuthRepository {
     await db.query(q, values);
   }
 
+  async updatePatientProfile(
+    userId: string,
+    update: { datenaissance?: Date; genre?: string; adresse?: string; groupesanguin?: string; poids?: number; taille?: number }
+  ): Promise<void> {
+    const p = await db.query(`SELECT idPatient FROM patient WHERE utilisateur_id = $1`, [userId]);
+    if (p.rows.length === 0) throw new Error('Patient introuvable');
+    const idPatient = p.rows[0].idpatient;
+
+    const fields: string[] = [];
+    const values: any[] = [idPatient];
+    if (update.datenaissance !== undefined) { fields.push(`dateNaissance = $${fields.length + 2}`); values.push(update.datenaissance); }
+    if (update.genre !== undefined) { fields.push(`genre = $${fields.length + 2}`); values.push(update.genre); }
+    if (update.adresse !== undefined) { fields.push(`adresse = $${fields.length + 2}`); values.push(update.adresse); }
+    if (update.groupesanguin !== undefined) { fields.push(`groupeSanguin = $${fields.length + 2}`); values.push(update.groupesanguin); }
+    if (update.poids !== undefined) { fields.push(`poids = $${fields.length + 2}`); values.push(update.poids); }
+    if (update.taille !== undefined) { fields.push(`taille = $${fields.length + 2}`); values.push(update.taille); }
+    if (fields.length === 0) return;
+    const q = `UPDATE patient SET ${fields.join(', ')} WHERE idPatient = $1`;
+    await db.query(q, values);
+  }
+
   // Déterminer le rôle d'un utilisateur
   async getUserRole(userId: string): Promise<string> {
     // Vérifier si c'est un SuperAdmin

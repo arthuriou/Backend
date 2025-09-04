@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS utilisateur (
     nom TEXT NOT NULL,
     prenom TEXT,
     telephone TEXT UNIQUE,
+    photoProfil TEXT,
     dateCreation TIMESTAMP DEFAULT now(),
     derniereConnexion TIMESTAMP,
     actif BOOLEAN DEFAULT true,

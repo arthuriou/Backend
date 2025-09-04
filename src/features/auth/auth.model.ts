@@ -9,6 +9,7 @@ export interface User {
   nom: string;
   prenom?: string;
   telephone?: string;
+  photoprofil?: string;
   datecreation?: Date;
   derniereconnexion?: Date;
   actif: boolean;

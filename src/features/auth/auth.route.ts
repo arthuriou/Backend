@@ -5,6 +5,7 @@ import { authenticateToken, requireRole } from "../../shared/middlewares/auth.mi
 const router = Router();
 const controller = new AuthController();
 
+// Auth de base
 router.post("/register-patient", controller.createPatient.bind(controller));
 router.post("/register-doctor", controller.createMedecin.bind(controller));
 router.post("/login", controller.login.bind(controller));
@@ -15,10 +16,13 @@ router.post("/send-otp", controller.sendOTP.bind(controller));
 router.post("/verify-otp", controller.verifyOTP.bind(controller));
 router.post("/resend-otp", controller.resendOTP.bind(controller));
 
-// Routes profil
-router.put("/profile/:userId", authenticateToken, controller.updateProfile.bind(controller));
-router.put("/profile", authenticateToken, controller.updateProfile.bind(controller));
-router.put("/profile/medecin", authenticateToken, controller.updateMedecinProfile.bind(controller));
+// Profil (mises à jour partielles → PATCH)
+router.patch("/profile/:userId", authenticateToken, controller.updateProfile.bind(controller));
+router.patch("/profile", authenticateToken, controller.updateProfile.bind(controller));
+router.patch("/profile/medecin", authenticateToken, controller.updateMedecinProfile.bind(controller));
+router.patch("/profile/patient", authenticateToken, controller.updatePatientProfile.bind(controller));
+
+// Sécurité mot de passe
 router.post("/change-password", authenticateToken, controller.changePassword.bind(controller));
 router.post("/forgot-password", controller.forgotPassword.bind(controller));
 router.post("/reset-password", controller.resetPassword.bind(controller));
