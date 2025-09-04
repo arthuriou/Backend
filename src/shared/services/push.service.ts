@@ -1,4 +1,5 @@
 import db from "../../utils/database";
+import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 
 interface PushPayload {
   title: string;
@@ -7,6 +8,7 @@ interface PushPayload {
 }
 
 export class PushService {
+  private expo = new Expo();
   async isPushEnabled(userId: string): Promise<boolean> {
     const r = await db.query(
       `SELECT COALESCE(pushEnabled, false) as enabled FROM preferences_notification WHERE utilisateur_id = $1`,
@@ -29,10 +31,30 @@ export class PushService {
     const devices = await this.getUserDeviceTokens(userId);
     if (devices.length === 0) return;
 
-    // Placeholder sender: integrate Expo/FCM here
-    for (const d of devices) {
-      // eslint-disable-next-line no-console
-      console.log(`[PUSH:${d.platform}] -> ${d.token} | ${payload.title} - ${payload.body}`, payload.data || {});
+    const expoTokens = devices
+      .filter(d => d.platform === 'EXPO' || Expo.isExpoPushToken(d.token))
+      .map(d => d.token);
+
+    const messages: ExpoPushMessage[] = expoTokens.map(token => ({
+      to: token,
+      title: payload.title,
+      body: payload.body,
+      data: payload.data || {},
+      sound: 'default'
+    }));
+
+    if (messages.length === 0) return;
+
+    const chunks = this.expo.chunkPushNotifications(messages);
+    const tickets: ExpoPushTicket[] = [];
+    for (const chunk of chunks) {
+      try {
+        const ticketChunk = await this.expo.sendPushNotificationsAsync(chunk);
+        tickets.push(...ticketChunk);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Expo push error:', error);
+      }
     }
   }
 }
