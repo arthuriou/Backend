@@ -27,9 +27,9 @@ export class CabinetRepository {
     prenom?: string,
     telephone?: string
   ): Promise<any> {
-    const query = `INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone)
-           VALUES ($1, $2, $3, $4, $5)
-           RETURNING idUtilisateur, email, nom, prenom, telephone, dateCreation, actif`;
+    const query = `INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone, mustChangePassword)
+           VALUES ($1, $2, $3, $4, $5, true)
+           RETURNING idUtilisateur, email, nom, prenom, telephone, dateCreation, actif, mustChangePassword`;
     const values = [email, motdepasse, nom, prenom, telephone];
     const result = await db.query(query, values);
     return result.rows[0];
@@ -81,6 +81,11 @@ export class CabinetRepository {
     const query = `SELECT * FROM adminCabinet WHERE utilisateur_id = $1 AND cabinet_id = $2`;
     const result = await db.query(query, [userId, cabinetId]);
     return result.rows.length > 0;
+  }
+
+  async medecinBelongsToCabinet(medecinId: string, cabinetId: string): Promise<boolean> {
+    const r = await db.query(`SELECT 1 FROM medecin_cabinet WHERE medecin_id = $1 AND cabinet_id = $2 AND actif = true`, [medecinId, cabinetId]);
+    return r.rows.length > 0;
   }
 
   // Modifier un cabinet

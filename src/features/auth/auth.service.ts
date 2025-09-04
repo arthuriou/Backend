@@ -2,7 +2,7 @@ import { AuthRepository } from "./auth.repository";
 import { User, Patient, Medecin } from "./auth.model";
 import bcrypt from 'bcrypt';
 import { generateOTP, sendOTPEmail } from '../../shared/utils/mail';
-import { generateToken, JWTPayload } from '../../shared/utils/jwt.utils';
+import { generateToken, JWTPayload, generateRefreshToken, verifyRefreshToken } from '../../shared/utils/jwt.utils';
 import db from '../../utils/database';
 
 export class AuthService {
@@ -97,7 +97,7 @@ export class AuthService {
     return newUser;
   }
 
-  async login(email: string, motdepasse: string): Promise<{ user: User; token: string }> {
+  async login(email: string, motdepasse: string): Promise<{ user: User; token: string; refreshToken: string }> {
     const user = await this.repository.getUserByEmail(email);
     if (!user) {
       throw { statusCode: 401, message: "Email ou mot de passe incorrect" };
@@ -123,8 +123,52 @@ export class AuthService {
     };
 
     const token = generateToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
-    return { user, token };
+    return { user, token, refreshToken };
+  }
+
+  async refresh(refreshToken: string) {
+    const payload = verifyRefreshToken(refreshToken);
+    const fresh = generateToken(payload);
+    return { token: fresh };
+  }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string) {
+    const user = await this.repository.getUserById(userId);
+    if (!user) throw { statusCode: 404, message: 'Utilisateur non trouvé' };
+    const ok = await bcrypt.compare(oldPassword, user.motdepasse);
+    if (!ok) throw { statusCode: 400, message: 'Ancien mot de passe incorrect' };
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.repository.updatePassword(userId, hashed);
+    await this.repository.setMustChangePassword(userId, false);
+    return true;
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.repository.getUserByEmail(email);
+    if (!user) throw { statusCode: 404, message: 'Utilisateur non trouvé' };
+    const code = (Math.floor(100000 + Math.random() * 900000)).toString();
+    await this.repository.savePasswordResetCode(email, code);
+    await sendOTPEmail(email, code, user.nom);
+    return true;
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const valid = await this.repository.verifyPasswordResetCode(email, code);
+    if (!valid) throw { statusCode: 400, message: 'Code invalide ou expiré' };
+    const user = await this.repository.getUserByEmail(email);
+    if (!user) throw { statusCode: 404, message: 'Utilisateur non trouvé' };
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.repository.updatePassword(user.idutilisateur!, hashed);
+    await this.repository.clearPasswordResetCode(email);
+    await this.repository.setMustChangePassword(user.idutilisateur!, false);
+    return true;
+  }
+
+  async updateMedecinProfile(userId: string, update: { experience?: number; biographie?: string }) {
+    await this.repository.updateMedecinProfile(userId, update);
+    return true;
   }
 
   // Envoyer OTP
@@ -240,6 +284,9 @@ export class AuthService {
       prenom,
       telephone
     );
+
+    // Forcer changement de mot de passe à la première connexion
+    await this.repository.setMustChangePassword(newUser.idutilisateur!, true);
 
     // Créer le médecin avec statut APPROVED
     await this.repository.createMedecinApproved(

@@ -257,6 +257,20 @@ export class CabinetController {
     }
   }
 
+  // Reset mot de passe d'un médecin par AdminCabinet (force mustChangePassword)
+  async resetMedecinPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const adminUserId = (req as any).user?.userId;
+      const { id, medecinId } = req.params;
+      const { newPassword } = req.body;
+      if (!newPassword) { res.status(400).json({ message: 'newPassword requis' }); return; }
+      await this.service.resetMedecinPassword(adminUserId, id, medecinId, newPassword);
+      res.status(200).json({ message: 'Mot de passe réinitialisé. Changement requis à la prochaine connexion.' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || 'Erreur Serveur' });
+    }
+  }
+
   // Statistiques du cabinet
   async getCabinetStats(req: Request, res: Response): Promise<void> {
     try {

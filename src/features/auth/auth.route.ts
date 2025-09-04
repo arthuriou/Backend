@@ -8,6 +8,7 @@ const controller = new AuthController();
 router.post("/register-patient", controller.createPatient.bind(controller));
 router.post("/register-doctor", controller.createMedecin.bind(controller));
 router.post("/login", controller.login.bind(controller));
+router.post("/refresh", controller.refresh.bind(controller));
 
 // Routes OTP
 router.post("/send-otp", controller.sendOTP.bind(controller));
@@ -17,6 +18,10 @@ router.post("/resend-otp", controller.resendOTP.bind(controller));
 // Routes profil
 router.put("/profile/:userId", authenticateToken, controller.updateProfile.bind(controller));
 router.put("/profile", authenticateToken, controller.updateProfile.bind(controller));
+router.put("/profile/medecin", authenticateToken, controller.updateMedecinProfile.bind(controller));
+router.post("/change-password", authenticateToken, controller.changePassword.bind(controller));
+router.post("/forgot-password", controller.forgotPassword.bind(controller));
+router.post("/reset-password", controller.resetPassword.bind(controller));
 
 // Routes SuperAdmin
 router.get("/super-admin/pending-medecins", 

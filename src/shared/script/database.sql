@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS utilisateur (
     telephone TEXT UNIQUE,
     dateCreation TIMESTAMP DEFAULT now(),
     derniereConnexion TIMESTAMP,
-    actif BOOLEAN DEFAULT true
+    actif BOOLEAN DEFAULT true,
+    mustChangePassword BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS patient (

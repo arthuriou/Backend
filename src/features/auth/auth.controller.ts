@@ -125,13 +125,79 @@ export class AuthController {
         message: "Connexion réussie",
         data: {
           user: result.user,
-          token: result.token
+          token: result.token,
+          refreshToken: result.refreshToken,
+          mustChangePassword: (result.user as any).mustchangepassword === true
         },
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
         message: error.message || "Erreur Serveur",
       });
+    }
+  }
+
+  async refresh(req: Request, res: Response): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        res.status(400).json({ message: 'refreshToken requis' });
+        return;
+      }
+      const data = await this.service.refresh(refreshToken);
+      res.status(200).json({ message: 'Token rafraîchi', data });
+    } catch (error: any) {
+      res.status(error.statusCode || 401).json({ message: error.message || 'Token invalide' });
+    }
+  }
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId || req.body.userId;
+      const { oldPassword, newPassword } = req.body;
+      if (!userId || !oldPassword || !newPassword) {
+        res.status(400).json({ message: 'userId, oldPassword, newPassword requis' });
+        return;
+      }
+      await this.service.changePassword(userId, oldPassword, newPassword);
+      res.status(200).json({ message: 'Mot de passe changé avec succès' });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email) { res.status(400).json({ message: 'email requis' }); return; }
+      await this.service.forgotPassword(email);
+      res.status(200).json({ message: 'Code de réinitialisation envoyé' });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });
+    }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, code, newPassword } = req.body;
+      if (!email || !code || !newPassword) { res.status(400).json({ message: 'email, code, newPassword requis' }); return; }
+      await this.service.resetPassword(email, code, newPassword);
+      res.status(200).json({ message: 'Mot de passe réinitialisé' });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });
+    }
+  }
+
+  // Mise à jour profil Médecin (expérience, biographie)
+  async updateMedecinProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId || req.body.userId;
+      if (!userId) { res.status(400).json({ message: 'userId requis' }); return; }
+      const { experience, biographie } = req.body;
+      await this.service.updateMedecinProfile(userId, { experience, biographie });
+      res.status(200).json({ message: 'Profil médecin mis à jour' });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });
     }
   }
 

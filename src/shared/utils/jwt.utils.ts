@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'santeafrik_secret_key_2024';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+const REFRESH_SECRET = process.env.REFRESH_SECRET || 'santeafrik_refresh_secret_2024';
+const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '30d';
 
 export interface JWTPayload {
   userId: string;
@@ -23,4 +25,12 @@ export const decodeToken = (token: string): JWTPayload | null => {
   } catch (error) {
     return null;
   }
+};
+
+export const generateRefreshToken = (payload: JWTPayload): string => {
+  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN } as jwt.SignOptions);
+};
+
+export const verifyRefreshToken = (token: string): JWTPayload => {
+  return jwt.verify(token, REFRESH_SECRET) as JWTPayload;
 };

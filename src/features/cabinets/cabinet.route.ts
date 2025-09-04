@@ -62,6 +62,14 @@ router.put("/:id/medecins/:medecinId/archive",
   controller.archiveMedecinFromCabinet.bind(controller)
 );
 
+// Reset mot de passe d'un médecin par AdminCabinet
+router.post(
+  "/:id/medecins/:medecinId/reset-password",
+  authenticateToken,
+  requireRole(['ADMINCABINET']),
+  controller.resetMedecinPassword.bind(controller)
+);
+
 // Routes statistiques
 router.get("/:id/stats", 
   authenticateToken, 

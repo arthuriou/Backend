@@ -9,8 +9,8 @@ export class AuthRepository {
     prenom?: string,
     telephone?: string
   ): Promise<User> {
-    const query = `INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone, actif)
-           VALUES ($1, $2, $3, $4, $5, true)
+    const query = `INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone, actif, mustChangePassword)
+           VALUES ($1, $2, $3, $4, $5, true, false)
            RETURNING *`;
     const values = [email, motdepasse, nom, prenom, telephone];
     const execute = await db.query<User>(query, values);
@@ -78,6 +78,24 @@ export class AuthRepository {
 
   async updateUserStatus(email: string, actif: boolean): Promise<void> {
     await db.query('UPDATE utilisateur SET actif = $1 WHERE email = $2', [actif, email]);
+  }
+
+  async setMustChangePassword(userId: string, must: boolean): Promise<void> {
+    await db.query('UPDATE utilisateur SET mustChangePassword = $2 WHERE idUtilisateur = $1', [userId, must]);
+  }
+
+  async updateMedecinProfile(userId: string, update: { experience?: number; biographie?: string }): Promise<void> {
+    const med = await db.query(`SELECT idMedecin FROM medecin WHERE utilisateur_id = $1`, [userId]);
+    if (med.rows.length === 0) throw new Error('Médecin introuvable');
+    const idMedecin = med.rows[0].idmedecin;
+
+    const fields: string[] = [];
+    const values: any[] = [idMedecin];
+    if (update.experience !== undefined) { fields.push(`experience = $${fields.length + 2}`); values.push(update.experience); }
+    if (update.biographie !== undefined) { fields.push(`biographie = $${fields.length + 2}`); values.push(update.biographie); }
+    if (fields.length === 0) return;
+    const q = `UPDATE medecin SET ${fields.join(', ')} WHERE idMedecin = $1`;
+    await db.query(q, values);
   }
 
   // Déterminer le rôle d'un utilisateur
@@ -152,5 +170,39 @@ export class AuthRepository {
     const query = `INSERT INTO medecin_cabinet (medecin_id, cabinet_id, roleCabinet)
            VALUES ($1, $2, 'MEDECIN')`;
     await db.query(query, [medecinId, cabinetId]);
+  }
+
+  // Password & users
+  async getUserById(userId: string): Promise<User | null> {
+    const r = await db.query<User>(`SELECT * FROM utilisateur WHERE idUtilisateur = $1`, [userId]);
+    return r.rows[0] || null;
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    await db.query(`UPDATE utilisateur SET motDePasse = $2 WHERE idUtilisateur = $1`, [userId, hashedPassword]);
+  }
+
+  // Password reset via otp_verification (réutilisation du stockage OTP)
+  async savePasswordResetCode(email: string, code: string): Promise<void> {
+    const query = `INSERT INTO otp_verification (email, code, expires_at)
+           VALUES ($1, $2, NOW() + INTERVAL '15 minutes')
+           ON CONFLICT (email)
+           DO UPDATE SET code = $2, expires_at = NOW() + INTERVAL '15 minutes'`;
+    await db.query(query, [email, code]);
+  }
+
+  async verifyPasswordResetCode(email: string, code: string): Promise<boolean> {
+    const r = await db.query(`SELECT 1 FROM otp_verification WHERE email = $1 AND code = $2 AND expires_at > NOW()`, [email, code]);
+    return r.rows.length > 0;
+  }
+
+  async clearPasswordResetCode(email: string): Promise<void> {
+    await db.query('DELETE FROM otp_verification WHERE email = $1', [email]);
+  }
+
+  async getUserIdByMedecinId(medecinId: string): Promise<string | null> {
+    const r = await db.query(`SELECT utilisateur_id FROM medecin WHERE idMedecin = $1`, [medecinId]);
+    if (r.rows.length === 0) return null;
+    return r.rows[0].utilisateur_id as string;
   }
 }
