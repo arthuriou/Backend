@@ -91,12 +91,15 @@ export class MessagerieService {
         participants: [userId1, userId2]
       };
       
-      conversation = await this.repository.createConversation(conversationData);
-      await this.repository.addParticipants(conversation.idConversation!, [userId1, userId2]);
+      const created = await this.repository.createConversation(conversationData);
+      const conversationId = (created as any).idConversation || (created as any).idconversation;
+      await this.repository.addParticipants(conversationId, [userId1, userId2]);
+      conversation = created as any;
     }
 
     // Récupérer la conversation avec détails
-    const conversationWithDetails = await this.repository.getConversationById(conversation.idConversation!);
+    const convId = (conversation as any).idConversation || (conversation as any).idconversation;
+    const conversationWithDetails = await this.repository.getConversationById(convId);
     if (!conversationWithDetails) {
       throw new Error("Erreur lors de la récupération de la conversation");
     }
@@ -225,7 +228,8 @@ export class MessagerieService {
     senderId: string, 
     senderRole: string
   ): Promise<MessageWithDetails> {
-    if (!data.contenu || data.contenu.trim().length === 0) {
+    // Autoriser les messages fichier sans contenu texte
+    if ((!data.contenu || data.contenu.trim().length === 0) && !data.fichier_url) {
       throw new Error("Le contenu du message ne peut pas être vide");
     }
 
@@ -247,7 +251,8 @@ export class MessagerieService {
     });
 
     // Récupérer le message avec détails
-    const messageWithDetails = await this.repository.getMessageById(message.idMessage!);
+    const messageId = (message as any).idMessage || (message as any).idmessage;
+    const messageWithDetails = await this.repository.getMessageById(messageId);
     if (!messageWithDetails) {
       throw new Error("Erreur lors de la récupération du message");
     }

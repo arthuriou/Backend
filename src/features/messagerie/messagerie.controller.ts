@@ -1,13 +1,16 @@
 import { Request, Response } from "express";
 import { MessagerieService } from "./messagerie.service";
 import { SocketService } from "../../shared/services/socket.service";
+import { AuthRepository } from "../auth/auth.repository";
 import { getMissingFields } from "../../shared/utils/validator";
 
 export class MessagerieController {
   private service: MessagerieService;
+  private authRepository: AuthRepository;
 
   constructor(socketService?: SocketService) {
     this.service = new MessagerieService(socketService);
+    this.authRepository = new AuthRepository();
   }
 
   // ========================================
@@ -32,11 +35,14 @@ export class MessagerieController {
         return;
       }
 
+      // Récupérer le rôle réel du participant cible
+      const participantRole = await this.authRepository.getUserRole(participantId);
+
       const conversation = await this.service.createOrGetPrivateConversation(
-        userId, 
-        participantId, 
-        userRole, 
-        'UNKNOWN' // Le rôle sera vérifié dans le service
+        userId,
+        participantId,
+        userRole,
+        participantRole
       );
       
       res.status(200).json({

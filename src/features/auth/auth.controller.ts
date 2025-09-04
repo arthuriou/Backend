@@ -229,7 +229,7 @@ export class AuthController {
       const file = (req as any).file as any;
       if (!file) { res.status(400).json({ message: 'Fichier requis (champ "file")' }); return; }
       const url = `/uploads/profile/${file.filename}`;
-      const updated = await this.service.updateProfile(userId, { photoprofil: url } as any);
+      const updated = await this.service.updateProfile(userId, { photoProfil: url } as any);
       res.status(201).json({ message: 'Photo de profil mise à jour', data: { url, user: updated } });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });

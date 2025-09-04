@@ -48,7 +48,7 @@ export class MessagerieRepository {
       SELECT 
         c.*,
         cp.idParticipant, cp.utilisateur_id, cp.role_participant, cp.dateRejointe, cp.actif as participant_actif,
-        u.nom, u.prenom, u.email, u.role,
+        u.nom, u.prenom, u.email,
         dm.idMessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
         dm.dateEnvoi as dernier_message_date, dm.type_message as dernier_message_type,
         eu.nom as dernier_message_expediteur_nom, eu.prenom as dernier_message_expediteur_prenom
@@ -84,7 +84,7 @@ export class MessagerieRepository {
           nom: row.nom,
           prenom: row.prenom,
           email: row.email,
-          role: row.role
+          role: ''
         }
       }));
 
@@ -122,7 +122,7 @@ export class MessagerieRepository {
       SELECT DISTINCT
         c.*,
         cp.idParticipant, cp.utilisateur_id, cp.role_participant, cp.dateRejointe, cp.actif as participant_actif,
-        u.nom, u.prenom, u.email, u.role,
+        u.nom, u.prenom, u.email,
         dm.idMessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
         dm.dateEnvoi as dernier_message_date, dm.type_message as dernier_message_type,
         eu.nom as dernier_message_expediteur_nom, eu.prenom as dernier_message_expediteur_prenom,
@@ -244,7 +244,7 @@ export class MessagerieRepository {
     const query = `
       SELECT 
         m.*,
-        u.nom, u.prenom, u.email, u.role,
+        u.nom, u.prenom, u.email,
         rm.idMessage as reponse_id, rm.contenu as reponse_contenu,
         ru.nom as reponse_expediteur_nom, ru.prenom as reponse_expediteur_prenom,
         ml.idMessageLu, ml.utilisateur_id as lu_par_user_id, ml.dateLecture,
@@ -269,7 +269,7 @@ export class MessagerieRepository {
     const query = `
       SELECT 
         m.*,
-        u.nom, u.prenom, u.email, u.role,
+        u.nom, u.prenom, u.email,
         rm.idMessage as reponse_id, rm.contenu as reponse_contenu,
         ru.nom as reponse_expediteur_nom, ru.prenom as reponse_expediteur_prenom,
         ml.idMessageLu, ml.utilisateur_id as lu_par_user_id, ml.dateLecture,
@@ -399,7 +399,7 @@ export class MessagerieRepository {
             nom: row.nom,
             prenom: row.prenom,
             email: row.email,
-            role: row.role
+            role: ''
           }
         });
       }
@@ -451,7 +451,7 @@ export class MessagerieRepository {
             nom: row.nom,
             prenom: row.prenom,
             email: row.email,
-            role: row.role
+            role: ''
           },
           lu_par: []
         });
