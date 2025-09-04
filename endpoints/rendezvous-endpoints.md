@@ -410,11 +410,16 @@ Content-Type: application/json
 ```
 
 ## Statuts des rendez-vous
+- Valeurs autorisées (ENUM): `EN_ATTENTE`, `CONFIRME`, `ANNULE`, `TERMINE`, `EN_COURS`
 - **EN_ATTENTE** : Rendez-vous créé, en attente de confirmation
 - **CONFIRME** : Rendez-vous confirmé par le médecin
 - **ANNULE** : Rendez-vous annulé
 - **TERMINE** : Rendez-vous terminé
 - **EN_COURS** : Rendez-vous en cours
+
+## Contrainte créneau (validation)
+- `fin` doit être strictement > `debut`. Si `fin <= debut`, la création/modification du créneau échoue.
+- Réponse recommandée: `422 Unprocessable Entity` avec message: `"fin doit être supérieure à debut"`.
 
 ## Canaux de rappel
 - **EMAIL** : Rappel par email
@@ -423,6 +428,7 @@ Content-Type: application/json
 
 ## Codes d'erreur
 - **400** : Champs manquants ou invalides
+- **422** : Contrainte métier non respectée (ex: `fin <= debut`)
 - **401** : Token d'accès requis
 - **403** : Permissions insuffisantes
 - **404** : Rendez-vous non trouvé

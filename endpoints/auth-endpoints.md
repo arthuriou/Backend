@@ -255,6 +255,10 @@ Authorization: Bearer <token>
 }
 ```
 
+Notes:
+- `statut` Médecin (ENUM): `PENDING` | `APPROVED`
+- `statut` Patient (ENUM): `PENDING` | `APPROVED` (après vérification OTP → `APPROVED`)
+
 ### Réponse (200)
 ```json
 {

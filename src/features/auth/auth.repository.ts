@@ -10,7 +10,7 @@ export class AuthRepository {
     telephone?: string
   ): Promise<User> {
     const query = `INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone, actif, mustChangePassword)
-           VALUES ($1, $2, $3, $4, $5, true, false)
+           VALUES ($1, $2, $3, $4, $5, false, false)
            RETURNING *`;
     const values = [email, motdepasse, nom, prenom, telephone];
     const execute = await db.query<User>(query, values);
@@ -35,7 +35,7 @@ export class AuthRepository {
     taille?: number
   ): Promise<Patient> {
     const query = `INSERT INTO patient (utilisateur_id, dateNaissance, genre, adresse, groupeSanguin, poids, taille, statut)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'APPROVED')
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING')
            RETURNING *`;
     const values = [utilisateur_id, datenaissance, genre, adresse, groupesanguin, poids, taille];
     const execute = await db.query<Patient>(query, values);
@@ -78,6 +78,14 @@ export class AuthRepository {
 
   async updateUserStatus(email: string, actif: boolean): Promise<void> {
     await db.query('UPDATE utilisateur SET actif = $1 WHERE email = $2', [actif, email]);
+    if (actif) {
+      // Passer patient.statut à APPROVED si l'utilisateur est un patient
+      await db.query(
+        `UPDATE patient SET statut = 'APPROVED'
+         WHERE utilisateur_id = (SELECT idUtilisateur FROM utilisateur WHERE email = $1)`,
+        [email]
+      );
+    }
   }
 
   async setMustChangePassword(userId: string, must: boolean): Promise<void> {

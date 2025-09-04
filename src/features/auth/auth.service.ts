@@ -109,7 +109,7 @@ export class AuthService {
     }
 
     if (!user.actif) {
-      throw { statusCode: 403, message: "Compte désactivé" };
+      throw { statusCode: 403, message: "Compte non vérifié. Veuillez valider l'OTP." };
     }
 
     // Déterminer le rôle de l'utilisateur

@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Configuration du transporteur email
 const transporter = nodemailer.createTransport({
@@ -8,7 +10,9 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
-  }
+  },
+  logger: process.env.SMTP_DEBUG === 'true',
+  debug: process.env.SMTP_DEBUG === 'true'
 });
 
 // Générer un code OTP
@@ -19,6 +23,10 @@ export function generateOTP(): string {
 // Envoyer un email OTP
 export async function sendOTPEmail(email: string, otp: string, nom: string): Promise<boolean> {
   try {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('❌ SMTP_USER/SMTP_PASS manquants dans les variables d\'environnement');
+      return false;
+    }
     const mailOptions = {
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: email,

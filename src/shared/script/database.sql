@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS utilisateur (
     photoProfil TEXT,
     dateCreation TIMESTAMP DEFAULT now(),
     derniereConnexion TIMESTAMP,
-    actif BOOLEAN DEFAULT true,
+    actif BOOLEAN DEFAULT false,
     mustChangePassword BOOLEAN DEFAULT false
 );
 
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS patient (
     groupeSanguin TEXT,
     poids NUMERIC,
     taille NUMERIC,
-    statut statut_patient_enum DEFAULT 'APPROVED'   -- validé direct après OTP
+    statut statut_patient_enum DEFAULT 'PENDING'   -- passe à APPROVED après OTP
 );
 
 

@@ -213,6 +213,10 @@ Authorization: Bearer <token>
 }
 ```
 
+Notes:
+- Gestion des médecins du cabinet: un médecin peut être archivé via `medecin_cabinet.actif = false`.
+- Les spécialités du cabinet sont maintenues via `cabinet_specialite`.
+
 ## 7. Archiver un cabinet (SuperAdmin)
 **PUT** `/:id/archive`
 
