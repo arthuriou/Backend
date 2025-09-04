@@ -8,6 +8,8 @@ import { createRendezVousRoutes } from "./features/rendezvous/rendezvous.route";
 import { createMessagerieRoutes } from "./features/messagerie/messagerie.route";
 import specialitesRoutes from "./features/specialites/specialites.route";
 import notificationPreferencesRoutes from "./features/notifications/notification-preferences.route";
+import dossierMedicalRoutes from "./features/dossier-medical/dossier-medical.route";
+import ordonnancesRoutes from "./features/ordonnances/ordonnances.route";
 import { SocketService } from "./shared/services/socket.service";
 
 dotenv.config();
@@ -61,6 +63,12 @@ app.use("/api/specialites", specialitesRoutes);
 
 // Routes des préférences de notification
 app.use("/api/notifications/preferences", notificationPreferencesRoutes);
+
+// Routes Dossier Médical
+app.use("/api/dossier-medical", dossierMedicalRoutes);
+
+// Routes Ordonnances
+app.use("/api/ordonnances", ordonnancesRoutes);
 
 // Démarrage
 server.listen(PORT, () => {
