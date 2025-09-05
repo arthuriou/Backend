@@ -11,7 +11,7 @@ export class CabinetRepository {
     logo?: string,
     horairesOuverture?: any
   ): Promise<Cabinet> {
-    const query = `INSERT INTO cabinet (nom, adresse, telephone, email, logo, horairesOuverture, actif)
+    const query = `INSERT INTO cabinet (nom, adresse, telephone, email, logo, horairesouverture, actif)
            VALUES ($1, $2, $3, $4, $5, $6, true)
            RETURNING *`;
     const values = [nom, adresse, telephone, email, logo, horairesOuverture];
@@ -58,7 +58,7 @@ export class CabinetRepository {
 
   // Récupérer un cabinet par ID (actif seulement)
   async getCabinetById(cabinetId: string): Promise<Cabinet | null> {
-    const query = `SELECT * FROM cabinet WHERE idCabinet = $1 AND actif = true`;
+    const query = `SELECT * FROM cabinet WHERE idcabinet = $1 AND actif = true`;
     const result = await db.query<Cabinet>(query, [cabinetId]);
     return result.rows[0] || null;
   }
@@ -102,7 +102,7 @@ export class CabinetRepository {
     const setClause = fieldsToUpdate.map((field, index) => `${field} = $${index + 2}`).join(', ');
     const values = [cabinetId, ...fieldsToUpdate.map(field => updateData[field as keyof Cabinet])];
 
-    const query = `UPDATE cabinet SET ${setClause} WHERE idCabinet = $1 RETURNING *`;
+    const query = `UPDATE cabinet SET ${setClause} WHERE idcabinet = $1 RETURNING *`;
     const result = await db.query<Cabinet>(query, values);
     
     if (result.rows.length === 0) {
@@ -114,7 +114,7 @@ export class CabinetRepository {
 
   // Archiver un cabinet
   async archiveCabinet(cabinetId: string): Promise<boolean> {
-    const query = `UPDATE cabinet SET actif = false WHERE idCabinet = $1`;
+    const query = `UPDATE cabinet SET actif = false WHERE idcabinet = $1`;
     const result = await db.query(query, [cabinetId]);
     return (result.rowCount || 0) > 0;
   }

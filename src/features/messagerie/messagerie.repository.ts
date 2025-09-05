@@ -47,13 +47,13 @@ export class MessagerieRepository {
     const query = `
       SELECT 
         c.*,
-        cp.idParticipant, cp.utilisateur_id, cp.role_participant, cp.dateRejointe, cp.actif as participant_actif,
+        cp.idparticipant, cp.utilisateur_id, cp.role_participant, cp.daterejointe, cp.actif as participant_actif,
         u.nom, u.prenom, u.email,
-        dm.idMessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
-        dm.dateEnvoi as dernier_message_date, dm.type_message as dernier_message_type,
+        dm.idmessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
+        dm.dateenvoi as dernier_message_date, dm.type_message as dernier_message_type,
         eu.nom as dernier_message_expediteur_nom, eu.prenom as dernier_message_expediteur_prenom
       FROM conversation c
-      LEFT JOIN conversation_participant cp ON c.idConversation = cp.conversation_id AND cp.actif = true
+      LEFT JOIN conversation_participant cp ON c.idconversation = cp.conversation_id AND cp.actif = true
       LEFT JOIN utilisateur u ON cp.utilisateur_id = u.idUtilisateur
       LEFT JOIN LATERAL (
         SELECT m.idMessage, m.contenu, m.dateEnvoi, m.type_message, m.expediteur_id
@@ -74,13 +74,13 @@ export class MessagerieRepository {
     const participants = result.rows
       .filter(row => row.idparticipant)
       .map(row => ({
-        idParticipant: row.idparticipant,
+        idparticipant: row.idparticipant,
         utilisateur_id: row.utilisateur_id,
         role_participant: row.role_participant,
-        dateRejointe: row.daterejointe,
+        daterejointe: row.daterejointe,
         actif: row.participant_actif,
         utilisateur: {
-          idUtilisateur: row.utilisateur_id,
+          idutilisateur: row.utilisateur_id,
           nom: row.nom,
           prenom: row.prenom,
           email: row.email,
@@ -89,23 +89,21 @@ export class MessagerieRepository {
       }));
 
     return {
-      idConversation: conversation.idconversation,
+      idconversation: conversation.idconversation,
       type_conversation: conversation.type_conversation,
       titre: conversation.titre,
       cabinet_id: conversation.cabinet_id,
-      dateCreation: conversation.datecreation,
-      dateModification: conversation.datemodification,
       actif: conversation.actif,
       participants,
       dernier_message: conversation.dernier_message_id ? {
-        idMessage: conversation.dernier_message_id,
+        idmessage: conversation.dernier_message_id,
         conversation_id: conversationId,
         expediteur_id: conversation.dernier_message_expediteur_id,
         contenu: conversation.dernier_message_contenu,
         type_message: conversation.dernier_message_type,
-        dateEnvoi: conversation.dernier_message_date,
+        dateenvoi: conversation.dernier_message_date,
         expediteur: {
-          idUtilisateur: conversation.dernier_message_expediteur_id,
+          idutilisateur: conversation.dernier_message_expediteur_id,
           nom: conversation.dernier_message_expediteur_nom,
           prenom: conversation.dernier_message_expediteur_prenom,
           email: '',
@@ -121,10 +119,10 @@ export class MessagerieRepository {
     const query = `
       SELECT DISTINCT
         c.*,
-        cp.idParticipant, cp.utilisateur_id, cp.role_participant, cp.dateRejointe, cp.actif as participant_actif,
+        cp.idparticipant, cp.utilisateur_id, cp.role_participant, cp.daterejointe, cp.actif as participant_actif,
         u.nom, u.prenom, u.email,
-        dm.idMessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
-        dm.dateEnvoi as dernier_message_date, dm.type_message as dernier_message_type,
+        dm.idmessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
+        dm.dateenvoi as dernier_message_date, dm.type_message as dernier_message_type,
         eu.nom as dernier_message_expediteur_nom, eu.prenom as dernier_message_expediteur_prenom,
         COUNT(ml.idMessageLu) as messages_non_lus
       FROM conversation c
@@ -373,12 +371,10 @@ export class MessagerieRepository {
     rows.forEach(row => {
       if (!conversationMap.has(row.idconversation)) {
         conversationMap.set(row.idconversation, {
-          idConversation: row.idconversation,
+          idconversation: row.idconversation,
           type_conversation: row.type_conversation,
           titre: row.titre,
           cabinet_id: row.cabinet_id,
-          dateCreation: row.datecreation,
-          dateModification: row.datemodification,
           actif: row.actif,
           participants: [],
           nombre_messages_non_lus: parseInt(row.messages_non_lus) || 0
@@ -387,15 +383,15 @@ export class MessagerieRepository {
       
       const conversation = conversationMap.get(row.idconversation)!;
       
-      if (row.idparticipant && !conversation.participants.find(p => p.idParticipant === row.idparticipant)) {
+      if (row.idparticipant && !conversation.participants.find(p => p.idparticipant === row.idparticipant)) {
         conversation.participants.push({
-          idParticipant: row.idparticipant,
+          idparticipant: row.idparticipant,
           utilisateur_id: row.utilisateur_id,
           role_participant: row.role_participant,
-          dateRejointe: row.daterejointe,
+          daterejointe: row.daterejointe,
           actif: row.participant_actif,
           utilisateur: {
-            idUtilisateur: row.utilisateur_id,
+            idutilisateur: row.utilisateur_id,
             nom: row.nom,
             prenom: row.prenom,
             email: row.email,
@@ -406,14 +402,14 @@ export class MessagerieRepository {
       
       if (row.dernier_message_id && !conversation.dernier_message) {
         conversation.dernier_message = {
-          idMessage: row.dernier_message_id,
+          idmessage: row.dernier_message_id,
           conversation_id: row.idconversation,
           expediteur_id: row.dernier_message_expediteur_id,
           contenu: row.dernier_message_contenu,
           type_message: row.dernier_message_type,
-          dateEnvoi: row.dernier_message_date,
+          dateenvoi: row.dernier_message_date,
           expediteur: {
-            idUtilisateur: row.dernier_message_expediteur_id,
+            idutilisateur: row.dernier_message_expediteur_id,
             nom: row.dernier_message_expediteur_nom,
             prenom: row.dernier_message_expediteur_prenom,
             email: '',
@@ -433,7 +429,7 @@ export class MessagerieRepository {
     rows.forEach(row => {
       if (!messageMap.has(row.idmessage)) {
         messageMap.set(row.idmessage, {
-          idMessage: row.idmessage,
+          idmessage: row.idmessage,
           conversation_id: row.conversation_id,
           expediteur_id: row.expediteur_id,
           contenu: row.contenu,
@@ -442,12 +438,11 @@ export class MessagerieRepository {
           fichier_nom: row.fichier_nom,
           fichier_taille: row.fichier_taille,
           reponse_a: row.reponse_a,
-          dateEnvoi: row.dateenvoi,
-          dateModification: row.datemodification,
+          dateenvoi: row.dateenvoi,
           supprime: row.supprime,
           actif: row.actif,
           expediteur: {
-            idUtilisateur: row.expediteur_id,
+            idutilisateur: row.expediteur_id,
             nom: row.nom,
             prenom: row.prenom,
             email: row.email,
@@ -461,7 +456,7 @@ export class MessagerieRepository {
       
       if (row.reponse_id && !message.reponse_a_message) {
         message.reponse_a_message = {
-          idMessage: row.reponse_id,
+          idmessage: row.reponse_id,
           contenu: row.reponse_contenu,
           expediteur: {
             nom: row.reponse_expediteur_nom,
@@ -470,11 +465,11 @@ export class MessagerieRepository {
         };
       }
       
-      if (row.idmessagelu && !message.lu_par.find(l => l.idMessageLu === row.idmessagelu)) {
+      if (row.idmessagelu && !message.lu_par.find(l => l.idmessagelu === row.idmessagelu)) {
         message.lu_par.push({
-          idMessageLu: row.idmessagelu,
+          idmessagelu: row.idmessagelu,
           utilisateur_id: row.lu_par_user_id,
-          dateLecture: row.datelcture,
+          datelecture: row.datelcture,
           utilisateur: {
             nom: row.lu_par_nom,
             prenom: row.lu_par_prenom

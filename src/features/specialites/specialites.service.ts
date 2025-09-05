@@ -365,7 +365,7 @@ export class SpecialitesService {
     let totalAssociationsSpecialiteMaux = 0;
 
     for (const specialite of specialites) {
-      const details = await this.repository.getSpecialiteWithDetails(specialite.idSpecialite!);
+      const details = await this.repository.getSpecialiteWithDetails(specialite.idspecialite!);
       if (details) {
         totalAssociationsMedecinSpecialite += details.nombre_medecins || 0;
         totalAssociationsCabinetSpecialite += details.nombre_cabinets || 0;

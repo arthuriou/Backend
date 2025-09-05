@@ -3,20 +3,18 @@
 // ========================================
 
 export interface RendezVous {
-  idRendezVous: string;
+  idrendezvous: string;
   patient_id: string;
   medecin_id: string;
   creneau_id?: string;
-  dateHeure: Date;
+  dateheure: Date;
   duree: number; // en minutes
   motif: string;
   statut: 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE' | 'EN_COURS';
-  dateCreation?: Date;
-  dateModification?: Date;
 }
 
 export interface Creneau {
-  idCreneau: string;
+  idcreneau: string;
   agenda_id: string;
   debut: Date;
   fin: Date;
@@ -24,15 +22,15 @@ export interface Creneau {
 }
 
 export interface Agenda {
-  idAgenda: string;
+  idagenda: string;
   medecin_id: string;
   libelle: string;
 }
 
 export interface Rappel {
-  idRappel: string;
+  idrappel: string;
   rendezvous_id: string;
-  dateEnvoi: Date;
+  dateenvoi: Date;
   canal: 'SMS' | 'EMAIL' | 'PUSH';
   envoye: boolean;
 }
@@ -44,14 +42,14 @@ export interface Rappel {
 export interface CreateRendezVousRequest {
   patient_id: string;
   medecin_id: string;
-  dateHeure: string; // ISO string
+  dateheure: string; // ISO string
   duree: number;
   motif: string;
   creneau_id?: string;
 }
 
 export interface UpdateRendezVousRequest {
-  dateHeure?: string;
+  dateheure?: string;
   duree?: number;
   motif?: string;
   statut?: 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE' | 'EN_COURS';
@@ -75,14 +73,14 @@ export interface CreateAgendaRequest {
 
 export interface RendezVousWithDetails extends RendezVous {
   patient: {
-    idPatient: string;
+    idpatient: string;
     nom: string;
     prenom: string;
     telephone: string;
     email: string;
   };
   medecin: {
-    idMedecin: string;
+    idmedecin: string;
     nom: string;
     prenom: string;
     specialites: string[];
@@ -92,10 +90,10 @@ export interface RendezVousWithDetails extends RendezVous {
 
 export interface CreneauWithDetails extends Creneau {
   agenda: {
-    idAgenda: string;
+    idagenda: string;
     libelle: string;
     medecin: {
-      idMedecin: string;
+      idmedecin: string;
       nom: string;
       prenom: string;
     };
@@ -104,7 +102,7 @@ export interface CreneauWithDetails extends Creneau {
 
 export interface AgendaWithDetails extends Agenda {
   medecin: {
-    idMedecin: string;
+    idmedecin: string;
     nom: string;
     prenom: string;
     specialites: string[];

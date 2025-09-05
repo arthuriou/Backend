@@ -125,9 +125,9 @@ export class MessagerieService {
     };
 
     const conversation = await this.repository.createConversation(conversationData);
-    await this.repository.addParticipants(conversation.idConversation!, [creatorId]);
+    await this.repository.addParticipants(conversation.idconversation!, [creatorId]);
 
-    const conversationWithDetails = await this.repository.getConversationById(conversation.idConversation!);
+    const conversationWithDetails = await this.repository.getConversationById(conversation.idconversation!);
     if (!conversationWithDetails) {
       throw new Error("Erreur lors de la récupération de la conversation");
     }
@@ -267,7 +267,7 @@ export class MessagerieService {
           this.pushService.sendToUser(participant.utilisateur_id, {
             title: "Nouveau message",
             body: messageWithDetails.contenu || "Pièce jointe",
-            data: { conversation_id: data.conversation_id, message_id: messageWithDetails.idMessage }
+            data: { conversation_id: data.conversation_id, message_id: messageWithDetails.idmessage }
           });
         }
       });

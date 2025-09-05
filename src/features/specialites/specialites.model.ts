@@ -3,13 +3,13 @@
 // ========================================
 
 export interface Specialite {
-  idSpecialite?: string;
+  idspecialite?: string;
   nom: string;
   description?: string;
 }
 
 export interface Maux {
-  idMaux?: string;
+  idmaux?: string;
   nom: string;
   description?: string;
   categorie?: string;
@@ -80,18 +80,18 @@ export interface SpecialiteWithDetails extends Specialite {
   nombre_cabinets?: number;
   nombre_maux?: number;
   medecins?: {
-    idMedecin: string;
+    idmedecin: string;
     nom: string;
     prenom: string;
     email: string;
   }[];
   cabinets?: {
-    idCabinet: string;
+    idcabinet: string;
     nom: string;
     adresse: string;
   }[];
   maux?: {
-    idMaux: string;
+    idmaux: string;
     nom: string;
     categorie: string;
   }[];
@@ -100,30 +100,30 @@ export interface SpecialiteWithDetails extends Specialite {
 export interface MauxWithDetails extends Maux {
   nombre_specialites?: number;
   specialites?: {
-    idSpecialite: string;
+    idspecialite: string;
     nom: string;
     description: string;
   }[];
 }
 
 export interface MedecinWithSpecialites {
-  idMedecin: string;
+  idmedecin: string;
   nom: string;
   prenom: string;
   email: string;
   specialites: {
-    idSpecialite: string;
+    idspecialite: string;
     nom: string;
     description: string;
   }[];
 }
 
 export interface CabinetWithSpecialites {
-  idCabinet: string;
+  idcabinet: string;
   nom: string;
   adresse: string;
   specialites: {
-    idSpecialite: string;
+    idspecialite: string;
     nom: string;
     description: string;
   }[];

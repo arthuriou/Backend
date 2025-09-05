@@ -12,17 +12,17 @@ export class RendezVousRepository {
     patient_id: string;
     medecin_id: string;
     creneau_id?: string;
-    dateHeure: Date;
+    dateheure: Date;
     duree: number;
     motif: string;
     statut: string;
   }): Promise<RendezVous> {
     const query = `
-      INSERT INTO rendezvous (patient_id, medecin_id, creneau_id, dateHeure, duree, motif, statut)
+      INSERT INTO rendezvous (patient_id, medecin_id, creneau_id, dateheure, duree, motif, statut)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
-    const values = [data.patient_id, data.medecin_id, data.creneau_id, data.dateHeure, data.duree, data.motif, data.statut];
+    const values = [data.patient_id, data.medecin_id, data.creneau_id, data.dateheure, data.duree, data.motif, data.statut];
     const result = await db.query<RendezVous>(query, values);
     return result.rows[0];
   }
@@ -51,31 +51,29 @@ export class RendezVousRepository {
     
     const row = result.rows[0];
     return {
-      idRendezVous: row.idrendezvous,
+      idrendezvous: row.idrendezvous,
       patient_id: row.patient_id,
       medecin_id: row.medecin_id,
       creneau_id: row.creneau_id,
-      dateHeure: row.dateheure,
+      dateheure: row.dateheure,
       duree: row.duree,
       motif: row.motif,
       statut: row.statut,
-      dateCreation: row.datecreation,
-      dateModification: row.datemodification,
       patient: {
-        idPatient: row.idpatient,
+        idpatient: row.idpatient,
         nom: row.patient_nom,
         prenom: row.patient_prenom,
         telephone: row.patient_telephone,
         email: row.patient_email
       },
       medecin: {
-        idMedecin: row.idmedecin,
+        idmedecin: row.idmedecin,
         nom: row.medecin_nom,
         prenom: row.medecin_prenom,
         specialites: [] // TODO: Ajouter les spécialités
       },
       creneau: row.idcreneau ? {
-        idCreneau: row.idcreneau,
+        idcreneau: row.idcreneau,
         agenda_id: row.idagenda,
         debut: row.debut,
         fin: row.fin,
@@ -314,31 +312,29 @@ export class RendezVousRepository {
 
   private mapRendezVousWithDetails(rows: any[]): RendezVousWithDetails[] {
     return rows.map(row => ({
-      idRendezVous: row.idrendezvous,
+      idrendezvous: row.idrendezvous,
       patient_id: row.patient_id,
       medecin_id: row.medecin_id,
       creneau_id: row.creneau_id,
-      dateHeure: row.dateheure,
+      dateheure: row.dateheure,
       duree: row.duree,
       motif: row.motif,
       statut: row.statut,
-      dateCreation: row.datecreation,
-      dateModification: row.datemodification,
       patient: {
-        idPatient: row.idpatient,
+        idpatient: row.idpatient,
         nom: row.patient_nom,
         prenom: row.patient_prenom,
         telephone: row.patient_telephone,
         email: row.patient_email
       },
       medecin: {
-        idMedecin: row.idmedecin,
+        idmedecin: row.idmedecin,
         nom: row.medecin_nom,
         prenom: row.medecin_prenom,
         specialites: []
       },
       creneau: row.idcreneau ? {
-        idCreneau: row.idcreneau,
+        idcreneau: row.idcreneau,
         agenda_id: row.idagenda,
         debut: row.debut,
         fin: row.fin,
@@ -349,16 +345,16 @@ export class RendezVousRepository {
 
   private mapCreneauxWithDetails(rows: any[]): CreneauWithDetails[] {
     return rows.map(row => ({
-      idCreneau: row.idcreneau,
+      idcreneau: row.idcreneau,
       agenda_id: row.agenda_id,
       debut: row.debut,
       fin: row.fin,
       disponible: row.disponible,
       agenda: {
-        idAgenda: row.idagenda,
+        idagenda: row.idagenda,
         libelle: row.libelle,
         medecin: {
-          idMedecin: row.idmedecin,
+          idmedecin: row.idmedecin,
           nom: row.medecin_nom,
           prenom: row.medecin_prenom
         }
@@ -372,11 +368,11 @@ export class RendezVousRepository {
     rows.forEach(row => {
       if (!agendaMap.has(row.idagenda)) {
         agendaMap.set(row.idagenda, {
-          idAgenda: row.idagenda,
+          idagenda: row.idagenda,
           medecin_id: row.medecin_id,
           libelle: row.libelle,
           medecin: {
-            idMedecin: row.idmedecin,
+            idmedecin: row.idmedecin,
             nom: row.medecin_nom,
             prenom: row.medecin_prenom,
             specialites: []
@@ -387,7 +383,7 @@ export class RendezVousRepository {
       
       if (row.idcreneau) {
         agendaMap.get(row.idagenda)!.creneaux.push({
-          idCreneau: row.idcreneau,
+          idcreneau: row.idcreneau,
           agenda_id: row.agenda_id,
           debut: row.debut,
           fin: row.fin,

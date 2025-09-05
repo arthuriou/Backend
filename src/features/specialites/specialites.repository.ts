@@ -104,25 +104,25 @@ export class SpecialitesRepository {
     const mauxResult = await db.query(mauxQuery, [id]);
     
     return {
-      idSpecialite: specialite.idspecialite,
+      idspecialite: specialite.idspecialite,
       nom: specialite.nom,
       description: specialite.description,
       nombre_medecins: parseInt(specialite.nombre_medecins) || 0,
       nombre_cabinets: parseInt(specialite.nombre_cabinets) || 0,
       nombre_maux: parseInt(specialite.nombre_maux) || 0,
       medecins: medecinsResult.rows.map(m => ({
-        idMedecin: m.idmedecin,
+        idmedecin: m.idmedecin,
         nom: m.nom,
         prenom: m.prenom,
         email: m.email
       })),
       cabinets: cabinetsResult.rows.map(c => ({
-        idCabinet: c.idcabinet,
+        idcabinet: c.idcabinet,
         nom: c.nom,
         adresse: c.adresse
       })),
       maux: mauxResult.rows.map(m => ({
-        idMaux: m.idmaux,
+        idmaux: m.idmaux,
         nom: m.nom,
         categorie: m.categorie
       }))
@@ -298,13 +298,13 @@ export class SpecialitesRepository {
     const specialitesResult = await db.query(specialitesQuery, [id]);
     
     return {
-      idMaux: maux.idmaux,
+      idmaux: maux.idmaux,
       nom: maux.nom,
       description: maux.description,
       categorie: maux.categorie,
       nombre_specialites: parseInt(maux.nombre_specialites) || 0,
       specialites: specialitesResult.rows.map(s => ({
-        idSpecialite: s.idspecialite,
+        idspecialite: s.idspecialite,
         nom: s.nom,
         description: s.description
       }))
@@ -517,12 +517,12 @@ export class SpecialitesRepository {
       const specialitesResult = await db.query(specialitesQuery, [medecin.idmedecin]);
       
       medecinsWithSpecialites.push({
-        idMedecin: medecin.idmedecin,
+        idmedecin: medecin.idmedecin,
         nom: medecin.nom,
         prenom: medecin.prenom,
         email: medecin.email,
         specialites: specialitesResult.rows.map(s => ({
-          idSpecialite: s.idspecialite,
+          idspecialite: s.idspecialite,
           nom: s.nom,
           description: s.description
         }))
@@ -558,11 +558,11 @@ export class SpecialitesRepository {
       const specialitesResult = await db.query(specialitesQuery, [cabinet.idcabinet]);
       
       cabinetsWithSpecialites.push({
-        idCabinet: cabinet.idcabinet,
+        idcabinet: cabinet.idcabinet,
         nom: cabinet.nom,
         adresse: cabinet.adresse,
         specialites: specialitesResult.rows.map(s => ({
-          idSpecialite: s.idspecialite,
+          idspecialite: s.idspecialite,
           nom: s.nom,
           description: s.description
         }))

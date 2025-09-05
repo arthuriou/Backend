@@ -3,17 +3,15 @@
 // ========================================
 
 export interface NotificationPreferences {
-  idPreference?: string;
+  idpreference?: string;
   utilisateur_id: string;
-  soundEnabled: boolean;
-  soundFile: string;
+  soundenabled: boolean;
+  soundfile: string;
   volume: number; // 0.0 à 1.0
   vibration: boolean;
-  pushEnabled: boolean;
-  emailEnabled: boolean;
-  smsEnabled: boolean;
-  dateCreation?: Date;
-  dateModification?: Date;
+  pushenabled: boolean;
+  emailenabled: boolean;
+  smsenabled: boolean;
 }
 
 // ========================================
@@ -21,13 +19,13 @@ export interface NotificationPreferences {
 // ========================================
 
 export interface UpdateNotificationPreferencesRequest {
-  soundEnabled?: boolean;
-  soundFile?: string;
+  soundenabled?: boolean;
+  soundfile?: string;
   volume?: number;
   vibration?: boolean;
-  pushEnabled?: boolean;
-  emailEnabled?: boolean;
-  smsEnabled?: boolean;
+  pushenabled?: boolean;
+  emailenabled?: boolean;
+  smsenabled?: boolean;
 }
 
 // ========================================

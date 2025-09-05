@@ -3,27 +3,25 @@
 // ========================================
 
 export interface Conversation {
-  idConversation?: string;
+  idconversation?: string;
   type_conversation: 'PRIVEE' | 'GROUPE_CABINET' | 'SUPPORT';
   titre?: string;
   cabinet_id?: string;
-  dateCreation?: Date;
-  dateModification?: Date;
   actif?: boolean;
 }
 
 export interface ConversationParticipant {
-  idParticipant?: string;
+  idparticipant?: string;
   conversation_id: string;
   utilisateur_id: string;
   role_participant: 'MEMBRE' | 'ADMIN' | 'MODERATEUR';
-  dateRejointe?: Date;
-  dateQuittee?: Date;
+  daterejointe?: Date;
+  datequittee?: Date;
   actif?: boolean;
 }
 
 export interface Message {
-  idMessage?: string;
+  idmessage?: string;
   conversation_id: string;
   expediteur_id: string;
   contenu: string;
@@ -32,17 +30,16 @@ export interface Message {
   fichier_nom?: string;
   fichier_taille?: number;
   reponse_a?: string;
-  dateEnvoi?: Date;
-  dateModification?: Date;
+  dateenvoi?: Date;
   supprime?: boolean;
   actif?: boolean;
 }
 
 export interface MessageLu {
-  idMessageLu?: string;
+  idmessagelu?: string;
   message_id: string;
   utilisateur_id: string;
-  dateLecture?: Date;
+  datelecture?: Date;
 }
 
 // ========================================
@@ -85,13 +82,13 @@ export interface AddParticipantRequest {
 
 export interface ConversationWithDetails extends Conversation {
   participants: {
-    idParticipant: string;
+    idparticipant: string;
     utilisateur_id: string;
     role_participant: string;
-    dateRejointe: Date;
+    daterejointe: Date;
     actif: boolean;
     utilisateur: {
-      idUtilisateur: string;
+      idutilisateur: string;
       nom: string;
       prenom: string;
       email: string;
@@ -104,14 +101,14 @@ export interface ConversationWithDetails extends Conversation {
 
 export interface MessageWithDetails extends Message {
   expediteur: {
-    idUtilisateur: string;
+    idutilisateur: string;
     nom: string;
     prenom: string;
     email: string;
     role: string;
   };
   reponse_a_message?: {
-    idMessage: string;
+    idmessage: string;
     contenu: string;
     expediteur: {
       nom: string;
@@ -119,9 +116,9 @@ export interface MessageWithDetails extends Message {
     };
   };
   lu_par: {
-    idMessageLu: string;
+    idmessagelu: string;
     utilisateur_id: string;
-    dateLecture: Date;
+    datelecture: Date;
     utilisateur: {
       nom: string;
       prenom: string;

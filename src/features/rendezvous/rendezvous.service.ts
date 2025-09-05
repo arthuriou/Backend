@@ -31,15 +31,15 @@ export class RendezVousService {
 
   // Créer un rendez-vous
   async createRendezVous(data: CreateRendezVousRequest): Promise<RendezVous> {
-    const { patient_id, medecin_id, dateHeure, duree, motif, creneau_id } = data;
+    const { patient_id, medecin_id, dateheure, duree, motif, creneau_id } = data;
 
     // Validation des champs requis
-    if (!patient_id || !medecin_id || !dateHeure || !duree || !motif) {
+    if (!patient_id || !medecin_id || !dateheure || !duree || !motif) {
       throw new Error("Tous les champs requis doivent être fournis");
     }
 
     // Vérifier que la date est dans le futur
-    const dateRDV = new Date(dateHeure);
+    const dateRDV = new Date(dateheure);
     if (dateRDV <= new Date()) {
       throw new Error("La date du rendez-vous doit être dans le futur");
     }
@@ -61,7 +61,7 @@ export class RendezVousService {
       patient_id,
       medecin_id,
       creneau_id,
-      dateHeure: dateRDV,
+      dateheure: dateRDV,
       duree,
       motif,
       statut: 'EN_ATTENTE'
@@ -73,7 +73,7 @@ export class RendezVousService {
     
     if (dateRappel > new Date()) {
       await this.repository.createRappel({
-        rendezvous_id: rendezVous.idRendezVous,
+        rendezvous_id: rendezVous.idrendezvous,
         dateEnvoi: dateRappel,
         canal: 'EMAIL'
       });
@@ -88,12 +88,12 @@ export class RendezVousService {
     this.pushService.sendToUser(patient_id, {
       title: 'Nouveau rendez-vous',
       body: motif || 'Vous avez un nouveau rendez-vous',
-      data: { rendezvous_id: rendezVous.idRendezVous }
+      data: { rendezvous_id: rendezVous.idrendezvous }
     });
     this.pushService.sendToUser(medecin_id, {
       title: 'Nouveau rendez-vous',
       body: motif || 'Vous avez un nouveau rendez-vous',
-      data: { rendezvous_id: rendezVous.idRendezVous }
+      data: { rendezvous_id: rendezVous.idrendezvous }
     });
 
     return rendezVous;
@@ -143,12 +143,12 @@ export class RendezVousService {
     // Préparer les données de mise à jour
     const updateDataFormatted: Partial<RendezVous> = {};
 
-    if (updateData.dateHeure) {
-      const newDate = new Date(updateData.dateHeure);
+    if (updateData.dateheure) {
+      const newDate = new Date(updateData.dateheure);
       if (newDate <= new Date()) {
         throw new Error("La nouvelle date doit être dans le futur");
       }
-      updateDataFormatted.dateHeure = newDate;
+      updateDataFormatted.dateheure = newDate;
     }
 
     if (updateData.duree !== undefined) {
@@ -195,12 +195,12 @@ export class RendezVousService {
     this.pushService.sendToUser(existingRDV.patient_id, {
       title: 'Rendez-vous confirmé',
       body: existingRDV.motif || 'Votre rendez-vous a été confirmé',
-      data: { rendezvous_id: updatedRDV.idRendezVous }
+      data: { rendezvous_id: updatedRDV.idrendezvous }
     });
     this.pushService.sendToUser(existingRDV.medecin_id, {
       title: 'Rendez-vous confirmé',
       body: existingRDV.motif || 'Un rendez-vous a été confirmé',
-      data: { rendezvous_id: updatedRDV.idRendezVous }
+      data: { rendezvous_id: updatedRDV.idrendezvous }
     });
 
     return updatedRDV;
@@ -236,12 +236,12 @@ export class RendezVousService {
       this.pushService.sendToUser(existingRDV.patient_id, {
         title: 'Rendez-vous annulé',
         body: existingRDV.motif || 'Votre rendez-vous a été annulé',
-        data: { rendezvous_id: existingRDV.idRendezVous }
+        data: { rendezvous_id: existingRDV.idrendezvous }
       });
       this.pushService.sendToUser(existingRDV.medecin_id, {
         title: 'Rendez-vous annulé',
         body: existingRDV.motif || 'Un rendez-vous a été annulé',
-        data: { rendezvous_id: existingRDV.idRendezVous }
+        data: { rendezvous_id: existingRDV.idrendezvous }
       });
     }
 
@@ -351,7 +351,7 @@ export class RendezVousService {
     // TODO: Intégrer avec le service d'envoi d'emails/SMS
     // Pour l'instant, on marque juste comme envoyés
     for (const rappel of rappels) {
-      await this.repository.marquerRappelEnvoye(rappel.idRappel);
+      await this.repository.marquerRappelEnvoye(rappel.idrappel);
     }
 
     return rappels;

@@ -10,7 +10,7 @@ export class AuthRepository {
     prenom?: string,
     telephone?: string
   ): Promise<User> {
-    const query = `INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone, actif, mustChangePassword)
+    const query = `INSERT INTO utilisateur (email, motdepasse, nom, prenom, telephone, actif, mustchangepassword)
            VALUES ($1, $2, $3, $4, $5, false, false)
            RETURNING *`;
     const values = [email, motdepasse, nom, prenom, telephone];
@@ -49,7 +49,7 @@ export class AuthRepository {
     experience?: number,
     biographie?: string
   ): Promise<Medecin> {
-    const query = `INSERT INTO medecin (utilisateur_id, numOrdre, experience, biographie, statut)
+    const query = `INSERT INTO medecin (utilisateur_id, numordre, experience, biographie, statut)
            VALUES ($1, $2, $3, $4, 'PENDING')
            RETURNING *`;
     const values = [utilisateur_id, numordre, experience, biographie];
@@ -83,18 +83,18 @@ export class AuthRepository {
       // Passer patient.statut à APPROVED si l'utilisateur est un patient
       await db.query(
         `UPDATE patient SET statut = 'APPROVED'
-         WHERE utilisateur_id = (SELECT idUtilisateur FROM utilisateur WHERE email = $1)`,
+         WHERE utilisateur_id = (SELECT idutilisateur FROM utilisateur WHERE email = $1)`,
         [email]
       );
     }
   }
 
   async setMustChangePassword(userId: string, must: boolean): Promise<void> {
-    await db.query('UPDATE utilisateur SET mustChangePassword = $2 WHERE idUtilisateur = $1', [userId, must]);
+    await db.query('UPDATE utilisateur SET mustchangepassword = $2 WHERE idutilisateur = $1', [userId, must]);
   }
 
   async updateMedecinProfile(userId: string, update: { experience?: number; biographie?: string }): Promise<void> {
-    const med = await db.query(`SELECT idMedecin FROM medecin WHERE utilisateur_id = $1`, [userId]);
+    const med = await db.query(`SELECT idmedecin FROM medecin WHERE utilisateur_id = $1`, [userId]);
     if (med.rows.length === 0) throw new Error('Médecin introuvable');
     const idMedecin = med.rows[0].idmedecin;
 
@@ -103,7 +103,7 @@ export class AuthRepository {
     if (update.experience !== undefined) { fields.push(`experience = $${fields.length + 2}`); values.push(update.experience); }
     if (update.biographie !== undefined) { fields.push(`biographie = $${fields.length + 2}`); values.push(update.biographie); }
     if (fields.length === 0) return;
-    const q = `UPDATE medecin SET ${fields.join(', ')} WHERE idMedecin = $1`;
+    const q = `UPDATE medecin SET ${fields.join(', ')} WHERE idmedecin = $1`;
     await db.query(q, values);
   }
 
@@ -170,7 +170,7 @@ export class AuthRepository {
 
   // Validation médecin par SuperAdmin
   async validateMedecin(medecinId: string, action: 'APPROVED' | 'REJECTED'): Promise<void> {
-    const query = 'UPDATE medecin SET statut = $1 WHERE idMedecin = $2';
+    const query = 'UPDATE medecin SET statut = $1 WHERE idmedecin = $2';
     await db.query(query, [action, medecinId]);
   }
 
@@ -194,7 +194,7 @@ export class AuthRepository {
     experience?: number,
     biographie?: string
   ): Promise<Medecin> {
-    const query = `INSERT INTO medecin (utilisateur_id, numOrdre, experience, biographie, statut)
+    const query = `INSERT INTO medecin (utilisateur_id, numordre, experience, biographie, statut)
            VALUES ($1, $2, $3, $4, 'APPROVED')
            RETURNING *`;
     const values = [utilisateur_id, numordre, experience, biographie];
@@ -204,14 +204,14 @@ export class AuthRepository {
 
   // Associer médecin à un cabinet
   async associateMedecinToCabinet(medecinId: string, cabinetId: string): Promise<void> {
-    const query = `INSERT INTO medecin_cabinet (medecin_id, cabinet_id, roleCabinet)
+    const query = `INSERT INTO medecin_cabinet (medecin_id, cabinet_id, rolecabinet)
            VALUES ($1, $2, 'MEDECIN')`;
     await db.query(query, [medecinId, cabinetId]);
   }
 
   // Password & users
   async getUserById(userId: string): Promise<User | null> {
-    const r = await db.query<User>(`SELECT * FROM utilisateur WHERE idUtilisateur = $1`, [userId]);
+    const r = await db.query<User>(`SELECT * FROM utilisateur WHERE idutilisateur = $1`, [userId]);
     const user = r.rows[0] || null;
     if (user) {
       // Déterminer le rôle de l'utilisateur
@@ -222,7 +222,7 @@ export class AuthRepository {
   }
 
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {
-    await db.query(`UPDATE utilisateur SET motDePasse = $2 WHERE idUtilisateur = $1`, [userId, hashedPassword]);
+    await db.query(`UPDATE utilisateur SET motdepasse = $2 WHERE idutilisateur = $1`, [userId, hashedPassword]);
   }
 
   // Password reset via otp_verification (réutilisation du stockage OTP)
@@ -244,7 +244,7 @@ export class AuthRepository {
   }
 
   async getUserIdByMedecinId(medecinId: string): Promise<string | null> {
-    const r = await db.query(`SELECT utilisateur_id FROM medecin WHERE idMedecin = $1`, [medecinId]);
+    const r = await db.query(`SELECT utilisateur_id FROM medecin WHERE idmedecin = $1`, [medecinId]);
     if (r.rows.length === 0) return null;
     return r.rows[0].utilisateur_id as string;
   }
@@ -312,7 +312,7 @@ export class AuthRepository {
       INNER JOIN medecin m ON u.idUtilisateur = m.utilisateur_id
       LEFT JOIN medecin_cabinet mc ON m.idMedecin = mc.medecin_id
       LEFT JOIN cabinet c ON mc.cabinet_id = c.idCabinet
-      WHERE EXISTS (SELECT 1 FROM medecin m2 WHERE m2.utilisateur_id = u.idUtilisateur)
+      WHERE EXISTS (SELECT 1 FROM medecin m2 WHERE m2.utilisateur_id = u.idutilisateur)
     `;
     const params: any[] = [];
     let paramCount = 0;
@@ -465,7 +465,7 @@ export class AuthRepository {
     updates.push(`derniereconnexion = NOW()`);
     values.push(userId);
 
-    const query = `UPDATE utilisateur SET ${updates.join(', ')} WHERE idUtilisateur = $${paramCount} RETURNING *`;
+    const query = `UPDATE utilisateur SET ${updates.join(', ')} WHERE idutilisateur = $${paramCount} RETURNING *`;
     const result = await db.query(query, values);
     return result.rows[0];
   }

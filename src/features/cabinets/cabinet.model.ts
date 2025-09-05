@@ -3,22 +3,22 @@
  */
 
 export interface Cabinet {
-  idCabinet?: string;
+  idcabinet?: string;
   nom: string;
   adresse?: string;
   telephone?: string;
   email?: string;
   logo?: string;
-  horairesOuverture?: any; // JSONB
-  dateCreation?: Date;
+  horairesouverture?: any; // JSONB
+  actif?: boolean;
 }
 
 export interface AdminCabinet {
-  idAdminCabinet?: string;
+  idadmincabinet?: string;
   utilisateur_id: string;
   cabinet_id: string;
-  roleAdmin: string;
-  dateAffectation?: Date;
+  roleadmin: string;
+  dateaffectation?: Date;
 }
 
 export interface CreateCabinetRequest {
@@ -27,7 +27,7 @@ export interface CreateCabinetRequest {
   telephone?: string;
   email?: string;
   logo?: string;
-  horairesOuverture?: any;
+  horairesouverture?: any;
 }
 
 export interface CreateAdminCabinetRequest {
@@ -37,7 +37,7 @@ export interface CreateAdminCabinetRequest {
   prenom?: string;
   telephone?: string;
   cabinetId: string;
-  roleAdmin: string;
+  roleadmin: string;
 }
 
 export interface CabinetResponse {

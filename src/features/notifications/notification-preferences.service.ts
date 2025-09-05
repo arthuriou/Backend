@@ -40,8 +40,8 @@ export class NotificationPreferencesService {
       }
     }
 
-    if (updateData.soundFile !== undefined) {
-      if (!updateData.soundFile.startsWith('/sounds/')) {
+    if (updateData.soundfile !== undefined) {
+      if (!updateData.soundfile.startsWith('/sounds/')) {
         throw new Error("Le fichier son doit être dans le dossier /sounds/");
       }
     }
@@ -63,13 +63,13 @@ export class NotificationPreferencesService {
     }
 
     const defaultPreferences: UpdateNotificationPreferencesRequest = {
-      soundEnabled: true,
-      soundFile: '/sounds/notification.mp3',
+      soundenabled: true,
+      soundfile: '/sounds/notification.mp3',
       volume: 0.7,
       vibration: true,
-      pushEnabled: false,
-      emailEnabled: true,
-      smsEnabled: false
+      pushenabled: false,
+      emailenabled: true,
+      smsenabled: false
     };
 
     return await this.updatePreferences(utilisateurId, defaultPreferences);

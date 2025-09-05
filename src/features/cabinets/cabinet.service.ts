@@ -14,7 +14,7 @@ export class CabinetService {
 
   // Créer un cabinet
   async createCabinet(data: CreateCabinetRequest): Promise<Cabinet> {
-    const { nom, adresse, telephone, email, logo, horairesOuverture } = data;
+    const { nom, adresse, telephone, email, logo, horairesouverture } = data;
 
     if (!nom) {
       throw new Error("Le nom du cabinet est requis");
@@ -26,7 +26,7 @@ export class CabinetService {
       telephone,
       email,
       logo,
-      horairesOuverture
+      horairesouverture
     );
 
     return cabinet;
@@ -34,7 +34,7 @@ export class CabinetService {
 
   // Créer un AdminCabinet
   async createAdminCabinet(data: CreateAdminCabinetRequest): Promise<{ user: any; adminCabinet: AdminCabinet }> {
-    const { email, motdepasse, nom, prenom, telephone, cabinetId, roleAdmin } = data;
+    const { email, motdepasse, nom, prenom, telephone, cabinetId, roleadmin } = data;
 
     // Vérifier que le cabinet existe
     const cabinet = await this.repository.getCabinetById(cabinetId);
@@ -60,9 +60,9 @@ export class CabinetService {
 
     // Créer l'AdminCabinet
     const adminCabinet = await this.repository.createAdminCabinet(
-      user.idUtilisateur,
+      user.idutilisateur,
       cabinetId,
-      roleAdmin
+      roleadmin
     );
 
     return { user, adminCabinet };

@@ -13,6 +13,7 @@ export interface User {
   datecreation?: Date;
   derniereconnexion?: Date;
   actif: boolean;
+  mustchangepassword?: boolean;
   role?: string;
 }
 
@@ -39,7 +40,9 @@ export interface Medecin {
 export interface AdminCabinet {
   idadmincabinet?: string;
   utilisateur_id: string;
+  cabinet_id?: string;
   roleadmin: string;
+  dateaffectation?: Date;
 }
 
 export interface SuperAdmin {
