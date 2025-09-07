@@ -162,15 +162,20 @@ describe('Notifications', () => {
       .post('/api/notifications/devices')
       .set('Authorization', `Bearer ${patient.token}`)
       .send({
-        deviceToken: 'test-device-token-123',
-        platform: 'android',
+        token: 'test-device-token-123',
+        platform: 'FCM',
         appVersion: '1.0.0'
       });
 
+    if (res.status !== 200 && res.status !== 201) {
+      console.log('Erreur device registration:', res.status, res.body);
+    }
     expect([200, 201]).toContain(res.status);
-    expect(res.body?.data).toHaveProperty('iddevice');
-    expect(res.body?.data?.devicetoken).toBe('test-device-token-123');
-    expect(res.body?.data?.platform).toBe('android');
+    if (res.status === 200 || res.status === 201) {
+      expect(res.body?.data).toHaveProperty('iddevice');
+      expect(res.body?.data?.token).toBe('test-device-token-123');
+      expect(res.body?.data?.platform).toBe('FCM');
+    }
   }, 15000);
 
   it('récupère les devices enregistrés d\'un utilisateur', async () => {
@@ -181,8 +186,8 @@ describe('Notifications', () => {
       .post('/api/notifications/devices')
       .set('Authorization', `Bearer ${patient.token}`)
       .send({
-        deviceToken: 'test-device-token-456',
-        platform: 'ios',
+        token: 'test-device-token-456',
+        platform: 'APNS',
         appVersion: '1.0.0'
       });
 

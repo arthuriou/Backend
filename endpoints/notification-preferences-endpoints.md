@@ -21,17 +21,57 @@ Authorization: Bearer <token>
     "idpreference": "uuid",
     "utilisateur_id": "uuid",
     "soundenabled": true,
-    "soundFile": "/sounds/notification.mp3",
+    "soundfile": "/sounds/notification.mp3",
     "volume": 0.7,
     "vibration": true,
     "pushenabled": false,
     "emailenabled": true,
-    "smsenabled": false,
+    "smsenabled": false
   }
 }
 ```
 
-## 2. Mettre à jour les préférences
+## 2. Créer les préférences de l'utilisateur connecté
+**POST** `/`
+
+### Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+### Body (JSON)
+```json
+{
+  "soundenabled": true,
+  "soundfile": "/sounds/notification.mp3",
+  "volume": 0.7,
+  "vibration": true,
+  "pushenabled": false,
+  "emailenabled": true,
+  "smsenabled": false
+}
+```
+
+### Réponse (201)
+```json
+{
+  "message": "Préférences créées avec succès",
+  "data": {
+    "idpreference": "uuid",
+    "utilisateur_id": "uuid",
+    "soundenabled": true,
+    "soundfile": "/sounds/notification.mp3",
+    "volume": 0.7,
+    "vibration": true,
+    "pushenabled": false,
+    "emailenabled": true,
+    "smsenabled": false
+  }
+}
+```
+
+## 3. Mettre à jour les préférences
 **PUT** `/`
 
 ### Headers
@@ -44,12 +84,12 @@ Content-Type: application/json
 ```json
 {
   "soundenabled": true,
-  "soundFile": "/sounds/ding.mp3",
+  "soundfile": "/sounds/ding.mp3",
   "volume": 0.8,
   "vibration": false,
   "pushenabled": true,
   "emailenabled": false,
-  "smsEnabled": true
+  "smsenabled": true
 }
 ```
 
@@ -61,7 +101,7 @@ Content-Type: application/json
     "idpreference": "uuid",
     "utilisateur_id": "uuid",
     "soundenabled": true,
-    "soundFile": "/sounds/ding.mp3",
+    "soundfile": "/sounds/ding.mp3",
     "volume": 0.8,
     "vibration": false,
     "pushenabled": true,
@@ -72,7 +112,7 @@ Content-Type: application/json
 }
 ```
 
-## 3. Réinitialiser aux préférences par défaut
+## 4. Réinitialiser aux préférences par défaut
 **POST** `/reset`
 
 ### Headers
@@ -88,7 +128,7 @@ Authorization: Bearer <token>
     "idpreference": "uuid",
     "utilisateur_id": "uuid",
     "soundenabled": true,
-    "soundFile": "/sounds/notification.mp3",
+    "soundfile": "/sounds/notification.mp3",
     "volume": 0.7,
     "vibration": true,
     "pushenabled": false,
@@ -99,7 +139,7 @@ Authorization: Bearer <token>
 }
 ```
 
-## 4. Supprimer les préférences
+## 5. Supprimer les préférences
 **DELETE** `/`
 
 ### Headers
@@ -115,17 +155,17 @@ Authorization: Bearer <token>
 ```
 
 ## Valeurs par défaut
-- **soundEnabled**: `true`
-- **soundFile**: `/sounds/notification.mp3`
+- **soundenabled**: `true`
+- **soundfile**: `/sounds/notification.mp3`
 - **volume**: `0.7` (70%)
 - **vibration**: `true`
-- **pushEnabled**: `false`
-- **emailEnabled**: `true`
-- **smsEnabled**: `false`
+- **pushenabled**: `false`
+- **emailenabled**: `true`
+- **smsenabled**: `false`
 
 ## Validation
 - **volume**: Doit être entre 0 et 1
-- **soundFile**: Doit commencer par `/sounds/`
+- **soundfile**: Doit commencer par `/sounds/`
 - **Tous les champs booléens**: `true` ou `false`
 
 ## Codes d'erreur
@@ -172,22 +212,88 @@ const resetPreferences = async () => {
 };
 ```
 
-## 5. Gestion des devices (push)
+## 6. Gestion des devices (push)
 
-- Enregistrer un device
-  - **POST** `/api/notifications/devices`
-  - Body JSON:
-  ```json
-  {
-    "platform": "EXPO",
-    "token": "ExponentPushToken[xxx]",
-    "appVersion": "1.0.0",
-    "deviceInfo": "Android 14, Pixel 7"
+### Enregistrer un device
+**POST** `/api/notifications/devices`
+
+#### Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+#### Body (JSON)
+```json
+{
+  "platform": "FCM",
+  "token": "test-device-token-123",
+  "appVersion": "1.0.0",
+  "deviceInfo": "Android 14, Pixel 7"
+}
+```
+
+#### Réponse (201)
+```json
+{
+  "message": "Device enregistré",
+  "data": {
+    "iddevice": "uuid",
+    "utilisateur_id": "uuid",
+    "platform": "FCM",
+    "token": "test-device-token-123",
+    "appversion": "1.0.0",
+    "deviceinfo": "Android 14, Pixel 7",
+    "datecreation": "2024-01-15T11:30:00Z",
+    "datemodification": "2024-01-15T11:30:00Z"
   }
-  ```
+}
+```
 
-- Lister mes devices
-  - **GET** `/api/notifications/devices`
+### Lister mes devices
+**GET** `/api/notifications/devices`
 
-- Supprimer un device
-  - **DELETE** `/api/notifications/devices/:token`
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Devices utilisateur",
+  "data": [
+    {
+      "iddevice": "uuid",
+      "utilisateur_id": "uuid",
+      "platform": "FCM",
+      "token": "test-device-token-123",
+      "appversion": "1.0.0",
+      "deviceinfo": "Android 14, Pixel 7",
+      "datecreation": "2024-01-15T11:30:00Z",
+      "datemodification": "2024-01-15T11:30:00Z"
+    }
+  ]
+}
+```
+
+### Supprimer un device
+**DELETE** `/api/notifications/devices/:token`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Réponse (200)
+```json
+{
+  "success": true
+}
+```
+
+## Plateformes supportées
+- **FCM** : Firebase Cloud Messaging (Android)
+- **APNS** : Apple Push Notification Service (iOS)
+- **EXPO** : Expo Push Notifications
+- **WEB** : Web Push Notifications

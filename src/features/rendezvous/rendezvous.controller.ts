@@ -16,7 +16,7 @@ export class RendezVousController {
 
   // Créer un rendez-vous
   async createRendezVous(req: Request, res: Response): Promise<void> {
-    const requiredFields = ["patient_id", "medecin_id", "dateHeure", "duree", "motif"];
+    const requiredFields = ["patient_id", "medecin_id", "dateheure", "duree", "motif"];
     const missingFields = getMissingFields(req.body, requiredFields);
     
     if (missingFields.length > 0) {

@@ -24,6 +24,23 @@ export class NotificationPreferencesService {
     return preferences;
   }
 
+  // Créer les préférences d'un utilisateur
+  async createPreferences(utilisateurId: string, data: any): Promise<NotificationPreferences> {
+    if (!utilisateurId) {
+      throw new Error("ID utilisateur requis");
+    }
+
+    // Vérifier que les préférences n'existent pas déjà
+    const existingPreferences = await this.repository.getPreferencesByUser(utilisateurId);
+    if (existingPreferences) {
+      throw new Error("Les préférences existent déjà pour cet utilisateur");
+    }
+
+    // Créer les préférences avec les données fournies
+    const preferences = await this.repository.createPreferences(utilisateurId, data);
+    return preferences;
+  }
+
   // Mettre à jour les préférences
   async updatePreferences(
     utilisateurId: string, 

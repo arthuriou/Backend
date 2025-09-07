@@ -32,6 +32,29 @@ export class NotificationPreferencesController {
     }
   }
 
+  // Créer les préférences de l'utilisateur connecté
+  async createPreferences(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId;
+      
+      if (!userId) {
+        res.status(401).json({ message: "Utilisateur non authentifié" });
+        return;
+      }
+
+      const preferences = await this.service.createPreferences(userId, req.body);
+      
+      res.status(201).json({
+        message: "Préférences créées avec succès",
+        data: preferences
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur"
+      });
+    }
+  }
+
   // Mettre à jour les préférences
   async updatePreferences(req: Request, res: Response): Promise<void> {
     try {

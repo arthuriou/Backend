@@ -15,6 +15,12 @@ router.get("/",
   controller.getPreferences.bind(controller)
 );
 
+// Créer les préférences de l'utilisateur connecté
+router.post("/", 
+  authenticateToken, 
+  controller.createPreferences.bind(controller)
+);
+
 // Mettre à jour les préférences
 router.put("/", 
   authenticateToken, 

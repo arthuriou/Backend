@@ -24,6 +24,30 @@ export class NotificationPreferencesRepository {
     return result.rows[0];
   }
 
+  // Créer les préférences avec des données personnalisées
+  async createPreferences(utilisateurId: string, data: any): Promise<NotificationPreferences> {
+    const query = `
+      INSERT INTO preferences_notification (
+        utilisateur_id, soundenabled, soundfile, volume, vibration,
+        pushenabled, emailenabled, smsenabled
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `;
+    const values = [
+      utilisateurId,
+      data.soundenabled ?? true,
+      data.soundfile ?? '/sounds/notification.mp3',
+      data.volume ?? 0.7,
+      data.vibration ?? true,
+      data.pushenabled ?? false,
+      data.emailenabled ?? true,
+      data.smsenabled ?? false
+    ];
+    const result = await db.query<NotificationPreferences>(query, values);
+    return result.rows[0];
+  }
+
   // Mettre à jour les préférences
   async updatePreferences(
     utilisateurId: string, 
