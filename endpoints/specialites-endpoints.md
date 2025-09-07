@@ -27,7 +27,7 @@ Content-Type: application/json
 {
   "message": "Spécialité créée avec succès",
   "data": {
-    "idSpecialite": "uuid",
+    "idspecialite": "uuid",
     "nom": "Cardiologie",
     "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
   }
@@ -52,7 +52,7 @@ Authorization: Bearer <token>
   "message": "Spécialités récupérées avec succès",
   "data": [
     {
-      "idSpecialite": "uuid",
+      "idspecialite": "uuid",
       "nom": "Cardiologie",
       "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
     }
@@ -73,7 +73,7 @@ Authorization: Bearer <token>
 {
   "message": "Spécialité récupérée avec succès",
   "data": {
-    "idSpecialite": "uuid",
+    "idspecialite": "uuid",
     "nom": "Cardiologie",
     "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
   }
@@ -93,7 +93,7 @@ Authorization: Bearer <token>
 {
   "message": "Spécialité récupérée avec succès",
   "data": {
-    "idSpecialite": "uuid",
+    "idspecialite": "uuid",
     "nom": "Cardiologie",
     "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins",
     "nombre_medecins": 5,
@@ -116,7 +116,7 @@ Authorization: Bearer <token>
     ],
     "maux": [
       {
-        "idMaux": "uuid",
+        "idmaux": "uuid",
         "nom": "Douleur thoracique",
         "categorie": "Symptôme"
       }
@@ -147,7 +147,7 @@ Content-Type: application/json
 {
   "message": "Spécialité modifiée avec succès",
   "data": {
-    "idSpecialite": "uuid",
+    "idspecialite": "uuid",
     "nom": "Cardiologie Avancée",
     "description": "Spécialité médicale avancée qui traite les maladies du cœur et des vaisseaux sanguins"
   }
@@ -192,7 +192,7 @@ Authorization: Bearer <token>
   "message": "Recherche de spécialités effectuée avec succès",
   "data": [
     {
-      "idSpecialite": "uuid",
+      "idspecialite": "uuid",
       "nom": "Cardiologie",
       "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins",
       "nombre_medecins": 5,
@@ -226,7 +226,7 @@ Content-Type: application/json
 {
   "message": "Mal créé avec succès",
   "data": {
-    "idMaux": "uuid",
+    "idmaux": "uuid",
     "nom": "Douleur thoracique",
     "description": "Sensation de douleur ou d'inconfort dans la poitrine",
     "categorie": "Symptôme"
@@ -252,7 +252,7 @@ Authorization: Bearer <token>
   "message": "Maux récupérés avec succès",
   "data": [
     {
-      "idMaux": "uuid",
+      "idmaux": "uuid",
       "nom": "Douleur thoracique",
       "description": "Sensation de douleur ou d'inconfort dans la poitrine",
       "categorie": "Symptôme"
@@ -274,7 +274,7 @@ Authorization: Bearer <token>
 {
   "message": "Mal récupéré avec succès",
   "data": {
-    "idMaux": "uuid",
+    "idmaux": "uuid",
     "nom": "Douleur thoracique",
     "description": "Sensation de douleur ou d'inconfort dans la poitrine",
     "categorie": "Symptôme"
@@ -295,14 +295,14 @@ Authorization: Bearer <token>
 {
   "message": "Mal récupéré avec succès",
   "data": {
-    "idMaux": "uuid",
+    "idmaux": "uuid",
     "nom": "Douleur thoracique",
     "description": "Sensation de douleur ou d'inconfort dans la poitrine",
     "categorie": "Symptôme",
     "nombre_specialites": 3,
     "specialites": [
       {
-        "idSpecialite": "uuid",
+        "idspecialite": "uuid",
         "nom": "Cardiologie",
         "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
       }
@@ -334,7 +334,7 @@ Content-Type: application/json
 {
   "message": "Mal modifié avec succès",
   "data": {
-    "idMaux": "uuid",
+    "idmaux": "uuid",
     "nom": "Douleur thoracique aiguë",
     "description": "Sensation de douleur ou d'inconfort intense dans la poitrine",
     "categorie": "Symptôme urgent"
@@ -378,7 +378,7 @@ Authorization: Bearer <token>
   "message": "Recherche de maux effectuée avec succès",
   "data": [
     {
-      "idMaux": "uuid",
+      "idmaux": "uuid",
       "nom": "Douleur thoracique",
       "description": "Sensation de douleur ou d'inconfort dans la poitrine",
       "categorie": "Symptôme",
@@ -542,7 +542,7 @@ Authorization: Bearer <token>
       "email": "jean.martin@email.com",
       "specialites": [
         {
-          "idSpecialite": "uuid",
+          "idspecialite": "uuid",
           "nom": "Cardiologie",
           "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
         }
@@ -575,7 +575,7 @@ Authorization: Bearer <token>
       "adresse": "123 Rue de la Santé",
       "specialites": [
         {
-          "idSpecialite": "uuid",
+          "idspecialite": "uuid",
           "nom": "Cardiologie",
           "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
         }

@@ -18,14 +18,14 @@ Authorization: Bearer <token>
 {
   "message": "Préférences récupérées avec succès",
   "data": {
-    "idPreference": "uuid",
+    "idpreference": "uuid",
     "utilisateur_id": "uuid",
-    "soundEnabled": true,
+    "soundenabled": true,
     "soundFile": "/sounds/notification.mp3",
     "volume": 0.7,
     "vibration": true,
-    "pushEnabled": false,
-    "emailEnabled": true,
+    "pushenabled": false,
+    "emailenabled": true,
     "smsenabled": false,
   }
 }
@@ -43,12 +43,12 @@ Content-Type: application/json
 ### Body (JSON) - Tous les champs sont optionnels
 ```json
 {
-  "soundEnabled": true,
+  "soundenabled": true,
   "soundFile": "/sounds/ding.mp3",
   "volume": 0.8,
   "vibration": false,
-  "pushEnabled": true,
-  "emailEnabled": false,
+  "pushenabled": true,
+  "emailenabled": false,
   "smsEnabled": true
 }
 ```
@@ -58,16 +58,16 @@ Content-Type: application/json
 {
   "message": "Préférences mises à jour avec succès",
   "data": {
-    "idPreference": "uuid",
+    "idpreference": "uuid",
     "utilisateur_id": "uuid",
-    "soundEnabled": true,
+    "soundenabled": true,
     "soundFile": "/sounds/ding.mp3",
     "volume": 0.8,
     "vibration": false,
-    "pushEnabled": true,
-    "emailEnabled": false,
+    "pushenabled": true,
+    "emailenabled": false,
     "smsenabled": true,
-    "dateModification": "2024-01-15T11:30:00Z"
+    "datemodification": "2024-01-15T11:30:00Z"
   }
 }
 ```
@@ -85,16 +85,16 @@ Authorization: Bearer <token>
 {
   "message": "Préférences réinitialisées aux valeurs par défaut",
   "data": {
-    "idPreference": "uuid",
+    "idpreference": "uuid",
     "utilisateur_id": "uuid",
-    "soundEnabled": true,
+    "soundenabled": true,
     "soundFile": "/sounds/notification.mp3",
     "volume": 0.7,
     "vibration": true,
-    "pushEnabled": false,
-    "emailEnabled": true,
+    "pushenabled": false,
+    "emailenabled": true,
     "smsenabled": false,
-    "dateModification": "2024-01-15T11:30:00Z"
+    "datemodification": "2024-01-15T11:30:00Z"
   }
 }
 ```

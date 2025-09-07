@@ -19,7 +19,7 @@ Content-Type: application/json
 {
   "patient_id": "uuid",
   "medecin_id": "uuid",
-  "dateHeure": "2024-01-15T10:00:00Z",
+  "dateheure": "2024-01-15T10:00:00Z",
   "duree": 30,
   "motif": "Consultation de routine",
   "creneau_id": "uuid" // Optionnel
@@ -31,11 +31,11 @@ Content-Type: application/json
 {
   "message": "Rendez-vous créé avec succès",
   "data": {
-    "idRendezVous": "uuid",
+    "idrendezvous": "uuid",
     "patient_id": "uuid",
     "medecin_id": "uuid",
     "creneau_id": "uuid",
-    "dateHeure": "2024-01-15T10:00:00Z",
+    "dateheure": "2024-01-15T10:00:00Z",
     "duree": 30,
     "motif": "Consultation de routine",
     "statut": "EN_ATTENTE"
@@ -56,10 +56,10 @@ Authorization: Bearer <token>
 {
   "message": "Rendez-vous récupéré avec succès",
   "data": {
-    "idRendezVous": "uuid",
+    "idrendezvous": "uuid",
     "patient_id": "uuid",
     "medecin_id": "uuid",
-    "dateHeure": "2024-01-15T10:00:00Z",
+    "dateheure": "2024-01-15T10:00:00Z",
     "duree": 30,
     "motif": "Consultation de routine",
     "statut": "CONFIRME",
@@ -77,7 +77,7 @@ Authorization: Bearer <token>
       "specialites": ["Médecine générale"]
     },
     "creneau": {
-      "idCreneau": "uuid",
+      "idcreneau": "uuid",
       "agenda_id": "uuid",
       "debut": "2024-01-15T10:00:00Z",
       "fin": "2024-01-15T10:30:00Z",
@@ -101,10 +101,10 @@ Authorization: Bearer <token>
   "message": "Rendez-vous du patient récupérés avec succès",
   "data": [
     {
-      "idRendezVous": "uuid",
+      "idrendezvous": "uuid",
       "patient_id": "uuid",
       "medecin_id": "uuid",
-      "dateHeure": "2024-01-15T10:00:00Z",
+      "dateheure": "2024-01-15T10:00:00Z",
       "duree": 30,
       "motif": "Consultation de routine",
       "statut": "CONFIRME",
@@ -129,10 +129,10 @@ Authorization: Bearer <token>
   "message": "Rendez-vous du médecin récupérés avec succès",
   "data": [
     {
-      "idRendezVous": "uuid",
+      "idrendezvous": "uuid",
       "patient_id": "uuid",
       "medecin_id": "uuid",
-      "dateHeure": "2024-01-15T10:00:00Z",
+      "dateheure": "2024-01-15T10:00:00Z",
       "duree": 30,
       "motif": "Consultation de routine",
       "statut": "CONFIRME",
@@ -155,7 +155,7 @@ Content-Type: application/json
 ### Body (JSON)
 ```json
 {
-  "dateHeure": "2024-01-15T14:00:00Z",
+  "dateheure": "2024-01-15T14:00:00Z",
   "duree": 45,
   "motif": "Consultation urgente",
   "statut": "CONFIRME"
@@ -167,10 +167,10 @@ Content-Type: application/json
 {
   "message": "Rendez-vous modifié avec succès",
   "data": {
-    "idRendezVous": "uuid",
+    "idrendezvous": "uuid",
     "patient_id": "uuid",
     "medecin_id": "uuid",
-    "dateHeure": "2024-01-15T14:00:00Z",
+    "dateheure": "2024-01-15T14:00:00Z",
     "duree": 45,
     "motif": "Consultation urgente",
     "statut": "CONFIRME"
@@ -191,7 +191,7 @@ Authorization: Bearer <token>
 {
   "message": "Rendez-vous confirmé avec succès",
   "data": {
-    "idRendezVous": "uuid",
+    "idrendezvous": "uuid",
     "statut": "CONFIRME"
   }
 }
@@ -225,7 +225,7 @@ Authorization: Bearer <token>
 {
   "message": "Rendez-vous terminé avec succès",
   "data": {
-    "idRendezVous": "uuid",
+    "idrendezvous": "uuid",
     "statut": "TERMINE"
   }
 }
@@ -255,7 +255,7 @@ Content-Type: application/json
 {
   "message": "Créneau créé avec succès",
   "data": {
-    "idCreneau": "uuid",
+    "idcreneau": "uuid",
     "agenda_id": "uuid",
     "debut": "2024-01-15T09:00:00Z",
     "fin": "2024-01-15T09:30:00Z",
@@ -273,13 +273,13 @@ Content-Type: application/json
   "message": "Créneaux disponibles récupérés avec succès",
   "data": [
     {
-      "idCreneau": "uuid",
+      "idcreneau": "uuid",
       "agenda_id": "uuid",
       "debut": "2024-01-15T09:00:00Z",
       "fin": "2024-01-15T09:30:00Z",
       "disponible": true,
       "agenda": {
-        "idAgenda": "uuid",
+        "idagenda": "uuid",
         "libelle": "Consultations matin",
         "medecin": {
           "idMedecin": "uuid",
@@ -314,7 +314,7 @@ Content-Type: application/json
 {
   "message": "Agenda créé avec succès",
   "data": {
-    "idAgenda": "uuid",
+    "idagenda": "uuid",
     "medecin_id": "uuid",
     "libelle": "Consultations matin"
   }
@@ -330,7 +330,7 @@ Content-Type: application/json
   "message": "Agendas du médecin récupérés avec succès",
   "data": [
     {
-      "idAgenda": "uuid",
+      "idagenda": "uuid",
       "medecin_id": "uuid",
       "libelle": "Consultations matin",
       "medecin": {
@@ -341,7 +341,7 @@ Content-Type: application/json
       },
       "creneaux": [
         {
-          "idCreneau": "uuid",
+          "idcreneau": "uuid",
           "agenda_id": "uuid",
           "debut": "2024-01-15T09:00:00Z",
           "fin": "2024-01-15T09:30:00Z",

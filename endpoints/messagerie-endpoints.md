@@ -39,7 +39,7 @@ Content-Type: application/json
 {
   "message": "Conversation récupérée avec succès",
   "data": {
-    "idConversation": "uuid",
+    "idconversation": "uuid",
     "type_conversation": "PRIVEE",
     "titre": null,
     "cabinet_id": null,
@@ -79,12 +79,12 @@ Authorization: Bearer <token>
   "message": "Conversations récupérées avec succès",
   "data": [
     {
-      "idConversation": "uuid",
+      "idconversation": "uuid",
       "type_conversation": "PRIVEE",
       "titre": null,
       "participants": [...],
       "dernier_message": {
-        "idMessage": "uuid",
+        "idmessage": "uuid",
         "contenu": "Bonjour, j'ai une question...",
         "dateEnvoi": "2024-01-15T11:30:00Z",
         "expediteur": {
@@ -111,7 +111,7 @@ Authorization: Bearer <token>
 {
   "message": "Conversation récupérée avec succès",
   "data": {
-    "idConversation": "uuid",
+    "idconversation": "uuid",
     "type_conversation": "PRIVEE",
     "participants": [...],
     "dernier_message": {...}
@@ -195,12 +195,12 @@ Authorization: Bearer <token>
 {
   "message": "Message envoyé avec succès",
   "data": {
-    "idMessage": "uuid",
+    "idmessage": "uuid",
     "conversation_id": "uuid",
     "expediteur_id": "uuid",
     "contenu": "Bonjour, j'ai une question concernant mon rendez-vous",
     "type_message": "TEXTE",
-    "dateEnvoi": "2024-01-15T12:00:00Z",
+    "dateenvoi": "2024-01-15T12:00:00Z",
     "expediteur": {
       "idutilisateur": "uuid",
       "nom": "Dupont",
@@ -231,7 +231,7 @@ Authorization: Bearer <token>
   "message": "Messages récupérés avec succès",
   "data": [
     {
-      "idMessage": "uuid",
+      "idmessage": "uuid",
       "conversation_id": "uuid",
       "expediteur_id": "uuid",
       "contenu": "Bonjour, j'ai une question...",
@@ -244,7 +244,7 @@ Authorization: Bearer <token>
         "role": "PATIENT"
       },
       "reponse_a_message": {
-        "idMessage": "uuid",
+        "idmessage": "uuid",
         "contenu": "Message précédent",
         "expediteur": {
           "nom": "Martin",
@@ -288,9 +288,9 @@ Content-Type: application/json
 {
   "message": "Message modifié avec succès",
   "data": {
-    "idMessage": "uuid",
+    "idmessage": "uuid",
     "contenu": "Message modifié",
-    "dateModification": "2024-01-15T12:30:00Z"
+    "datemodification": "2024-01-15T12:30:00Z"
   }
 }
 ```
