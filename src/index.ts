@@ -97,6 +97,7 @@ app.use("/api/v1/mobile/specialites", specialitesRoutes);
 app.use("/api/v1/mobile/notifications/preferences", notificationPreferencesRoutes);
 app.use("/api/v1/mobile/notifications", devicesRoutes);
 app.use("/api/v1/mobile/dossier-medical", dossierMedicalRoutes);
+app.use("/api/v1/mobile/ordonnances", ordonnancesRoutes);
 
 app.use("/api/v1/dashboard/auth", authRoutes);
 app.use("/api/v1/dashboard/cabinets", cabinetRoutes);
@@ -106,9 +107,11 @@ app.use("/api/v1/dashboard/specialites", specialitesRoutes);
 app.use("/api/v1/dashboard/notifications/preferences", notificationPreferencesRoutes);
 app.use("/api/v1/dashboard/notifications", devicesRoutes);
 app.use("/api/v1/dashboard/dossier-medical", dossierMedicalRoutes);
+app.use("/api/v1/dashboard/ordonnances", ordonnancesRoutes);
 
 // Routes Ordonnances
 app.use("/api/ordonnances", ordonnancesRoutes);
+app.use("/api/v1/ordonnances", ordonnancesRoutes);
 
 // Démarrage (pas d'écoute en mode test)
 if (process.env.NODE_ENV !== 'test') {

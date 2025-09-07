@@ -56,6 +56,38 @@ export class OrdonnancesController {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   }
+
+  async getByPatient(req: Request, res: Response) {
+    try {
+      const { patientId } = req.params;
+      if (!patientId) return res.status(400).json({ message: "patientId requis" });
+      const ordonnances = await service.getByPatient(patientId);
+      res.json({ ordonnances });
+    } catch (error: any) {
+      res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
+  }
+
+  async getByMedecin(req: Request, res: Response) {
+    try {
+      const { medecinId } = req.params;
+      if (!medecinId) return res.status(400).json({ message: "medecinId requis" });
+      const ordonnances = await service.getByMedecin(medecinId);
+      res.json({ ordonnances });
+    } catch (error: any) {
+      res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
+  }
+
+  async valider(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const updated = await service.valider(id);
+      res.json({ message: "Ordonnance validée", ordonnance: updated });
+    } catch (error: any) {
+      res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
+  }
 }
 
 export default new OrdonnancesController();

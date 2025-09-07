@@ -31,6 +31,18 @@ export class OrdonnancesService {
   async remove(id: string) {
     return this.repo.deleteOrdonnance(id);
   }
+
+  async getByPatient(patientId: string) {
+    return this.repo.getByPatient(patientId);
+  }
+
+  async getByMedecin(medecinId: string) {
+    return this.repo.getByMedecin(medecinId);
+  }
+
+  async valider(id: string) {
+    return this.repo.validerOrdonnance(id);
+  }
 }
 
 

@@ -1,5 +1,5 @@
 import { NotificationPreferences, UpdateNotificationPreferencesRequest } from "./notification-preferences.model";
-import db from "../../utils/database";
+import db from "../../shared/database/client";
 
 export class NotificationPreferencesRepository {
   
@@ -30,8 +30,8 @@ export class NotificationPreferencesRepository {
     updateData: UpdateNotificationPreferencesRequest
   ): Promise<NotificationPreferences> {
     const allowedFields = [
-      'soundEnabled', 'soundFile', 'volume', 'vibration', 
-      'pushEnabled', 'emailEnabled', 'smsEnabled'
+      'soundenabled', 'soundfile', 'volume', 'vibration', 
+      'pushenabled', 'emailenabled', 'smsenabled'
     ];
     
     const fieldsToUpdate = Object.keys(updateData).filter(field => 
@@ -47,7 +47,7 @@ export class NotificationPreferencesRepository {
 
     const query = `
       UPDATE preferences_notification 
-      SET ${setClause}, dateModification = now() 
+      SET ${setClause}, datemodification = now() 
       WHERE utilisateur_id = $1 
       RETURNING *
     `;
