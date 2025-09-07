@@ -109,7 +109,7 @@ Authorization: Bearer <token>
     ],
     "cabinets": [
       {
-        "idCabinet": "uuid",
+        "idcabinet": "uuid",
         "nom": "Cabinet Cardiologie",
         "adresse": "123 Rue de la Santé"
       }
@@ -570,7 +570,7 @@ Authorization: Bearer <token>
   "message": "Cabinets trouvés avec succès",
   "data": [
     {
-      "idCabinet": "uuid",
+      "idcabinet": "uuid",
       "nom": "Cabinet Cardiologie",
       "adresse": "123 Rue de la Santé",
       "specialites": [

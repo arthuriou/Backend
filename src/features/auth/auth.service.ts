@@ -1,7 +1,7 @@
 import { AuthRepository } from "./auth.repository";
 import { User, Patient, Medecin } from "./auth.model";
 import bcrypt from 'bcrypt';
-import { generateOTP, sendOTPEmail } from '../../shared/utils/mail';
+import { generateOTP, sendOTPEmail, sendValidationEmail } from '../../shared/utils/mail';
 import { generateToken, JWTPayload, generateRefreshToken, verifyRefreshToken } from '../../shared/utils/jwt.utils';
 import db from '../../shared/database/client';
 
@@ -87,14 +87,18 @@ export class AuthService {
       telephone
     );
 
-    await this.repository.createMedecin(
+    const medecin = await this.repository.createMedecin(
       newUser.idutilisateur!,
       numordre,
       experience,
       biographie
     );
 
-    return newUser;
+    // Retourner l'utilisateur avec l'ID du médecin
+    return {
+      ...newUser,
+      medecinId: medecin.idmedecin
+    } as User & { medecinId: string };
   }
 
   async login(email: string, motdepasse: string): Promise<{ user: User; token: string; refreshToken: string }> {
@@ -108,12 +112,19 @@ export class AuthService {
       throw { statusCode: 401, message: "Email ou mot de passe incorrect" };
     }
 
-    if (!user.actif) {
-      throw { statusCode: 403, message: "Compte non vérifié. Veuillez valider l'OTP." };
-    }
-
     // Déterminer le rôle de l'utilisateur
     const userRole = await this.repository.getUserRole(user.idutilisateur!);
+
+    if (!user.actif) {
+      // Message différent selon le rôle
+      if (userRole === 'PATIENT') {
+        throw { statusCode: 403, message: "Compte non vérifié. Veuillez valider l'OTP." };
+      } else if (userRole === 'MEDECIN') {
+        throw { statusCode: 403, message: "Compte créé mais en attente de validation. Vous recevrez la confirmation dans max 2H." };
+      } else {
+        throw { statusCode: 403, message: "Compte non vérifié." };
+      }
+    }
 
     // Générer le token JWT
     const payload: JWTPayload = {
@@ -245,9 +256,18 @@ export class AuthService {
   }
 
   // Validation médecin par SuperAdmin
-  async validateMedecin(medecinId: string, action: 'APPROVED' | 'REJECTED'): Promise<boolean> {
+  async validateMedecin(utilisateurId: string, action: 'APPROVED' | 'REJECTED'): Promise<boolean> {
     try {
-      await this.repository.validateMedecin(medecinId, action);
+      await this.repository.validateMedecin(utilisateurId, action);
+      
+      // Si approuvé, envoyer email de confirmation
+      if (action === 'APPROVED') {
+        const user = await this.repository.getUserById(utilisateurId);
+        if (user) {
+          await sendValidationEmail(user.email, user.nom);
+        }
+      }
+      
       return true;
     } catch (error) {
       console.error('Erreur validation médecin:', error);
@@ -261,6 +281,7 @@ export class AuthService {
 
 
   // Récupérer médecins en attente
+
   async getPendingMedecins(): Promise<any[]> {
     return await this.repository.getPendingMedecins();
   }

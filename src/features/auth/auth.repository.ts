@@ -169,19 +169,64 @@ export class AuthRepository {
   }
 
   // Validation médecin par SuperAdmin
-  async validateMedecin(medecinId: string, action: 'APPROVED' | 'REJECTED'): Promise<void> {
-    const query = 'UPDATE medecin SET statut = $1 WHERE idmedecin = $2';
-    await db.query(query, [action, medecinId]);
+  async validateMedecin(utilisateurId: string, action: 'APPROVED' | 'REJECTED'): Promise<void> {
+    // Vérifier d'abord si le médecin existe
+    const checkQuery = 'SELECT idmedecin, statut FROM medecin WHERE utilisateur_id = $1';
+    const checkResult = await db.query(checkQuery, [utilisateurId]);
+    
+    if (checkResult.rows.length === 0) {
+      throw new Error(`Médecin avec l'utilisateur ID ${utilisateurId} non trouvé`);
+    }
+    
+    console.log(`🔍 Médecin trouvé:`, checkResult.rows[0]);
+    
+    // Mettre à jour le statut du médecin
+    const medecinQuery = 'UPDATE medecin SET statut = $1 WHERE utilisateur_id = $2';
+    const medecinResult = await db.query(medecinQuery, [action, utilisateurId]);
+    
+    if (medecinResult.rowCount === 0) {
+      throw new Error(`Aucune ligne mise à jour pour le médecin avec utilisateur ID ${utilisateurId}`);
+    }
+    
+    console.log(`✅ Médecin mis à jour: ${medecinResult.rowCount} ligne(s) affectée(s)`);
+    
+    // Si approuvé, activer aussi l'utilisateur
+    if (action === 'APPROVED') {
+      const userQuery = 'UPDATE utilisateur SET actif = true WHERE idutilisateur = $1';
+      const userResult = await db.query(userQuery, [utilisateurId]);
+      
+      if (userResult.rowCount === 0) {
+        throw new Error(`Aucun utilisateur activé pour l'ID ${utilisateurId}`);
+      }
+      
+      console.log(`✅ Utilisateur activé: ${userResult.rowCount} ligne(s) affectée(s)`);
+    }
   }
+
+  // Récupérer un médecin par ID
+  async getMedecinById(medecinId: string): Promise<Medecin | null> {
+    const query = 'SELECT * FROM medecin WHERE idmedecin = $1';
+    const result = await db.query<Medecin>(query, [medecinId]);
+    return result.rows[0] || null;
+  }
+
+  // Récupérer un médecin par utilisateur ID
+  async getMedecinByUtilisateurId(utilisateurId: string): Promise<Medecin | null> {
+    const query = 'SELECT * FROM medecin WHERE utilisateur_id = $1';
+    const result = await db.query<Medecin>(query, [utilisateurId]);
+    return result.rows[0] || null;
+  }
+
 
   // Récupérer tous les médecins en attente
   async getPendingMedecins(): Promise<any[]> {
     const query = `
-      SELECT m.*, u.email, u.nom, u.prenom, u.telephone, u.dateCreation
+      SELECT m.idmedecin, m.utilisateur_id, m.numordre, m.experience, m.biographie, m.statut,
+             u.email, u.nom, u.prenom, u.telephone, u.datecreation
       FROM medecin m
-      JOIN utilisateur u ON m.utilisateur_id = u.idUtilisateur
+      JOIN utilisateur u ON m.utilisateur_id = u.idutilisateur
       WHERE m.statut = 'PENDING'
-      ORDER BY u.dateCreation ASC
+      ORDER BY u.datecreation ASC
     `;
     const result = await db.query(query);
     return result.rows;

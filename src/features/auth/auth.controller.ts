@@ -365,7 +365,7 @@ export class AuthController {
 
   // Validation médecin par SuperAdmin
   async validateMedecin(req: Request, res: Response): Promise<void> {
-    const requiredFields = ["medecinId", "action"];
+    const requiredFields = ["utilisateurId", "action"];
     const missingFields = getMissingFields(req.body, requiredFields);
     if (missingFields.length > 0) {
       res.status(400).json({
@@ -376,7 +376,7 @@ export class AuthController {
     }
 
     try {
-      const { medecinId, action } = req.body;
+      const { utilisateurId, action } = req.body;
       
       if (!['APPROVED', 'REJECTED'].includes(action)) {
         res.status(400).json({
@@ -385,7 +385,7 @@ export class AuthController {
         return;
       }
 
-      const success = await this.service.validateMedecin(medecinId, action);
+      const success = await this.service.validateMedecin(utilisateurId, action);
       
       if (success) {
         res.status(200).json({
@@ -402,6 +402,7 @@ export class AuthController {
       });
     }
   }
+
 
   // Récupérer médecins en attente
   async getPendingMedecins(req: Request, res: Response): Promise<void> {

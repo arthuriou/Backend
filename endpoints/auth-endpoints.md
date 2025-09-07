@@ -242,7 +242,7 @@ Authorization: Bearer <token>
 ### Body (JSON)
 ```json
 {
-  "medecinId": "uuid",
+  "utilisateurId": "uuid",
   "action": "APPROVED"
 }
 ```
@@ -519,7 +519,7 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
   "prenom": "Marie",
   "telephone": "0123456789",
   "cabinetId": "uuid-du-cabinet",
-  "roleAdmin": "ADMIN_PRINCIPAL"
+  "roleadmin": "ADMIN_PRINCIPAL"
 }
 ```
 
@@ -529,20 +529,19 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
   "message": "AdminCabinet créé avec succès",
   "data": {
     "user": {
-      "idUtilisateur": "uuid",
+      "idutilisateur": "uuid",
       "email": "admin@cabinet-central.tg",
       "nom": "Dupont",
       "prenom": "Marie",
       "telephone": "0123456789",
-      "dateCreation": "2024-01-15T10:30:00.000Z",
       "statut": "ACTIF"
     },
     "adminCabinet": {
       "idAdminCabinet": "uuid",
       "utilisateur_id": "uuid",
       "cabinet_id": "uuid-du-cabinet",
-      "roleAdmin": "ADMIN_PRINCIPAL",
-      "dateAttribution": "2024-01-15T10:30:00.000Z"
+      "roleadmin": "ADMIN_PRINCIPAL",
+      "dateaffectation": "2024-01-15T10:30:00.000Z"
     }
   }
 }
@@ -670,7 +669,7 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
   "message": "Cabinets de l'AdminCabinet récupérés avec succès",
   "data": [
     {
-      "idCabinet": "uuid",
+      "idcabinet": "uuid",
       "nom": "Cabinet Médical Central",
       "adresse": "123 Avenue de la Santé, Lomé",
       "telephone": "+228 22 12 34 56",
@@ -678,7 +677,6 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
       "siteWeb": "https://cabinet-central.tg",
       "description": "Cabinet médical moderne",
       "specialites": "[\"Cardiologie\", \"Dermatologie\"]",
-      "dateCreation": "2024-01-15T10:30:00.000Z",
       "dateAttribution": "2024-01-20T14:30:00.000Z"
     }
   ]
@@ -699,7 +697,7 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
   "message": "AdminCabinet du cabinet récupérés avec succès",
   "data": [
     {
-      "idUtilisateur": "uuid",
+      "idutilisateur": "uuid",
       "email": "admin@cabinet-central.tg",
       "nom": "Dupont",
       "prenom": "Marie",

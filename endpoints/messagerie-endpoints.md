@@ -43,7 +43,6 @@ Content-Type: application/json
     "type_conversation": "PRIVEE",
     "titre": null,
     "cabinet_id": null,
-    "dateCreation": "2024-01-15T10:00:00Z",
     "participants": [
       {
         "idParticipant": "uuid",
@@ -52,7 +51,7 @@ Content-Type: application/json
         "dateRejointe": "2024-01-15T10:00:00Z",
         "actif": true,
         "utilisateur": {
-          "idUtilisateur": "uuid",
+          "idutilisateur": "uuid",
           "nom": "Dupont",
           "prenom": "Jean",
           "email": "jean.dupont@email.com",
@@ -83,7 +82,6 @@ Authorization: Bearer <token>
       "idConversation": "uuid",
       "type_conversation": "PRIVEE",
       "titre": null,
-      "dateCreation": "2024-01-15T10:00:00Z",
       "participants": [...],
       "dernier_message": {
         "idMessage": "uuid",
@@ -204,7 +202,7 @@ Authorization: Bearer <token>
     "type_message": "TEXTE",
     "dateEnvoi": "2024-01-15T12:00:00Z",
     "expediteur": {
-      "idUtilisateur": "uuid",
+      "idutilisateur": "uuid",
       "nom": "Dupont",
       "prenom": "Jean",
       "email": "jean.dupont@email.com",
@@ -240,7 +238,7 @@ Authorization: Bearer <token>
       "type_message": "TEXTE",
       "dateEnvoi": "2024-01-15T10:00:00Z",
       "expediteur": {
-        "idUtilisateur": "uuid",
+        "idutilisateur": "uuid",
         "nom": "Dupont",
         "prenom": "Jean",
         "role": "PATIENT"

@@ -89,6 +89,49 @@ export async function sendWelcomeEmail(email: string, nom: string, type: 'patien
   }
 }
 
+// Envoyer un email de validation de compte médecin
+export async function sendValidationEmail(email: string, nom: string): Promise<boolean> {
+  try {
+    if (process.env.NODE_ENV === 'test' || process.env.SMTP_DISABLE === 'true') {
+      console.log(`[TEST|DISABLED] Email de validation destiné à ${email}`);
+      return true;
+    }
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('❌ SMTP_USER/SMTP_PASS manquants dans les variables d\'environnement');
+      return false;
+    }
+    
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: 'Compte médecin validé - SantéAfrik',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2c5aa0;">🎉 Félicitations !</h2>
+          <p>Bonjour ${nom},</p>
+          <p><strong>Votre compte médecin a été validé avec succès !</strong></p>
+          <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; color: #2d5a2d;">✅ Votre compte est maintenant actif</p>
+            <p style="margin: 5px 0 0 0; color: #2d5a2d;">✅ Vous pouvez vous connecter à la plateforme</p>
+            <p style="margin: 5px 0 0 0; color: #2d5a2d;">✅ Vous pouvez commencer à recevoir des patients</p>
+          </div>
+          <p>Vous pouvez maintenant vous connecter avec vos identifiants habituels.</p>
+          <p>Bienvenue dans l'équipe SantéAfrik !</p>
+          <hr style="margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">SantéAfrik - Plateforme médicale du Togo</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email de validation envoyé à ${email}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur envoi email de validation:', error);
+    return false;
+  }
+}
+
 // Tester la connexion SMTP
 export async function testSMTPConnection(): Promise<boolean> {
   try {

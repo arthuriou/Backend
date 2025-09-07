@@ -26,9 +26,7 @@ Authorization: Bearer <token>
     "vibration": true,
     "pushEnabled": false,
     "emailEnabled": true,
-    "smsEnabled": false,
-    "dateCreation": "2024-01-15T10:00:00Z",
-    "dateModification": "2024-01-15T10:00:00Z"
+    "smsenabled": false,
   }
 }
 ```
@@ -68,8 +66,7 @@ Content-Type: application/json
     "vibration": false,
     "pushEnabled": true,
     "emailEnabled": false,
-    "smsEnabled": true,
-    "dateCreation": "2024-01-15T10:00:00Z",
+    "smsenabled": true,
     "dateModification": "2024-01-15T11:30:00Z"
   }
 }
@@ -96,8 +93,7 @@ Authorization: Bearer <token>
     "vibration": true,
     "pushEnabled": false,
     "emailEnabled": true,
-    "smsEnabled": false,
-    "dateCreation": "2024-01-15T10:00:00Z",
+    "smsenabled": false,
     "dateModification": "2024-01-15T11:30:00Z"
   }
 }

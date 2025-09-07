@@ -43,6 +43,7 @@ router.get("/super-admin/pending-medecins",
   requireRole(['SUPERADMIN']), 
   controller.getPendingMedecins.bind(controller)
 );
+
 router.post("/super-admin/validate-medecin", 
   authenticateToken, 
   requireRole(['SUPERADMIN']), 

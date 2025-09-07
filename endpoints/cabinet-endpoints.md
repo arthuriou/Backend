@@ -14,13 +14,13 @@ http://localhost:3000/api/cabinets
   "message": "Cabinets récupérés avec succès",
   "data": [
     {
-      "idCabinet": "uuid",
+      "idcabinet": "uuid",
       "nom": "Cabinet Médical Central",
       "adresse": "123 Avenue de la Santé, Lomé",
       "telephone": "0123456789",
       "email": "contact@cabinet-central.com",
       "logo": "logo-url",
-      "horairesOuverture": {
+      "horairesouverture": {
         "lundi": "08:00-18:00",
         "mardi": "08:00-18:00",
         "mercredi": "08:00-18:00",
@@ -41,13 +41,13 @@ http://localhost:3000/api/cabinets
 {
   "message": "Cabinet récupéré avec succès",
   "data": {
-    "idCabinet": "uuid",
+    "idcabinet": "uuid",
     "nom": "Cabinet Médical Central",
     "adresse": "123 Avenue de la Santé, Lomé",
     "telephone": "0123456789",
     "email": "contact@cabinet-central.com",
     "logo": "logo-url",
-    "horairesOuverture": {
+    "horairesouverture": {
       "lundi": "08:00-18:00",
       "mardi": "08:00-18:00"
     }
@@ -71,7 +71,7 @@ Authorization: Bearer <token>
   "telephone": "0123456789",
   "email": "contact@cabinet-central.com",
   "logo": "logo-url",
-  "horairesOuverture": {
+  "horairesouverture": {
     "lundi": "08:00-18:00",
     "mardi": "08:00-18:00",
     "mercredi": "08:00-18:00",
@@ -87,13 +87,13 @@ Authorization: Bearer <token>
 {
   "message": "Cabinet créé avec succès",
   "data": {
-    "idCabinet": "uuid",
+    "idcabinet": "uuid",
     "nom": "Cabinet Médical Central",
     "adresse": "123 Avenue de la Santé, Lomé",
     "telephone": "0123456789",
     "email": "contact@cabinet-central.com",
     "logo": "logo-url",
-    "horairesOuverture": {
+    "horairesouverture": {
       "lundi": "08:00-18:00",
       "mardi": "08:00-18:00"
     }
@@ -118,13 +118,12 @@ Authorization: Bearer <token>
       "idAdminCabinet": "uuid",
       "utilisateur_id": "uuid",
       "cabinet_id": "uuid",
-      "roleAdmin": "ADMIN_PRINCIPAL",
-      "dateAffectation": "2025-01-03T00:00:00.000Z",
+      "roleadmin": "ADMIN_PRINCIPAL",
+      "dateaffectation": "2025-01-03T00:00:00.000Z",
       "email": "admin@cabinet-central.com",
       "nom": "Admin",
       "prenom": "Cabinet",
       "telephone": "0987654321",
-      "dateCreation": "2025-01-03T00:00:00.000Z"
     }
   ]
 }
@@ -145,7 +144,7 @@ Authorization: Bearer <token>
   "adresse": "Nouvelle adresse",
   "telephone": "0987654321",
   "email": "nouveau@cabinet.com",
-  "horairesOuverture": {
+  "horairesouverture": {
     "lundi": "09:00-17:00",
     "mardi": "09:00-17:00"
   }
@@ -157,7 +156,7 @@ Authorization: Bearer <token>
 {
   "message": "Cabinet modifié avec succès",
   "data": {
-    "idCabinet": "uuid",
+    "idcabinet": "uuid",
     "nom": "Nouveau nom du cabinet",
     "adresse": "Nouvelle adresse",
     "telephone": "0987654321",
