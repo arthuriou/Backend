@@ -7,7 +7,8 @@
     "start": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
     "build": "tsc",
     "test": "vitest run",
-    "create-superadmin": "node src/shared/script/create-superadmin.js"
+    "create-superadmin": "node src/shared/script/create-superadmin.js",
+    "db:seed:initial": "ts-node src/shared/script/seed-initial-data.ts"
   },
   "keywords": [],
   "author": "",

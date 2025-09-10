@@ -335,7 +335,7 @@ export class AuthController {
   // Mettre à jour le profil
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.params.userId || req.body.userId;
+      const userId = (req as any).user?.userId || req.params.userId || req.body.userId;
       if (!userId) {
         res.status(400).json({
           message: "ID utilisateur requis",
