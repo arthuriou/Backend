@@ -1,9 +1,21 @@
 # 💬 API Endpoints - Messagerie
-
 ## Base URL
 ```
 http://localhost:3000/api/messagerie
 ```
+
+## Index (URLs complètes)
+- POST  http://localhost:3000/api/messagerie/conversations/private
+- GET   http://localhost:3000/api/messagerie/conversations
+- GET   http://localhost:3000/api/messagerie/conversations/:id
+- POST  http://localhost:3000/api/messagerie/conversations/:id/participants
+- DELETE http://localhost:3000/api/messagerie/conversations/:id/participants/:participantId
+- POST  http://localhost:3000/api/messagerie/conversations/:id/read
+- POST  http://localhost:3000/api/messagerie/messages
+- GET   http://localhost:3000/api/messagerie/conversations/:id/messages
+- PUT   http://localhost:3000/api/messagerie/messages/:id
+- DELETE http://localhost:3000/api/messagerie/messages/:id
+- POST  http://localhost:3000/api/messagerie/messages/:id/read
 
 ## Règles de Communication
 

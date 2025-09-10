@@ -18,10 +18,10 @@ router.post("/verify-otp", controller.verifyOTP.bind(controller));
 router.post("/resend-otp", controller.resendOTP.bind(controller));
 
 // Profil (mises à jour partielles → PATCH)
-router.patch("/profile/:userId", authenticateToken, controller.updateProfile.bind(controller));
-router.patch("/profile", authenticateToken, controller.updateProfile.bind(controller));
 router.patch("/profile/medecin", authenticateToken, controller.updateMedecinProfile.bind(controller));
 router.patch("/profile/patient", authenticateToken, controller.updatePatientProfile.bind(controller));
+router.patch("/profile/:userId", authenticateToken, controller.updateProfile.bind(controller));
+router.patch("/profile", authenticateToken, controller.updateProfile.bind(controller));
 
 // Upload photo de profil
 router.post(

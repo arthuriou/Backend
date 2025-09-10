@@ -178,11 +178,26 @@ export class AuthService {
   }
 
   async updateMedecinProfile(userId: string, update: { experience?: number; biographie?: string }) {
+    const hasAny = update.experience !== undefined || update.biographie !== undefined;
+    if (!hasAny) {
+      throw { statusCode: 400, message: 'Aucun champ médecin valide à mettre à jour' };
+    }
     await this.repository.updateMedecinProfile(userId, update);
     return true;
   }
 
   async updatePatientProfile(userId: string, update: { datenaissance?: Date; genre?: string; adresse?: string; groupesanguin?: string; poids?: number; taille?: number }) {
+    const hasAny = (
+      update.datenaissance !== undefined ||
+      update.genre !== undefined ||
+      update.adresse !== undefined ||
+      update.groupesanguin !== undefined ||
+      update.poids !== undefined ||
+      update.taille !== undefined
+    );
+    if (!hasAny) {
+      throw { statusCode: 400, message: 'Aucun champ patient valide à mettre à jour' };
+    }
     await this.repository.updatePatientProfile(userId, update);
     return true;
   }

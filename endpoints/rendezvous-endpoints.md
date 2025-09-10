@@ -5,6 +5,22 @@
 http://localhost:3000/api/rendezvous
 ```
 
+## Index (URLs complètes)
+- POST  http://localhost:3000/api/rendezvous/
+- GET   http://localhost:3000/api/rendezvous/:id
+- GET   http://localhost:3000/api/rendezvous/patient/:patientId
+- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId
+- PUT   http://localhost:3000/api/rendezvous/:id
+- PUT   http://localhost:3000/api/rendezvous/:id/confirmer
+- PUT   http://localhost:3000/api/rendezvous/:id/annuler
+- PUT   http://localhost:3000/api/rendezvous/:id/terminer
+- POST  http://localhost:3000/api/rendezvous/creneaux
+- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/creneaux-disponibles
+- POST  http://localhost:3000/api/rendezvous/agendas
+- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/agendas
+- POST  http://localhost:3000/api/rendezvous/rappels/traiter
+- POST  http://localhost:3000/api/rendezvous/rappels
+
 ## 1. Créer un rendez-vous (Patient)
 **POST** `/`
 

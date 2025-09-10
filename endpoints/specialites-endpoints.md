@@ -1,9 +1,33 @@
 # 🏥 API Endpoints - Spécialités & Maux
-
 ## Base URL
 ```
 http://localhost:3000/api/specialites
 ```
+
+## Index (URLs complètes)
+- POST  http://localhost:3000/api/specialites/specialites
+- GET   http://localhost:3000/api/specialites/specialites
+- GET   http://localhost:3000/api/specialites/specialites/:id
+- GET   http://localhost:3000/api/specialites/specialites/:id/details
+- PUT   http://localhost:3000/api/specialites/specialites/:id
+- DELETE http://localhost:3000/api/specialites/specialites/:id
+- GET   http://localhost:3000/api/specialites/specialites/search
+- POST  http://localhost:3000/api/specialites/maux
+- GET   http://localhost:3000/api/specialites/maux
+- GET   http://localhost:3000/api/specialites/maux/:id
+- GET   http://localhost:3000/api/specialites/maux/:id/details
+- PUT   http://localhost:3000/api/specialites/maux/:id
+- DELETE http://localhost:3000/api/specialites/maux/:id
+- GET   http://localhost:3000/api/specialites/maux/search
+- POST  http://localhost:3000/api/specialites/associations/medecin-specialite
+- DELETE http://localhost:3000/api/specialites/associations/medecin-specialite/:medecinId/:specialiteId
+- POST  http://localhost:3000/api/specialites/associations/cabinet-specialite
+- DELETE http://localhost:3000/api/specialites/associations/cabinet-specialite/:cabinetId/:specialiteId
+- POST  http://localhost:3000/api/specialites/associations/specialite-maux
+- DELETE http://localhost:3000/api/specialites/associations/specialite-maux/:specialiteId/:mauxId
+- GET   http://localhost:3000/api/specialites/specialites/:id/medecins
+- GET   http://localhost:3000/api/specialites/specialites/:id/cabinets
+- GET   http://localhost:3000/api/specialites/statistics
 
 ## 1. Créer une spécialité
 **POST** `/specialites`

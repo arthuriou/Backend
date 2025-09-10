@@ -1,9 +1,16 @@
 # Dossier Médical - Endpoints
 
-Base: `/api/dossier-medical`
+Base: `http://localhost:3000/api/dossier-medical`
 
 Tous les endpoints nécessitent le header d'authentification JWT:
 - `Authorization: Bearer <token>`
+
+## Index (URLs complètes)
+- GET   http://localhost:3000/api/dossier-medical/dossier/:patientId
+- GET   http://localhost:3000/api/dossier-medical/:dossierId/documents
+- POST  http://localhost:3000/api/dossier-medical/documents
+- PATCH http://localhost:3000/api/dossier-medical/documents/:id
+- DELETE http://localhost:3000/api/dossier-medical/documents/:id
 
 ---
 

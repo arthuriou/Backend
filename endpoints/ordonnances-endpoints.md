@@ -1,8 +1,17 @@
 # Ordonnances - Endpoints
 
-Base: `/api/ordonnances`
-
+Base: `http://localhost:3000/api/ordonnances`
 Auth: `Authorization: Bearer <token>`
+
+## Index (URLs complètes)
+- POST  http://localhost:3000/api/ordonnances/
+- GET   http://localhost:3000/api/ordonnances/:id
+- PATCH http://localhost:3000/api/ordonnances/:id
+- DELETE http://localhost:3000/api/ordonnances/:id
+- PUT   http://localhost:3000/api/ordonnances/:id/valider
+- GET   http://localhost:3000/api/ordonnances/consultation/:consultationId
+- GET   http://localhost:3000/api/ordonnances/patient/:patientId
+- GET   http://localhost:3000/api/ordonnances/medecin/:medecinId
 
 ---
 
