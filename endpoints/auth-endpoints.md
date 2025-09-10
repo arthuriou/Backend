@@ -232,24 +232,27 @@ Authorization: Bearer <token>
 }
 ```
 
-## 6. Upload photo de profil
+## 6. Upload photo de profil (Cloudinary uniquement)
 **POST** `http://localhost:3000/api/auth/profile/photo`
 
 ### Headers
 ```
 Authorization: Bearer <token>
-Content-Type: multipart/form-data
 ```
+Note: ne PAS définir manuellement `Content-Type`; laissez le client le définir pour le multipart.
 
-### Form-Data
-- `file`: image/jpeg | image/png
+### Form-Data (un seul des noms acceptés)
+- `file` | `photo` | `image`: image (jpeg/png/webp/gif)
+- Alternative: base64 data URL dans `file`/`photo`/`image` (ex: `data:image/jpeg;base64,...`)
 
-### Réponse (200)
+### Réponse (201)
 ```json
 {
-  "message": "Photo de profil uploadée",
+  "message": "Photo de profil mise à jour",
   "data": {
-    "photoprofil": "/uploads/profile/<filename>.jpg"
+    "url": "https://res.cloudinary.com/<cloud_name>/image/upload/...",
+    "user": {},
+    "storage": "cloudinary"
   }
 }
 ```

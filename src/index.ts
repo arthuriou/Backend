@@ -1,4 +1,5 @@
 import express from "express";
+import { configureCloudinary } from "./shared/utils/cloudinary";
 import { createServer } from "http";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -21,6 +22,8 @@ import { SchedulerService } from "./shared/services/scheduler.service";
 dotenv.config();
 
 const app = express();
+// Configure cloudinary once at startup (no-op if env missing)
+configureCloudinary();
 const server = createServer(app);
 const PORT = process.env.PORT || 3000;
 

@@ -25,13 +25,15 @@ const storage: StorageEngine = multer.diskStorage({
 });
 
 function fileFilter(_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  // Basic filter: allow common types; refine per route if needed
+  // Autoriser tous les fichiers image + quelques types communs, et fallback sur octet-stream
+  const mime = file.mimetype || '';
+  if (mime.startsWith('image/')) return cb(null, true);
   const allowed = [
-    'image/jpeg','image/png','image/webp','image/gif',
     'application/pdf','text/plain',
-    'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/octet-stream'
   ];
-  if (allowed.includes(file.mimetype)) return cb(null, true);
+  if (allowed.includes(mime)) return cb(null, true);
   cb(new Error('Type de fichier non autorisé'));
 }
 
@@ -50,5 +52,13 @@ export function publicUrl(filePath: string) {
   const rel = path.relative(baseDir, filePath).replace(/\\/g, '/');
   return `/uploads/${rel}`;
 }
+
+// Upload en mémoire (pour Cloudinary uniquement, pas d'écriture disque)
+const memoryStorage = multer.memoryStorage();
+export const uploadMemory = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter
+});
 
 

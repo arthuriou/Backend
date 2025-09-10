@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AuthController } from "./auth.controller";
 import { authenticateToken, requireRole } from "../../shared/middlewares/auth.middleware";
-import { upload, setUploadSegment } from "../../shared/utils/upload";
+import { uploadMemory, setUploadSegment } from "../../shared/utils/upload";
 
 const router = Router();
 const controller = new AuthController();
@@ -28,7 +28,12 @@ router.post(
   "/profile/photo",
   authenticateToken,
   setUploadSegment('profile'),
-  upload.single('file'),
+  // Accepte plusieurs noms de champs possibles
+  uploadMemory.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'photo', maxCount: 1 },
+    { name: 'image', maxCount: 1 }
+  ]),
   (req, res) => controller.uploadProfilePhoto(req, res)
 );
 

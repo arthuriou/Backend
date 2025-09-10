@@ -226,11 +226,39 @@ export class AuthController {
     try {
       const userId = (req as any).user?.userId || req.body.userId;
       if (!userId) { res.status(400).json({ message: 'userId requis' }); return; }
-      const file = (req as any).file as any;
-      if (!file) { res.status(400).json({ message: 'Fichier requis (champ "file")' }); return; }
-      const url = `/uploads/profile/${file.filename}`;
-      const updated = await this.service.updateProfile(userId, { photoProfil: url } as any);
-      res.status(201).json({ message: 'Photo de profil mise à jour', data: { url, user: updated } });
+      const anyReq: any = req as any;
+      const picked = anyReq.file || (anyReq.files?.file?.[0]) || (anyReq.files?.photo?.[0]) || (anyReq.files?.image?.[0]);
+      const file = picked as any;
+      // Fallback: accepter base64 string dans le body si fourni par erreur côté front
+      const base64Str = anyReq.body?.file || anyReq.body?.photo || anyReq.body?.image;
+      if (!file && !base64Str) {
+        const ct = req.headers['content-type'];
+        res.status(400).json({ message: 'Fichier requis (champ "file"|"photo"|"image")', details: { contentType: ct, fields: Object.keys(anyReq.body || {}), files: Object.keys(anyReq.files || {}) } });
+        return;
+      }
+      const { isCloudinaryEnabled, uploadImageToCloudinary } = await import('../../shared/utils/cloudinary');
+      if (!isCloudinaryEnabled()) {
+        res.status(500).json({ message: 'Cloudinary non configuré (CLOUDINARY_URL manquant)' });
+        return;
+      }
+      try {
+        let uploaded: any;
+        if (file && file.buffer) {
+          uploaded = await uploadImageToCloudinary(file.buffer, 'profile', file.originalname);
+        } else {
+          // Support base64 data URL
+          const data = base64Str as string;
+          const matches = /^data:(.+);base64,(.*)$/.exec(data);
+          const buffer = Buffer.from(matches ? matches[2] : data, 'base64');
+          const name = file?.originalname || `upload_${Date.now()}.jpg`;
+          uploaded = await uploadImageToCloudinary(buffer, 'profile', name);
+        }
+        const url = uploaded.url;
+        const updated = await this.service.updateProfile(userId, { photoProfil: url } as any);
+        res.status(201).json({ message: 'Photo de profil mise à jour', data: { url, user: updated, storage: 'cloudinary' } });
+      } catch (e: any) {
+        res.status(502).json({ message: 'Echec de téléchargement vers Cloudinary', details: e?.message || e });
+      }
     } catch (error: any) {
       res.status(error.statusCode || 500).json({ message: error.message || 'Erreur Serveur' });
     }
