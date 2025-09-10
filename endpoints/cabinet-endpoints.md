@@ -5,8 +5,15 @@
 http://localhost:3000/api/cabinets
 ```
 
+Alias:
+```
+http://localhost:3000/api/v1/cabinets
+http://localhost:3000/api/v1/mobile/cabinets
+http://localhost:3000/api/v1/dashboard/cabinets
+```
+
 ## 1. Lister tous les cabinets
-**GET** `/`
+**GET** `http://localhost:3000/api/cabinets/`
 
 ### Réponse (200)
 ```json
@@ -34,7 +41,7 @@ http://localhost:3000/api/cabinets
 ```
 
 ## 2. Récupérer un cabinet par ID
-**GET** `/:id`
+**GET** `http://localhost:3000/api/cabinets/:id`
 
 ### Réponse (200)
 ```json
@@ -56,7 +63,7 @@ http://localhost:3000/api/cabinets
 ```
 
 ## 3. Créer un cabinet (SuperAdmin)
-**POST** `/`
+**POST** `http://localhost:3000/api/cabinets/`
 
 ### Headers
 ```
@@ -102,7 +109,7 @@ Authorization: Bearer <token>
 ```
 
 ## 4. Récupérer les AdminCabinet d'un cabinet (SuperAdmin)
-**GET** `/:id/admins`
+**GET** `http://localhost:3000/api/cabinets/:id/admins`
 
 ### Headers
 ```
@@ -123,14 +130,14 @@ Authorization: Bearer <token>
       "email": "admin@cabinet-central.com",
       "nom": "Admin",
       "prenom": "Cabinet",
-      "telephone": "0987654321",
+      "telephone": "0987654321"
     }
   ]
 }
 ```
 
 ## 5. Modifier un cabinet (SuperAdmin/AdminCabinet)
-**PUT** `/:id`
+**PUT** `http://localhost:3000/api/cabinets/:id`
 
 ### Headers
 ```
@@ -171,7 +178,7 @@ Notes:
 - Les spécialités du cabinet sont maintenues via `cabinet_specialite`.
 
 ## 6. Archiver un cabinet (SuperAdmin)
-**PUT** `/:id/archive`
+**PUT** `http://localhost:3000/api/cabinets/:id/archive`
 
 ### Headers
 ```
@@ -186,16 +193,21 @@ Authorization: Bearer <token>
 ```
 
 ## 7. Gestion des spécialités du cabinet
-**GET** `/:id/specialites` - Liste des spécialités
-**POST** `/:id/specialites` - Ajouter une spécialité
-**DELETE** `/:id/specialites/:specialiteId` - Retirer une spécialité
+**GET** `http://localhost:3000/api/cabinets/:id/specialites` - Liste des spécialités
+
+**POST** `http://localhost:3000/api/cabinets/:id/specialites` - Ajouter une spécialité (Auth)
+
+**DELETE** `http://localhost:3000/api/cabinets/:id/specialites/:specialiteId` - Retirer une spécialité (Auth)
 
 ## 8. Gestion des médecins du cabinet
-**GET** `/:id/medecins` - Liste des médecins
-**PUT** `/:id/medecins/:medecinId/archive` - Archiver un médecin
+**GET** `http://localhost:3000/api/cabinets/:id/medecins` - Liste des médecins
+
+**PUT** `http://localhost:3000/api/cabinets/:id/medecins/:medecinId/archive` - Archiver un médecin (Auth)
+
+**POST** `http://localhost:3000/api/cabinets/:id/medecins/:medecinId/reset-password` - Reset mot de passe d'un médecin (Auth AdminCabinet)
 
 ## 9. Statistiques du cabinet
-**GET** `/:id/stats`
+**GET** `http://localhost:3000/api/cabinets/:id/stats`
 
 ### Headers
 ```

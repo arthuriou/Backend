@@ -176,8 +176,15 @@ export class RendezVousRepository {
       RETURNING *
     `;
     const values = [data.agenda_id, data.debut, data.fin, data.disponible ?? true];
-    const result = await db.query<Creneau>(query, values);
-    return result.rows[0];
+    const result = await db.query(query, values);
+    const row = result.rows[0];
+    return {
+      idcreneau: row.idcreneau,
+      agenda_id: row.agenda_id,
+      debut: row.debut,
+      fin: row.fin,
+      disponible: row.disponible
+    };
   }
 
   // Récupérer les créneaux disponibles d'un médecin
@@ -222,8 +229,14 @@ export class RendezVousRepository {
       RETURNING *
     `;
     const values = [data.medecin_id, data.libelle];
-    const result = await db.query<Agenda>(query, values);
-    return result.rows[0];
+    const result = await db.query(query, values);
+    const row = result.rows[0];
+    console.log('Agenda row from DB:', row);
+    return {
+      idagenda: row.idagenda,
+      medecin_id: row.medecin_id,
+      libelle: row.libelle
+    };
   }
 
   // Récupérer les agendas d'un médecin

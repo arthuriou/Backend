@@ -1,0 +1,163 @@
+# Liste complète des Endpoints (URLs complètes)
+
+Base locale: `http://localhost:3000`
+
+Notes:
+- Tous les endpoints existent sous plusieurs alias (API v1, mobile, dashboard). Ci-dessous, la colonne URL principale liste le préfixe standard. Les alias valides sont indiqués à côté.
+- Auth requis sauf mention "Public". Utiliser l'en-tête: `Authorization: Bearer <token>`.
+
+## Authentification (`/api/auth`)
+Alias: `/api/v1/auth`, `/api/v1/mobile/auth`, `/api/v1/dashboard/auth`
+
+- POST  http://localhost:3000/api/auth/register-patient
+- POST  http://localhost:3000/api/auth/register-doctor
+- POST  http://localhost:3000/api/auth/login
+- POST  http://localhost:3000/api/auth/refresh
+- POST  http://localhost:3000/api/auth/send-otp
+- POST  http://localhost:3000/api/auth/verify-otp
+- POST  http://localhost:3000/api/auth/resend-otp
+- PATCH http://localhost:3000/api/auth/profile/:userId
+- PATCH http://localhost:3000/api/auth/profile
+- PATCH http://localhost:3000/api/auth/profile/medecin
+- PATCH http://localhost:3000/api/auth/profile/patient
+- POST  http://localhost:3000/api/auth/profile/photo
+- POST  http://localhost:3000/api/auth/change-password
+- POST  http://localhost:3000/api/auth/forgot-password
+- POST  http://localhost:3000/api/auth/reset-password
+- GET   http://localhost:3000/api/auth/super-admin/pending-medecins
+- POST  http://localhost:3000/api/auth/super-admin/validate-medecin
+- GET   http://localhost:3000/api/auth/profile
+- GET   http://localhost:3000/api/auth/user/:id
+- GET   http://localhost:3000/api/auth/patients
+- GET   http://localhost:3000/api/auth/medecins
+- GET   http://localhost:3000/api/auth/admins
+- GET   http://localhost:3000/api/auth/users/role/:role
+- GET   http://localhost:3000/api/auth/super-admin/profile
+- PATCH http://localhost:3000/api/auth/super-admin/profile
+- POST  http://localhost:3000/api/auth/super-admin/change-password
+- POST  http://localhost:3000/api/auth/super-admin/create-admin
+- POST  http://localhost:3000/api/auth/super-admin/cabinets
+- GET   http://localhost:3000/api/auth/super-admin/cabinets
+- GET   http://localhost:3000/api/auth/super-admin/cabinets/:id
+- PUT   http://localhost:3000/api/auth/super-admin/cabinets/:id
+- DELETE http://localhost:3000/api/auth/super-admin/cabinets/:id
+- POST  http://localhost:3000/api/auth/super-admin/assign-cabinet
+- DELETE http://localhost:3000/api/auth/super-admin/assign-cabinet/:adminId
+- GET   http://localhost:3000/api/auth/super-admin/admin-cabinets/:adminId
+- GET   http://localhost:3000/api/auth/super-admin/cabinets/:cabinetId/admins
+
+## Cabinets (`/api/cabinets`)
+Alias: `/api/v1/cabinets`, `/api/v1/mobile/cabinets`, `/api/v1/dashboard/cabinets`
+
+- GET   http://localhost:3000/api/cabinets/
+- GET   http://localhost:3000/api/cabinets/:id
+- POST  http://localhost:3000/api/cabinets/                      (SUPERADMIN)
+- POST  http://localhost:3000/api/cabinets/:id/admin            (SUPERADMIN)
+- GET   http://localhost:3000/api/cabinets/:id/admins           (SUPERADMIN)
+- PUT   http://localhost:3000/api/cabinets/:id                  (SUPERADMIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/cabinets/:id/archive          (SUPERADMIN)
+- GET   http://localhost:3000/api/cabinets/:id/specialites
+- POST  http://localhost:3000/api/cabinets/:id/specialites      (SUPERADMIN, ADMINCABINET)
+- DELETE http://localhost:3000/api/cabinets/:id/specialites/:specialiteId (SUPERADMIN, ADMINCABINET)
+- GET   http://localhost:3000/api/cabinets/:id/medecins
+- PUT   http://localhost:3000/api/cabinets/:id/medecins/:medecinId/archive (SUPERADMIN, ADMINCABINET)
+- POST  http://localhost:3000/api/cabinets/:id/medecins/:medecinId/reset-password (ADMINCABINET)
+- GET   http://localhost:3000/api/cabinets/:id/stats            (SUPERADMIN, ADMINCABINET)
+
+## Rendez-vous (`/api/rendezvous`)
+Alias: `/api/v1/rendezvous`, `/api/v1/mobile/rendezvous`, `/api/v1/dashboard/rendezvous`
+
+- POST  http://localhost:3000/api/rendezvous/                   (PATIENT)
+- GET   http://localhost:3000/api/rendezvous/:id                (PATIENT, MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/patient/:patientId (PATIENT, MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId (MEDECIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/rendezvous/:id                (PATIENT, MEDECIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/rendezvous/:id/confirmer      (MEDECIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/rendezvous/:id/annuler        (PATIENT, MEDECIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/rendezvous/:id/terminer       (MEDECIN, ADMINCABINET)
+- POST  http://localhost:3000/api/rendezvous/creneaux           (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/creneaux-disponibles (Public)
+- POST  http://localhost:3000/api/rendezvous/agendas            (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/agendas (Public)
+- POST  http://localhost:3000/api/rendezvous/rappels/traiter    (SUPERADMIN, ADMINCABINET)
+- POST  http://localhost:3000/api/rendezvous/rappels            (MEDECIN, ADMINCABINET)
+
+## Messagerie (`/api/messagerie`)
+Alias: `/api/v1/messagerie`, `/api/v1/mobile/messagerie`, `/api/v1/dashboard/messagerie`
+
+- POST  http://localhost:3000/api/messagerie/conversations/private
+- GET   http://localhost:3000/api/messagerie/conversations
+- GET   http://localhost:3000/api/messagerie/conversations/:id
+- POST  http://localhost:3000/api/messagerie/conversations/:id/participants (ADMINCABINET, SUPERADMIN)
+- DELETE http://localhost:3000/api/messagerie/conversations/:id/participants/:participantId
+- POST  http://localhost:3000/api/messagerie/conversations/:id/read
+- POST  http://localhost:3000/api/messagerie/messages
+- GET   http://localhost:3000/api/messagerie/conversations/:id/messages
+- PUT   http://localhost:3000/api/messagerie/messages/:id
+- DELETE http://localhost:3000/api/messagerie/messages/:id
+- POST  http://localhost:3000/api/messagerie/messages/:id/read
+
+## Spécialités & Maux (`/api/specialites`)
+Alias: `/api/v1/specialites`, `/api/v1/mobile/specialites`, `/api/v1/dashboard/specialites`
+
+- POST  http://localhost:3000/api/specialites/specialites
+- GET   http://localhost:3000/api/specialites/specialites
+- GET   http://localhost:3000/api/specialites/specialites/:id
+- GET   http://localhost:3000/api/specialites/specialites/:id/details
+- PUT   http://localhost:3000/api/specialites/specialites/:id
+- DELETE http://localhost:3000/api/specialites/specialites/:id
+- GET   http://localhost:3000/api/specialites/specialites/search
+- POST  http://localhost:3000/api/specialites/maux
+- GET   http://localhost:3000/api/specialites/maux
+- GET   http://localhost:3000/api/specialites/maux/:id
+- GET   http://localhost:3000/api/specialites/maux/:id/details
+- PUT   http://localhost:3000/api/specialites/maux/:id
+- DELETE http://localhost:3000/api/specialites/maux/:id
+- GET   http://localhost:3000/api/specialites/maux/search
+- POST  http://localhost:3000/api/specialites/associations/medecin-specialite
+- DELETE http://localhost:3000/api/specialites/associations/medecin-specialite/:medecinId/:specialiteId
+- POST  http://localhost:3000/api/specialites/associations/cabinet-specialite
+- DELETE http://localhost:3000/api/specialites/associations/cabinet-specialite/:cabinetId/:specialiteId
+- POST  http://localhost:3000/api/specialites/associations/specialite-maux
+- DELETE http://localhost:3000/api/specialites/associations/specialite-maux/:specialiteId/:mauxId
+- GET   http://localhost:3000/api/specialites/specialites/:id/medecins
+- GET   http://localhost:3000/api/specialites/specialites/:id/cabinets
+- GET   http://localhost:3000/api/specialites/statistics
+
+## Notifications - Préférences & Devices
+Préférences base: `/api/notifications/preferences` (alias `/api/v1/notifications/preferences`, `/api/v1/mobile/notifications/preferences`, `/api/v1/dashboard/notifications/preferences`)
+Devices base: `/api/notifications` (alias `/api/v1/notifications`, `/api/v1/mobile/notifications`, `/api/v1/dashboard/notifications`)
+
+- GET   http://localhost:3000/api/notifications/preferences/
+- POST  http://localhost:3000/api/notifications/preferences/
+- PUT   http://localhost:3000/api/notifications/preferences/
+- POST  http://localhost:3000/api/notifications/preferences/reset
+- DELETE http://localhost:3000/api/notifications/preferences/
+- POST  http://localhost:3000/api/notifications/devices
+- GET   http://localhost:3000/api/notifications/devices
+- DELETE http://localhost:3000/api/notifications/devices/:token
+
+## Dossier Médical (`/api/dossier-medical`)
+Alias: `/api/v1/dossier-medical`, `/api/v1/mobile/dossier-medical`, `/api/v1/dashboard/dossier-medical`
+
+- GET   http://localhost:3000/api/dossier-medical/dossier/:patientId
+- GET   http://localhost:3000/api/dossier-medical/:dossierId/documents
+- POST  http://localhost:3000/api/dossier-medical/documents
+- DELETE http://localhost:3000/api/dossier-medical/documents/:id
+- PATCH http://localhost:3000/api/dossier-medical/documents/:id
+
+## Ordonnances (`/api/ordonnances`)
+Alias: `/api/v1/ordonnances`, `/api/v1/mobile/ordonnances`, `/api/v1/dashboard/ordonnances`
+
+- POST  http://localhost:3000/api/ordonnances/
+- GET   http://localhost:3000/api/ordonnances/consultation/:consultationId
+- GET   http://localhost:3000/api/ordonnances/:id
+- PATCH http://localhost:3000/api/ordonnances/:id
+- DELETE http://localhost:3000/api/ordonnances/:id
+- GET   http://localhost:3000/api/ordonnances/patient/:patientId
+- GET   http://localhost:3000/api/ordonnances/medecin/:medecinId
+- PUT   http://localhost:3000/api/ordonnances/:id/valider
+
+---
+
+Pour toute divergence entre cette liste et les fichiers spécifiques, considérez cette liste comme source de vérité et ouvrez une demande de mise à jour du fichier concerné.

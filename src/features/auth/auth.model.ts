@@ -28,7 +28,7 @@ export interface Patient {
   taille?: number;
   statut: string;
 }
-
+  
 export interface Medecin {
   idmedecin?: string;
   utilisateur_id: string;

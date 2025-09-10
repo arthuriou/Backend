@@ -116,20 +116,84 @@ http://localhost:3000/api/auth
 }
 ```
 
-## 4. Envoi OTP
-**POST** `/send-otp`
+## 3bis. Rafraîchir le token
+**POST** `http://localhost:3000/api/auth/refresh`
 
 ### Body (JSON)
 ```json
 {
-  "email": "patient@example.com"
+  "token": "<refresh-token>"
 }
 ```
 
 ### Réponse (200)
 ```json
 {
-  "message": "OTP envoyé avec succès"
+  "message": "Token rafraîchi",
+  "data": {
+    "token": "<new-access-token>",
+    "refreshToken": "<new-refresh-token>"
+  }
+}
+```
+
+## 4. Gestion des mots de passe
+
+### 4.1 Changer le mot de passe (auth requis)
+**POST** `http://localhost:3000/api/auth/change-password`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Body (JSON)
+```json
+{
+  "ancienMotDePasse": "oldPass123",
+  "nouveauMotDePasse": "newPass456"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Mot de passe changé avec succès"
+}
+```
+
+### 4.2 Mot de passe oublié (public)
+**POST** `http://localhost:3000/api/auth/forgot-password`
+
+#### Body (JSON)
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Email de réinitialisation envoyé"
+}
+```
+
+### 4.3 Réinitialiser le mot de passe (public)
+**POST** `http://localhost:3000/api/auth/reset-password`
+
+#### Body (JSON)
+```json
+{
+  "token": "<reset-token>",
+  "nouveauMotDePasse": "newPass456"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Mot de passe réinitialisé avec succès"
 }
 ```
 
@@ -168,6 +232,28 @@ http://localhost:3000/api/auth
 }
 ```
 
+## 6. Upload photo de profil
+**POST** `http://localhost:3000/api/auth/profile/photo`
+
+### Headers
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+### Form-Data
+- `file`: image/jpeg | image/png
+
+### Réponse (200)
+```json
+{
+  "message": "Photo de profil uploadée",
+  "data": {
+    "photoprofil": "/uploads/profile/<filename>.jpg"
+  }
+}
+```
+
 ## 7. Mise à jour du profil
 **PUT** `/profile/:userId` ou **PUT** `/profile`
 
@@ -197,6 +283,71 @@ Authorization: Bearer <token>
     "telephone": "0987654321",
     "datecreation": "2025-01-03T00:00:00.000Z",
     "actif": true
+  }
+}
+```
+
+## 7.1 Mise à jour du profil Médecin (partielle)
+**PATCH** `http://localhost:3000/api/auth/profile/medecin`
+
+### Headers
+```
+Authorization: Bearer <token>
+```
+
+### Body (JSON) - champs optionnels
+```json
+{
+  "numordre": "ORD123456",
+  "experience": 8,
+  "biographie": "Mise à jour bio",
+  "cabinet_id": "uuid"
+}
+```
+
+### Réponse (200)
+```json
+{
+  "message": "Profil médecin mis à jour",
+  "data": {
+    "idutilisateur": "uuid",
+    "idmedecin": "uuid",
+    "numordre": "ORD123456",
+    "experience": 8,
+    "biographie": "Mise à jour bio"
+  }
+}
+```
+
+## 7.2 Mise à jour du profil Patient (partielle)
+**PATCH** `http://localhost:3000/api/auth/profile/patient`
+
+### Headers
+```
+Authorization: Bearer <token>
+```
+
+### Body (JSON) - champs optionnels
+```json
+{
+  "datenaissance": "1990-01-15",
+  "genre": "M",
+  "adresse": "123 Rue",
+  "groupesanguin": "O+",
+  "poids": 72,
+  "taille": 176
+}
+```
+
+### Réponse (200)
+```json
+{
+  "message": "Profil patient mis à jour",
+  "data": {
+    "idutilisateur": "uuid",
+    "idpatient": "uuid",
+    "datenaissance": "1990-01-15",
+    "genre": "M"
   }
 }
 ```
@@ -709,6 +860,91 @@ GET /api/auth/users/role/PATIENT?page=1&limit=20&search=Dupont
   ]
 }
 ```
+
+## 8.x Profil SuperAdmin
+
+### 8.x.1 Récupérer le profil SuperAdmin
+**GET** `http://localhost:3000/api/auth/super-admin/profile`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Profil SuperAdmin",
+  "data": {
+    "idutilisateur": "uuid",
+    "email": "superadmin@example.com",
+    "role": "SUPERADMIN"
+  }
+}
+```
+
+### 8.x.2 Mettre à jour le profil SuperAdmin
+**PATCH** `http://localhost:3000/api/auth/super-admin/profile`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Body (JSON)
+```json
+{
+  "nom": "Nouveau nom",
+  "prenom": "Nouveau prénom",
+  "telephone": "0900000000"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Profil SuperAdmin mis à jour",
+  "data": {
+    "idutilisateur": "uuid",
+    "nom": "Nouveau nom",
+    "prenom": "Nouveau prénom"
+  }
+}
+```
+
+### 8.x.3 Changer le mot de passe SuperAdmin
+**POST** `http://localhost:3000/api/auth/super-admin/change-password`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Body (JSON)
+```json
+{
+  "ancienMotDePasse": "old",
+  "nouveauMotDePasse": "new"
+}
+```
+
+#### Réponse (200)
+```json
+{
+  "message": "Mot de passe SuperAdmin mis à jour"
+}
+```
+
+## 8.y Gestion des cabinets via SuperAdmin (alias auth)
+Ces endpoints existent aussi côté `Cabinets` mais sont exposés sous: `http://localhost:3000/api/auth/super-admin/cabinets`.
+
+- **POST** `http://localhost:3000/api/auth/super-admin/cabinets` (Créer un cabinet)
+- **GET** `http://localhost:3000/api/auth/super-admin/cabinets` (Lister)
+- **GET** `http://localhost:3000/api/auth/super-admin/cabinets/:id` (Détail)
+- **PUT** `http://localhost:3000/api/auth/super-admin/cabinets/:id` (Mettre à jour)
+- **DELETE** `http://localhost:3000/api/auth/super-admin/cabinets/:id` (Supprimer)
+
+Les formats de body/réponses sont identiques à ceux décrits dans `cabinet-endpoints.md` (voir sections correspondantes), seuls les préfixes d'URL changent.
 
 ## Codes d'erreur
 - **400** : Champs manquants ou invalides
