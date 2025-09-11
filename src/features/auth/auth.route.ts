@@ -93,6 +93,12 @@ router.get("/medecins",
   controller.getAllMedecins.bind(controller)
 );
 
+// Recherche publique (PATIENT non authentifié autorisé) des médecins APPROVED
+router.get(
+  "/medecins/search",
+  controller.searchApprovedMedecins.bind(controller)
+);
+
 // Récupérer tous les administrateurs (avec pagination et recherche)
 router.get("/admins", 
   authenticateToken, 

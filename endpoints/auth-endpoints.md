@@ -65,9 +65,17 @@ http://localhost:3000/api/auth
   "telephone": "0987654321",
   "numordre": "ORD123456",
   "experience": 5,
-  "biographie": "Médecin généraliste avec 5 ans d'expérience"
+  "biographie": "Médecin généraliste avec 5 ans d'expérience",
+  "specialiteIds": [
+    "<idSpecialite-1>",
+    "<idSpecialite-2>"
+  ]
 }
 ```
+
+Notes:
+- `specialiteIds` est optionnel. Si fourni, chaque ID valide sera associé au médecin (table `medecin_specialite`).
+- Les IDs non trouvés sont ignorés sans erreur.
 
 ### Réponse (201)
 ```json
@@ -486,6 +494,31 @@ Authorization: Bearer <token>
 }
 ```
 
+Pour un utilisateur médecin, la réponse inclut désormais les spécialités:
+```json
+{
+  "message": "Profil récupéré avec succès",
+  "data": {
+    "idutilisateur": "uuid",
+    "email": "medecin@example.com",
+    "nom": "Martin",
+    "prenom": "Dr. Pierre",
+    "role": "MEDECIN",
+    "medecin": {
+      "idmedecin": "uuid",
+      "numordre": "ORD123456",
+      "experience": 5,
+      "biographie": "...",
+      "statut": "PENDING"
+    },
+    "specialites": [
+      { "idspecialite": "uuid", "nom": "Cardiologie", "description": "..." },
+      { "idspecialite": "uuid", "nom": "Dermatologie", "description": "..." }
+    ]
+  }
+}
+```
+
 ### 7.2 Récupérer un utilisateur par ID
 **GET** `/user/:id`
 
@@ -565,6 +598,8 @@ GET /api/auth/patients?page=1&limit=20&search=Dupont
 ```
 GET /api/auth/medecins?page=1&limit=20&specialite=Cardiologie&cabinetId=uuid
 ```
+
+Les médecins retournés sont désormais uniquement ceux avec `statut = APPROVED`.
 
 #### Réponse (200)
 ```json

@@ -77,6 +77,17 @@ CREATE TABLE IF NOT EXISTS medecin (
     statut statut_medecin_enum DEFAULT 'PENDING'   -- validé par SuperAdmin ou direct APPROVED si créé par AdminCabinet
 );
 
+CREATE TABLE IF NOT EXISTS cabinet (
+    idCabinet UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nom TEXT NOT NULL,
+    adresse TEXT,
+    telephone TEXT,
+    email TEXT,
+    logo TEXT,
+    horairesOuverture JSONB,
+    actif BOOLEAN DEFAULT true
+);
+
 CREATE TABLE IF NOT EXISTS adminCabinet (
     idAdminCabinet UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     utilisateur_id UUID UNIQUE REFERENCES utilisateur(idUtilisateur) ON DELETE CASCADE,
@@ -136,17 +147,6 @@ CREATE TABLE IF NOT EXISTS rolePermission (
 -- ================================
 -- CABINETS & SPECIALITES
 -- ================================
-
-CREATE TABLE IF NOT EXISTS cabinet (
-    idCabinet UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    nom TEXT NOT NULL,
-    adresse TEXT,
-    telephone TEXT,
-    email TEXT,
-    logo TEXT,
-    horairesOuverture JSONB,
-    actif BOOLEAN DEFAULT true
-);
 
 CREATE TABLE IF NOT EXISTS specialite (
     idSpecialite UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -532,6 +532,116 @@ INSERT INTO specialite (nom, description) VALUES
 ('Radiologie', 'Spécialité médicale de l''imagerie médicale'),
 ('Chirurgie générale', 'Spécialité chirurgicale générale'),
 ('Médecine générale', 'Médecine de famille et générale')
+ON CONFLICT DO NOTHING;
+
+-- ================================
+-- DONNÉES DE DÉMONSTRATION (IDEMPOTENTES)
+-- ================================
+
+-- Remarque: Ces données servent au développement/preview. Elles évitent les doublons et
+-- respectent les contraintes via des INSERT conditionnels et des mappages par email/numOrdre/nom.
+
+-- 1) Maux (si non présents)
+INSERT INTO maux (nom, description, categorie)
+SELECT v.nom, v.description, v.categorie
+FROM (
+    VALUES
+        ('Maux de tête', 'Céphalées et migraines', 'Neurologie'),
+        ('Douleurs articulaires', 'Arthrite, arthrose, rhumatismes', 'Rhumatologie'),
+        ('Problèmes digestifs', 'Gastrite, ulcères, reflux', 'Gastro-entérologie'),
+        ('Troubles du sommeil', 'Insomnie, apnée du sommeil', 'Psychiatrie'),
+        ('Anxiété et stress', 'Crises d''angoisse, stress chronique', 'Psychiatrie'),
+        ('Problèmes de peau', 'Eczéma, psoriasis, acné', 'Dermatologie'),
+        ('Troubles respiratoires', 'Asthme, bronchite, allergies', 'Pneumologie'),
+        ('Problèmes cardiaques', 'Hypertension, arythmie', 'Cardiologie'),
+        ('Troubles neurologiques', 'Épilepsie, SEP, neuropathies', 'Neurologie'),
+        ('Problèmes gynécologiques', 'Règles, ménopause, infections', 'Gynécologie')
+) AS v(nom, description, categorie)
+WHERE NOT EXISTS (
+    SELECT 1 FROM maux m WHERE TRIM(LOWER(m.nom)) = TRIM(LOWER(v.nom))
+);
+
+-- 2) Utilisateurs de démo (patients & médecins)
+-- Mot de passe en clair 'demo' (si l'API exige un hash, ces comptes sont informatifs)
+INSERT INTO utilisateur (email, motDePasse, nom, prenom, telephone, actif)
+SELECT v.email, v.motdepasse, v.nom, v.prenom, v.telephone, true
+FROM (
+    VALUES
+        ('patient.demo1@santeafrik.local', 'demo', 'Kouassi', 'Awa', '+225010000001'),
+        ('patient.demo2@santeafrik.local', 'demo', 'Traoré', 'Mariam', '+225010000002'),
+        ('patient.demo3@santeafrik.local', 'demo', 'Mensah', 'Kofi', '+233020000003'),
+        ('medecin.cardio@santeafrik.local', 'demo', 'Diop', 'Mamadou', '+221030000004'),
+        ('medecin.dermato@santeafrik.local', 'demo', 'Diallo', 'Aïcha', '+223040000005'),
+        ('medecin.gyneco@santeafrik.local', 'demo', 'Ndiaye', 'Fatou', '+221050000006'),
+        ('medecin.pediatre@santeafrik.local', 'demo', 'Ouédraogo', 'Abdou', '+226060000007'),
+        ('medecin.psy@santeafrik.local', 'demo', 'Akakpo', 'Grace', '+228070000008')
+) AS v(email, motdepasse, nom, prenom, telephone)
+WHERE NOT EXISTS (
+    SELECT 1 FROM utilisateur u WHERE LOWER(u.email) = LOWER(v.email)
+);
+
+-- 3) Patients liés aux utilisateurs patients
+INSERT INTO patient (utilisateur_id, statut)
+SELECT u.idUtilisateur, 'APPROVED'::statut_patient_enum
+FROM utilisateur u
+WHERE u.email IN (
+    'patient.demo1@santeafrik.local',
+    'patient.demo2@santeafrik.local',
+    'patient.demo3@santeafrik.local'
+)
+AND NOT EXISTS (
+    SELECT 1 FROM patient p WHERE p.utilisateur_id = u.idUtilisateur
+);
+
+-- 4) Médecins liés aux utilisateurs médecins, avec numOrdre unique
+INSERT INTO medecin (utilisateur_id, numOrdre, experience, biographie, statut)
+SELECT u.idUtilisateur, v.numOrdre, v.experience, v.biographie, 'APPROVED'::statut_medecin_enum
+FROM (
+    VALUES
+        ('medecin.cardio@santeafrik.local', 'ORD-CARD-001', 10, 'Cardiologue avec 10 ans d''expérience'),
+        ('medecin.dermato@santeafrik.local', 'ORD-DERM-001', 8, 'Dermatologue expérimentée'),
+        ('medecin.gyneco@santeafrik.local', 'ORD-GYNE-001', 12, 'Gynécologue confirmé(e)'),
+        ('medecin.pediatre@santeafrik.local', 'ORD-PEDI-001', 6, 'Pédiatre passionné(e)'),
+        ('medecin.psy@santeafrik.local', 'ORD-PSY-001', 15, 'Psychiatre spécialisé(e) en TCC')
+) AS v(email, numOrdre, experience, biographie)
+JOIN utilisateur u ON LOWER(u.email) = LOWER(v.email)
+WHERE NOT EXISTS (
+    SELECT 1 FROM medecin m WHERE m.utilisateur_id = u.idUtilisateur OR m.numOrdre = v.numOrdre
+);
+
+-- 5) Association des médecins aux spécialités existantes
+INSERT INTO medecin_specialite (medecin_id, specialite_id)
+SELECT m.idMedecin, s.idSpecialite
+FROM (
+    VALUES
+        ('medecin.cardio@santeafrik.local', 'Cardiologie'),
+        ('medecin.dermato@santeafrik.local', 'Dermatologie'),
+        ('medecin.gyneco@santeafrik.local', 'Gynécologie'),
+        ('medecin.pediatre@santeafrik.local', 'Pédiatrie'),
+        ('medecin.psy@santeafrik.local', 'Psychiatrie'),
+        ('medecin.cardio@santeafrik.local', 'Médecine générale')
+) AS v(email, specialite_nom)
+JOIN utilisateur u ON LOWER(u.email) = LOWER(v.email)
+JOIN medecin m ON m.utilisateur_id = u.idUtilisateur
+JOIN specialite s ON TRIM(LOWER(s.nom)) = TRIM(LOWER(v.specialite_nom))
+ON CONFLICT DO NOTHING;
+
+-- 6) Associations spécialité <-> maux
+INSERT INTO specialite_maux (specialite_id, maux_id)
+SELECT s.idSpecialite, mx.idMaux
+FROM (
+    VALUES
+        ('Cardiologie', 'Problèmes cardiaques'),
+        ('Dermatologie', 'Problèmes de peau'),
+        ('Gynécologie', 'Problèmes gynécologiques'),
+        ('Pédiatrie', 'Troubles respiratoires'),
+        ('Psychiatrie', 'Anxiété et stress'),
+        ('Psychiatrie', 'Troubles du sommeil'),
+        ('Médecine générale', 'Maux de tête'),
+        ('Médecine générale', 'Troubles du sommeil')
+) AS v(specialite_nom, maux_nom)
+JOIN specialite s ON TRIM(LOWER(s.nom)) = TRIM(LOWER(v.specialite_nom))
+JOIN maux mx ON TRIM(LOWER(mx.nom)) = TRIM(LOWER(v.maux_nom))
 ON CONFLICT DO NOTHING;
 
 -- ================================

@@ -479,24 +479,31 @@ export class SpecialitesRepository {
   // Rechercher des médecins par spécialité
   async searchMedecinsBySpecialite(searchData: SearchMedecinBySpecialiteRequest): Promise<MedecinWithSpecialites[]> {
     let query = `
-      SELECT DISTINCT m.idMedecin, m.nom, m.prenom, m.email
+      SELECT DISTINCT m.idmedecin, u.nom, u.prenom, u.email, u.photoprofil, m.experience, m.biographie
       FROM medecin m
-      JOIN medecin_specialite ms ON m.idMedecin = ms.medecin_id
+      JOIN utilisateur u ON m.utilisateur_id = u.idutilisateur
+      JOIN medecin_specialite ms ON m.idmedecin = ms.medecin_id
     `;
     
-    const conditions: string[] = [`ms.specialite_id = $1`];
+    const conditions: string[] = [`ms.specialite_id = $1`, `m.statut = 'APPROVED'`];
     const values: any[] = [searchData.specialite_id];
     let paramIndex = 2;
 
     if (searchData.cabinet_id) {
-      query += ` JOIN medecin_cabinet mc ON m.idMedecin = mc.medecin_id`;
+      query += ` JOIN medecin_cabinet mc ON m.idmedecin = mc.medecin_id`;
       conditions.push(`mc.cabinet_id = $${paramIndex} AND mc.actif = true`);
       values.push(searchData.cabinet_id);
       paramIndex++;
     }
 
+    if ((searchData as any).q) {
+      conditions.push(`(u.nom ILIKE $${paramIndex} OR u.prenom ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`);
+      values.push(`%${(searchData as any).q}%`);
+      paramIndex++;
+    }
+
     query += ` WHERE ${conditions.join(' AND ')}`;
-    query += ` ORDER BY m.nom ASC, m.prenom ASC`;
+    query += ` ORDER BY u.nom ASC, u.prenom ASC`;
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     
     values.push(searchData.limit || 50);
@@ -509,9 +516,9 @@ export class SpecialitesRepository {
     
     for (const medecin of result.rows) {
       const specialitesQuery = `
-        SELECT s.idSpecialite, s.nom, s.description
+        SELECT s.idspecialite, s.nom, s.description
         FROM specialite s
-        JOIN medecin_specialite ms ON s.idSpecialite = ms.specialite_id
+        JOIN medecin_specialite ms ON s.idspecialite = ms.specialite_id
         WHERE ms.medecin_id = $1
       `;
       const specialitesResult = await db.query(specialitesQuery, [medecin.idmedecin]);

@@ -111,6 +111,9 @@ export interface MedecinWithSpecialites {
   nom: string;
   prenom: string;
   email: string;
+  photoprofil?: string | null;
+  experience?: number | null;
+  biographie?: string | null;
   specialites: {
     idspecialite: string;
     nom: string;
@@ -174,6 +177,7 @@ export interface SearchMauxRequest {
 export interface SearchMedecinBySpecialiteRequest {
   specialite_id: string;
   cabinet_id?: string;
+  q?: string;
   limit?: number;
   offset?: number;
 }

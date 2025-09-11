@@ -11,6 +11,7 @@ Alias: `/api/v1/auth`, `/api/v1/mobile/auth`, `/api/v1/dashboard/auth`
 
 - POST  http://localhost:3000/api/auth/register-patient
 - POST  http://localhost:3000/api/auth/register-doctor
+  (Body: email, motdepasse, nom, numordre, [prenom], [telephone], [experience], [biographie], [specialiteIds:string[]])
 - POST  http://localhost:3000/api/auth/login
 - POST  http://localhost:3000/api/auth/refresh
 - POST  http://localhost:3000/api/auth/send-otp
@@ -28,8 +29,9 @@ Alias: `/api/v1/auth`, `/api/v1/mobile/auth`, `/api/v1/dashboard/auth`
 - POST  http://localhost:3000/api/auth/super-admin/validate-medecin
 - GET   http://localhost:3000/api/auth/profile
 - GET   http://localhost:3000/api/auth/user/:id
-- GET   http://localhost:3000/api/auth/patients
-- GET   http://localhost:3000/api/auth/medecins
+- GET   http://localhost:3000/api/auth/patients (SUPERADMIN, ADMINCABINET, MEDECIN)
+- GET   http://localhost:3000/api/auth/medecins (SUPERADMIN, ADMINCABINET)
+- GET   http://localhost:3000/api/auth/medecins/search (Public/PATIENT)
 - GET   http://localhost:3000/api/auth/admins
 - GET   http://localhost:3000/api/auth/users/role/:role
 - GET   http://localhost:3000/api/auth/super-admin/profile
@@ -120,7 +122,7 @@ Alias: `/api/v1/specialites`, `/api/v1/mobile/specialites`, `/api/v1/dashboard/s
 - DELETE http://localhost:3000/api/specialites/associations/cabinet-specialite/:cabinetId/:specialiteId
 - POST  http://localhost:3000/api/specialites/associations/specialite-maux
 - DELETE http://localhost:3000/api/specialites/associations/specialite-maux/:specialiteId/:mauxId
-- GET   http://localhost:3000/api/specialites/specialites/:id/medecins
+- GET   http://localhost:3000/api/specialites/specialites/:id/medecins (PATIENT OK, médecins APPROVED)
 - GET   http://localhost:3000/api/specialites/specialites/:id/cabinets
 - GET   http://localhost:3000/api/specialites/statistics
 

@@ -81,7 +81,8 @@ export class AuthController {
         telephone,
         numordre,
         experience,
-        biographie
+        biographie,
+        specialiteIds
       } = req.body;
 
       const user = await this.service.createMedecin(
@@ -92,7 +93,8 @@ export class AuthController {
         prenom,
         telephone,
         experience,
-        biographie
+        biographie,
+        Array.isArray(specialiteIds) ? specialiteIds : undefined
       );
 
       res.status(201).json({
@@ -588,6 +590,22 @@ export class AuthController {
         error: "Erreur interne du serveur",
         details: error.message
       });
+    }
+  }
+
+  // Recherche publique de médecins approuvés
+  async searchApprovedMedecins(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10, q, specialiteId } = req.query as any;
+      const medecins = await this.service.searchApprovedMedecins(
+        Number(page),
+        Number(limit),
+        q as string,
+        specialiteId as string
+      );
+      res.status(200).json({ message: 'Médecins trouvés', data: medecins });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Erreur interne du serveur', details: error.message });
     }
   }
 

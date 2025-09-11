@@ -67,7 +67,8 @@ export class AuthService {
     prenom?: string,
     telephone?: string,
     experience?: number,
-    biographie?: string
+    biographie?: string,
+    specialiteIds?: string[]
   ): Promise<User> {
     const userExistingMail = await this.repository.getUserByEmail(email);
     if (userExistingMail) {
@@ -93,6 +94,17 @@ export class AuthService {
       experience,
       biographie
     );
+
+    // Associer les spécialités si fournies
+    if (Array.isArray(specialiteIds) && specialiteIds.length > 0) {
+      const uniqueIds = Array.from(new Set(specialiteIds.filter(Boolean)));
+      for (const specialiteId of uniqueIds) {
+        const exists = await this.repository.getSpecialiteById(specialiteId);
+        if (exists) {
+          await this.repository.associateMedecinSpecialite(medecin.idmedecin as any, specialiteId);
+        }
+      }
+    }
 
     // Retourner l'utilisateur avec l'ID du médecin
     return {
@@ -345,7 +357,15 @@ export class AuthService {
     // Associer le médecin au cabinet (avec idMedecin)
     await this.repository.associateMedecinToCabinet(medecin.idmedecin as any, cabinetId);
 
-    return newUser;
+    // Récupérer les spécialités associées pour la réponse
+    const specialites = await this.repository.getSpecialitesByMedecinId(medecin.idmedecin as any);
+
+    // Retourner l'utilisateur enrichi
+    return {
+      ...newUser,
+      medecinId: medecin.idmedecin as any,
+      specialites
+    } as any;
   }
 
   // ========================================
@@ -364,7 +384,11 @@ export class AuthService {
       return { ...user, patient };
     } else if (user.role === 'MEDECIN') {
       const medecin = await this.repository.getMedecinByUserId(userId);
-      return { ...user, medecin };
+      let specialites: any[] = [];
+      if (medecin?.idmedecin) {
+        specialites = await this.repository.getSpecialitesByMedecinId(medecin.idmedecin);
+      }
+      return { ...user, medecin, specialites };
     } else if (user.role === 'ADMINCABINET') {
       const admin = await this.repository.getAdminByUserId(userId);
       return { ...user, admin };
@@ -402,6 +426,12 @@ export class AuthService {
   async getAllMedecins(page: number = 1, limit: number = 10, search?: string, specialite?: string, cabinetId?: string): Promise<any> {
     const offset = (page - 1) * limit;
     return await this.repository.getAllMedecins(offset, limit, search, specialite, cabinetId);
+  }
+
+  // Recherche publique des médecins approuvés
+  async searchApprovedMedecins(page: number = 1, limit: number = 10, q?: string, specialiteId?: string): Promise<any[]> {
+    const offset = (page - 1) * limit;
+    return await this.repository.searchApprovedMedecins(offset, limit, q, specialiteId);
   }
 
   async getAllAdmins(page: number = 1, limit: number = 10, search?: string, cabinetId?: string): Promise<any> {

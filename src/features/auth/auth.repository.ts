@@ -57,6 +57,35 @@ export class AuthRepository {
     return execute.rows[0];
   }
 
+  // Vérifier l'existence d'une spécialité
+  async getSpecialiteById(specialiteId: string): Promise<{ idspecialite: string } | null> {
+    const query = `SELECT idSpecialite AS idspecialite FROM specialite WHERE idSpecialite = $1`;
+    const result = await db.query(query, [specialiteId]);
+    return result.rows[0] || null;
+  }
+
+  // Associer un médecin à une spécialité (idempotent)
+  async associateMedecinSpecialite(medecinId: string, specialiteId: string): Promise<void> {
+    const query = `
+      INSERT INTO medecin_specialite (medecin_id, specialite_id)
+      VALUES ($1, $2)
+      ON CONFLICT (medecin_id, specialite_id) DO NOTHING
+    `;
+    await db.query(query, [medecinId, specialiteId]);
+  }
+
+  async getSpecialitesByMedecinId(medecinId: string): Promise<Array<{ idspecialite: string; nom: string; description: string | null }>> {
+    const query = `
+      SELECT s.idSpecialite AS idspecialite, s.nom, s.description
+      FROM medecin_specialite ms
+      JOIN specialite s ON s.idSpecialite = ms.specialite_id
+      WHERE ms.medecin_id = $1
+      ORDER BY s.nom
+    `;
+    const result = await db.query(query, [medecinId]);
+    return result.rows;
+  }
+
   // Gestion OTP
   async saveOTP(email: string, otp: string): Promise<void> {
     const query = `INSERT INTO otp_verification (email, code, expires_at) 
@@ -358,6 +387,7 @@ export class AuthRepository {
       LEFT JOIN medecin_cabinet mc ON m.idMedecin = mc.medecin_id
       LEFT JOIN cabinet c ON mc.cabinet_id = c.idCabinet
       WHERE EXISTS (SELECT 1 FROM medecin m2 WHERE m2.utilisateur_id = u.idutilisateur)
+        AND m.statut = 'APPROVED'
     `;
     const params: any[] = [];
     let paramCount = 0;
@@ -382,6 +412,37 @@ export class AuthRepository {
 
     query += ` ORDER BY u.nom, u.prenom LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
     params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    return result.rows;
+  }
+
+  // Recherche publique (patient) de médecins APPROVED par nom/prénom/email, optionnellement par spécialité
+  async searchApprovedMedecins(offset: number, limit: number, q?: string, specialiteId?: string): Promise<any[]> {
+    let query = `
+      SELECT DISTINCT u.idUtilisateur, u.nom, u.prenom, u.email, u.photoProfil,
+             m.idMedecin, m.experience, m.biographie
+      FROM medecin m
+      JOIN utilisateur u ON u.idUtilisateur = m.utilisateur_id
+      LEFT JOIN medecin_specialite ms ON ms.medecin_id = m.idMedecin
+      WHERE m.statut = 'APPROVED'
+    `;
+    const params: any[] = [];
+    let i = 0;
+
+    if (q) {
+      i++; params.push(`%${q}%`);
+      query += ` AND (u.nom ILIKE $${i} OR u.prenom ILIKE $${i} OR u.email ILIKE $${i})`;
+    }
+
+    if (specialiteId) {
+      i++; params.push(specialiteId);
+      query += ` AND ms.specialite_id = $${i}`;
+    }
+
+    i++; params.push(limit);
+    i++; params.push(offset);
+    query += ` ORDER BY u.nom, u.prenom LIMIT $${i-1} OFFSET $${i}`;
 
     const result = await db.query(query, params);
     return result.rows;

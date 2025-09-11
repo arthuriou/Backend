@@ -485,11 +485,12 @@ export class SpecialitesController {
   async searchMedecinsBySpecialite(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { cabinet_id, limit = 50, offset = 0 } = req.query;
+      const { cabinet_id, limit = 50, offset = 0, q } = req.query;
       
       const searchData = {
         specialite_id: id,
         cabinet_id: cabinet_id as string,
+        q: q as string,
         limit: parseInt(limit as string),
         offset: parseInt(offset as string)
       };

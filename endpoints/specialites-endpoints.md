@@ -608,7 +608,6 @@ Authorization: Bearer <token>
   ]
 }
 ```
-
 ## 23. Obtenir les statistiques générales
 **GET** `/statistics`
 
@@ -677,3 +676,4 @@ const associateMedecinSpecialite = async (medecinId, specialiteId) => {
   return response.json();
 };
 ```
+

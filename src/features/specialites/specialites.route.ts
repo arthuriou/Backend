@@ -154,8 +154,9 @@ router.delete("/associations/specialite-maux/:specialiteId/:mauxId",
 // ========================================
 
 // Rechercher des médecins par spécialité
+// Autoriser les patients à chercher des médecins par spécialité (résultats approuvés uniquement)
 router.get("/specialites/:id/medecins", 
-  authenticateToken, 
+  authenticateToken,
   controller.searchMedecinsBySpecialite.bind(controller)
 );
 
