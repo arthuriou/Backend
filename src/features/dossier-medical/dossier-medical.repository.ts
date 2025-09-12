@@ -2,6 +2,10 @@ import db from "../../utils/database";
 import { DossierMedical, DocumentMedical, CreateDocumentRequest } from "./dossier-medical.model";
 
 export class DossierMedicalRepository {
+  async getPatientByUserId(userId: string): Promise<any | null> {
+    const r = await db.query(`SELECT * FROM patient WHERE utilisateur_id = $1`, [userId]);
+    return r.rows[0] || null;
+  }
   async getDossierByPatient(patientId: string): Promise<any | null> {
     const result = await db.query(
       `SELECT * FROM dossierMedical WHERE patient_id = $1` ,
@@ -11,6 +15,13 @@ export class DossierMedicalRepository {
   }
 
   async createDossier(patientId: string): Promise<any> {
+    // Vérifier existence du patient pour renvoyer une erreur claire au lieu d'une FK
+    const pr = await db.query(`SELECT 1 FROM patient WHERE idPatient = $1`, [patientId]);
+    if (pr.rowCount === 0) {
+      const err: any = new Error("Patient introuvable");
+      err.status = 404;
+      throw err;
+    }
     const result = await db.query(
       `INSERT INTO dossierMedical (patient_id, dateCreation) VALUES ($1, now()) RETURNING *`,
       [patientId]
@@ -36,6 +47,17 @@ export class DossierMedicalRepository {
       ispublic,
     } = payload;
 
+    // Vérifier l'existence du dossier
+    const dr = await db.query(
+      `SELECT 1 FROM dossierMedical WHERE idDossier = $1`,
+      [dossier_id]
+    );
+    if (dr.rowCount === 0) {
+      const err: any = new Error("Dossier introuvable");
+      err.status = 404;
+      throw err;
+    }
+
     const result = await db.query(
       `INSERT INTO document (dossier_id, nom, type, url, mimeType, tailleKo, dateUpload, isPublic)
        VALUES ($1, $2, $3, $4, $5, $6, now(), COALESCE($7,false)) RETURNING *`,
@@ -58,6 +80,18 @@ export class DossierMedicalRepository {
       [documentId]
     );
     return (result.rowCount || 0) > 0;
+  }
+
+  async getDocumentWithOwner(documentId: string): Promise<any | null> {
+    const q = await db.query(
+      `SELECT d.*, dm.patient_id, p.utilisateur_id
+       FROM document d
+       JOIN dossierMedical dm ON dm.idDossier = d.dossier_id
+       JOIN patient p ON p.idPatient = dm.patient_id
+       WHERE d.idDocument = $1`,
+      [documentId]
+    );
+    return q.rows[0] || null;
   }
 
   async updateDocumentMeta(documentId: string, update: Partial<DocumentMedical>): Promise<any> {

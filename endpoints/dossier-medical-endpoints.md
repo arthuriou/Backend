@@ -6,7 +6,7 @@ Tous les endpoints nécessitent le header d'authentification JWT:
 - `Authorization: Bearer <token>`
 
 ## Index (URLs complètes)
-- GET   http://localhost:3000/api/dossier-medical/dossier/:patientId
+- GET   http://localhost:3000/api/dossier-medical/dossier/me
 - GET   http://localhost:3000/api/dossier-medical/:dossierId/documents
 - POST  http://localhost:3000/api/dossier-medical/documents
 - PATCH http://localhost:3000/api/dossier-medical/documents/:id
@@ -14,11 +14,11 @@ Tous les endpoints nécessitent le header d'authentification JWT:
 
 ---
 
-## 1) Obtenir/Créer le dossier d'un patient
-GET `/dossier/:patientId`
+## 1) Obtenir/Créer le dossier du patient connecté
+GET `/dossier/me`
 
-- Description: Retourne le dossier du patient. Le crée s'il n'existe pas.
-- Params: `patientId` (UUID du patient)
+- Description: Retourne le dossier du patient connecté (déduit via le token). Le crée s'il n'existe pas.
+- Auth: `Authorization: Bearer <token>`
 - Response 200:
 ```json
 {
@@ -30,6 +30,11 @@ GET `/dossier/:patientId`
   },
   "created": false
 }
+```
+
+- Response 404:
+```json
+{ "message": "Patient introuvable" }
 ```
 
 ---
@@ -57,7 +62,7 @@ GET `/:dossierId/documents`
 
 ---
 
-## 3) Ajouter un document
+## 3) Ajouter un document (Cloudinary)
 POST `/documents`
 
 - Auth: `Authorization: Bearer <token>`
@@ -73,6 +78,8 @@ POST `/documents`
 }
 ```
 - Response 201: document créé
+- Response 502: `{ "message": "Cloudinary non configuré" }`
+- Response 404: `{ "message": "Dossier introuvable" }`
 
 ---
 
@@ -90,7 +97,7 @@ PATCH `/documents/:id`
 
 ---
 
-## 5) Supprimer un document
+## 5) Supprimer un document (par le patient propriétaire uniquement)
 DELETE `/documents/:id`
 
 - Response 200:
@@ -98,8 +105,19 @@ DELETE `/documents/:id`
 { "success": true }
 ```
 
+- Response 403:
+```json
+{ "message": "Accès interdit" }
+```
+
+- Response 404:
+```json
+{ "message": "Document non trouvé" }
+```
+
 ---
 
 ## Notes
 - Les uploads de fichiers binaires seront gérés via un service d'upload (à venir). Ici on stocke seulement les métadonnées et l'URL.
 - Les droits d'accès sont contrôlés par le middleware JWT et la logique métier.
+  - Seul le patient propriétaire du dossier peut supprimer ses documents; aucun administrateur n'a ce droit.
