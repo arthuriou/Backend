@@ -68,7 +68,12 @@ export class DossierMedicalController {
           const { configureCloudinary } = await import('../../shared/utils/cloudinary');
           configureCloudinary();
           const result: any = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({ folder, resource_type: 'auto' }, (error: any, resu: any) => {
+            const stream = cloudinary.uploader.upload_stream({ 
+              folder, 
+              resource_type: 'auto',
+              access_mode: 'public', // Rendre les fichiers publics
+              type: 'upload' // Type d'upload standard
+            }, (error: any, resu: any) => {
               if (error) return reject(error);
               resolve(resu);
             });
@@ -128,6 +133,189 @@ export class DossierMedicalController {
       const doc = await service.updateDocumentMeta(id, update);
       res.json(doc);
     } catch (error: any) {
+      res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
+  }
+
+  // Servir un document avec authentification (proxy Cloudinary)
+  async viewDocument(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.userId;
+      
+      if (!id) {
+        res.status(400).json({ message: "ID du document requis" });
+        return;
+      }
+      
+      if (!userId) {
+        res.status(401).json({ message: "Utilisateur non authentifié" });
+        return;
+      }
+
+      // Récupérer le document
+      const document = await service.getDocumentById(id);
+      if (!document) {
+        res.status(404).json({ message: "Document non trouvé" });
+        return;
+      }
+
+      // Vérifier que l'utilisateur est le propriétaire du dossier
+      const dossier = await service.getDossierById(document.dossier_id);
+      if (!dossier) {
+        res.status(404).json({ message: "Dossier non trouvé" });
+        return;
+      }
+
+      const patientId = await service.getPatientIdFromUserId(userId);
+      if (!patientId || dossier.patient_id !== patientId) {
+        res.status(403).json({ message: "Accès refusé: vous n'êtes pas propriétaire de ce document" });
+        return;
+      }
+
+      // Récupérer le fichier (Cloudinary ou local)
+      const documentUrl = document.url;
+      console.log('🔍 Debug viewDocument:', {
+        documentId: id,
+        documentUrl,
+        documentExists: !!document,
+        documentName: document.nom
+      });
+      
+      if (!documentUrl) {
+        res.status(404).json({ message: "URL du document manquante" });
+        return;
+      }
+      
+      let response;
+      
+      // Vérifier si c'est une URL locale ou Cloudinary
+      if (documentUrl.startsWith('/uploads/')) {
+        // URL locale - servir directement depuis le système de fichiers
+        console.log('📁 Fichier local détecté:', documentUrl);
+        
+        const fs = await import('fs');
+        const path = await import('path');
+        
+        const filePath = path.join(process.cwd(), 'uploads', documentUrl.replace('/uploads/', ''));
+        
+        try {
+          // Vérifier que le fichier existe
+          await fs.promises.access(filePath);
+          
+          // Lire le fichier et l'envoyer
+          const fileBuffer = await fs.promises.readFile(filePath);
+          
+          // Définir les headers appropriés
+          res.setHeader('Content-Type', document.mimetype || 'application/octet-stream');
+          res.setHeader('Content-Disposition', `inline; filename="${document.nom}"`);
+          res.setHeader('Cache-Control', 'private, max-age=3600');
+          res.setHeader('Content-Length', fileBuffer.length);
+          
+          // Envoyer le fichier
+          res.end(fileBuffer);
+          return;
+          
+        } catch (fileError) {
+          console.error('❌ Erreur lecture fichier local:', fileError);
+          res.status(404).json({ message: "Fichier local non trouvé" });
+          return;
+        }
+        
+      } else if (documentUrl.startsWith('https://res.cloudinary.com/')) {
+        // URL Cloudinary - utiliser la logique existante
+        console.log('☁️ Fichier Cloudinary détecté:', documentUrl);
+        
+        // Essayer d'abord l'URL directe
+        response = await fetch(documentUrl);
+        console.log('🌐 Cloudinary response (direct):', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        
+        // Si 401, essayer avec une URL signée
+        if (response.status === 401) {
+          console.log('🔄 Tentative avec URL signée...');
+          try {
+            const { v2: cloudinary } = await import('cloudinary');
+            const { configureCloudinary } = await import('../../shared/utils/cloudinary');
+            configureCloudinary();
+            
+            // Extraire le public_id de l'URL
+            const urlParts = documentUrl.split('/');
+            const publicId = urlParts[urlParts.length - 1].replace(/\.[^.]+$/, '');
+            const folder = urlParts[urlParts.length - 2];
+            const fullPublicId = `${folder}/${publicId}`;
+            
+            // Générer une URL signée
+            const signedUrl = cloudinary.url(fullPublicId, {
+              resource_type: 'auto',
+              type: 'upload',
+              sign_url: true,
+              expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 heure
+            });
+            
+            console.log('🔐 URL signée générée:', signedUrl);
+            response = await fetch(signedUrl);
+            console.log('🌐 Cloudinary response (signed):', {
+              status: response.status,
+              statusText: response.statusText
+            });
+          } catch (signError) {
+            console.error('❌ Erreur génération URL signée:', signError);
+          }
+        }
+        
+        if (!response.ok) {
+          res.status(404).json({ 
+            message: "Fichier non trouvé sur Cloudinary",
+            details: {
+              status: response.status,
+              statusText: response.statusText,
+              url: documentUrl
+            }
+          });
+          return;
+        }
+        
+      } else {
+        // URL invalide
+        res.status(400).json({ 
+          message: "Format d'URL non supporté",
+          details: { url: documentUrl }
+        });
+        return;
+      }
+
+      // Définir les headers appropriés
+      res.setHeader('Content-Type', document.mimetype || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${document.nom}"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600'); // Cache 1 heure
+
+      // Streamer le fichier vers le client
+      if (response.body) {
+        // Convertir ReadableStream vers Node.js stream
+        const reader = response.body.getReader();
+        const pump = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              res.write(value);
+            }
+            res.end();
+          } catch (error) {
+            console.error('Erreur streaming:', error);
+            res.status(500).json({ message: "Erreur lors du streaming du fichier" });
+          }
+        };
+        pump();
+      } else {
+        res.status(500).json({ message: "Erreur lors de la récupération du fichier" });
+      }
+      
+    } catch (error: any) {
+      console.error('Erreur serveur document:', error);
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   }

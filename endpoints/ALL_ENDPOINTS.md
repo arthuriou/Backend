@@ -124,6 +124,7 @@ Alias: `/api/v1/specialites`, `/api/v1/mobile/specialites`, `/api/v1/dashboard/s
 - DELETE http://localhost:3000/api/specialites/associations/specialite-maux/:specialiteId/:mauxId
 - GET   http://localhost:3000/api/specialites/specialites/:id/medecins (PATIENT OK, médecins APPROVED)
 - GET   http://localhost:3000/api/specialites/specialites/:id/cabinets
+- GET   http://localhost:3000/api/specialites/maux/:id/medecins (PATIENT OK, médecins APPROVED)
 - GET   http://localhost:3000/api/specialites/statistics
 
 ## Notifications - Préférences & Devices
@@ -142,9 +143,10 @@ Devices base: `/api/notifications` (alias `/api/v1/notifications`, `/api/v1/mobi
 ## Dossier Médical (`/api/dossier-medical`)
 Alias: `/api/v1/dossier-medical`, `/api/v1/mobile/dossier-medical`, `/api/v1/dashboard/dossier-medical`
 
-- GET   http://localhost:3000/api/dossier-medical/dossier/:patientId
+- GET   http://localhost:3000/api/dossier-medical/dossier/me
 - GET   http://localhost:3000/api/dossier-medical/:dossierId/documents
 - POST  http://localhost:3000/api/dossier-medical/documents
+- GET   http://localhost:3000/api/dossier-medical/documents/:id/view (PATIENT propriétaire seulement)
 - DELETE http://localhost:3000/api/dossier-medical/documents/:id
 - PATCH http://localhost:3000/api/dossier-medical/documents/:id
 

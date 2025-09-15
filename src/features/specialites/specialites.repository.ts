@@ -15,7 +15,8 @@ import {
   SearchSpecialiteRequest,
   SearchMauxRequest,
   SearchMedecinBySpecialiteRequest,
-  SearchCabinetBySpecialiteRequest
+  SearchCabinetBySpecialiteRequest,
+  SearchMedecinByMauxRequest
 } from "./specialites.model";
 import db from "../../utils/database";
 
@@ -577,5 +578,71 @@ export class SpecialitesRepository {
     }
     
     return cabinetsWithSpecialites;
+  }
+
+  // Rechercher des médecins par mal
+  async searchMedecinsByMaux(searchData: SearchMedecinByMauxRequest): Promise<MedecinWithSpecialites[]> {
+    let query = `
+      SELECT DISTINCT m.idmedecin, u.nom, u.prenom, u.email, u.photoProfil, m.experience, m.biographie
+      FROM medecin m
+      JOIN utilisateur u ON m.utilisateur_id = u.idutilisateur
+      JOIN medecin_specialite ms ON m.idmedecin = ms.medecin_id
+      JOIN specialite_maux sm ON ms.specialite_id = sm.specialite_id
+      WHERE sm.maux_id = $1 AND m.statut = 'APPROVED'
+    `;
+    
+    const params: any[] = [searchData.maux_id];
+    let paramCount = 1;
+
+    if (searchData.q) {
+      paramCount++;
+      query += ` AND (u.nom ILIKE $${paramCount} OR u.prenom ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      params.push(`%${searchData.q}%`);
+    }
+
+    query += ` ORDER BY u.nom, u.prenom`;
+    
+    if (searchData.limit) {
+      paramCount++;
+      query += ` LIMIT $${paramCount}`;
+      params.push(searchData.limit);
+    }
+    
+    if (searchData.offset) {
+      paramCount++;
+      query += ` OFFSET $${paramCount}`;
+      params.push(searchData.offset);
+    }
+
+    const result = await db.query(query, params);
+    const medecinsWithSpecialites: MedecinWithSpecialites[] = [];
+
+    for (const medecin of result.rows) {
+      // Récupérer les spécialités de ce médecin
+      const specialitesQuery = `
+        SELECT s.idspecialite, s.nom, s.description
+        FROM specialite s
+        JOIN medecin_specialite ms ON s.idspecialite = ms.specialite_id
+        WHERE ms.medecin_id = $1
+      `;
+      const specialitesResult = await db.query(specialitesQuery, [medecin.idmedecin]);
+
+      medecinsWithSpecialites.push({
+        idmedecin: medecin.idmedecin,
+        nom: medecin.nom,
+        prenom: medecin.prenom,
+        email: medecin.email,
+        photoprofil: medecin.photoprofil,
+        experience: medecin.experience,
+        biographie: medecin.biographie,
+        specialites: specialitesResult.rows.map(s => ({
+          idspecialite: s.idspecialite,
+          nom: s.nom,
+          description: s.description
+        }))
+      });
+    }
+
+    return medecinsWithSpecialites;
   }
 }

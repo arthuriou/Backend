@@ -111,6 +111,31 @@ export class DossierMedicalRepository {
     if (result.rows.length === 0) throw new Error("Document non trouvé");
     return result.rows[0];
   }
+
+  // Méthodes pour l'endpoint viewDocument
+  async getDocumentById(documentId: string): Promise<any | null> {
+    const result = await db.query(
+      `SELECT * FROM document WHERE idDocument = $1`,
+      [documentId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async getDossierById(dossierId: string): Promise<any | null> {
+    const result = await db.query(
+      `SELECT * FROM dossierMedical WHERE idDossier = $1`,
+      [dossierId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async getPatientIdFromUserId(userId: string): Promise<string | null> {
+    const result = await db.query(
+      `SELECT idPatient FROM patient WHERE utilisateur_id = $1`,
+      [userId]
+    );
+    return result.rows[0]?.idpatient || null;
+  }
 }
 
 

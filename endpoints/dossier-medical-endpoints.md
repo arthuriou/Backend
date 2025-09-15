@@ -115,6 +115,45 @@ DELETE `/documents/:id`
 { "message": "Document non trouvé" }
 ```
 
+## 6. Consulter un document (proxy Cloudinary)
+**GET** `http://localhost:3000/api/dossier-medical/documents/:id/view`
+
+### Headers
+```
+Authorization: Bearer <token>
+```
+
+### Réponse (200)
+- **Content-Type**: Type MIME du document (PDF, image, etc.)
+- **Content-Disposition**: `inline; filename="nom-du-document.pdf"`
+- **Body**: Fichier binaire streamé depuis Cloudinary
+
+### Réponses d'erreur
+- Response 400:
+```json
+{ "message": "ID du document requis" }
+```
+
+- Response 401:
+```json
+{ "message": "Utilisateur non authentifié" }
+```
+
+- Response 403:
+```json
+{ "message": "Accès refusé: vous n'êtes pas propriétaire de ce document" }
+```
+
+- Response 404:
+```json
+{ "message": "Document non trouvé" }
+```
+
+- Response 404:
+```json
+{ "message": "Fichier non trouvé sur Cloudinary" }
+```
+
 ---
 
 ## Notes

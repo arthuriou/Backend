@@ -16,7 +16,8 @@ import {
   SearchSpecialiteRequest,
   SearchMauxRequest,
   SearchMedecinBySpecialiteRequest,
-  SearchCabinetBySpecialiteRequest
+  SearchCabinetBySpecialiteRequest,
+  SearchMedecinByMauxRequest
 } from "./specialites.model";
 
 export class SpecialitesService {
@@ -342,6 +343,15 @@ export class SpecialitesService {
     }
 
     return await this.repository.searchCabinetsBySpecialite(searchData);
+  }
+
+  // Rechercher des médecins par mal
+  async searchMedecinsByMaux(searchData: SearchMedecinByMauxRequest): Promise<MedecinWithSpecialites[]> {
+    if (!searchData.maux_id) {
+      throw new Error("ID mal requis");
+    }
+
+    return await this.repository.searchMedecinsByMaux(searchData);
   }
 
   // ========================================

@@ -187,3 +187,10 @@ export interface SearchCabinetBySpecialiteRequest {
   limit?: number;
   offset?: number;
 }
+
+export interface SearchMedecinByMauxRequest {
+  maux_id: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}

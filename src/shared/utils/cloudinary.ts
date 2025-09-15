@@ -38,6 +38,8 @@ export async function uploadImageToCloudinary(localFilePathOrBuffer: any, folder
     folder,
     resource_type: 'image',
     overwrite: true,
+    access_mode: 'public', // Rendre les fichiers publics
+    type: 'upload', // Type d'upload standard
   };
   if (filename) uploadOptions.public_id = filename.replace(/\.[^.]+$/, '');
 

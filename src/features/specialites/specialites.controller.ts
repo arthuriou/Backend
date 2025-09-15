@@ -533,6 +533,32 @@ export class SpecialitesController {
     }
   }
 
+  // Rechercher des médecins par mal
+  async searchMedecinsByMaux(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { limit = 50, offset = 0, q } = req.query;
+      
+      const searchData = {
+        maux_id: id,
+        q: q as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      };
+      
+      const medecins = await this.service.searchMedecinsByMaux(searchData);
+      
+      res.status(200).json({
+        message: "Médecins trouvés avec succès",
+        data: medecins
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur"
+      });
+    }
+  }
+
   // ========================================
   // STATISTIQUES
   // ========================================

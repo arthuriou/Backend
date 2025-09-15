@@ -27,6 +27,7 @@ http://localhost:3000/api/specialites
 - DELETE http://localhost:3000/api/specialites/associations/specialite-maux/:specialiteId/:mauxId
 - GET   http://localhost:3000/api/specialites/specialites/:id/medecins
 - GET   http://localhost:3000/api/specialites/specialites/:id/cabinets
+- GET   http://localhost:3000/api/specialites/maux/:id/medecins
 - GET   http://localhost:3000/api/specialites/statistics
 
 ## 1. Créer une spécialité
@@ -597,6 +598,44 @@ Authorization: Bearer <token>
       "idcabinet": "uuid",
       "nom": "Cabinet Cardiologie",
       "adresse": "123 Rue de la Santé",
+      "specialites": [
+        {
+          "idspecialite": "uuid",
+          "nom": "Cardiologie",
+          "description": "Spécialité médicale qui traite les maladies du cœur et des vaisseaux sanguins"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## 23. Rechercher des médecins par mal
+**GET** `/maux/:id/medecins?q=Martin&limit=10&offset=0`
+
+### Headers
+```
+Authorization: Bearer <token>
+```
+
+### Query Parameters
+- `q` (optionnel) : Recherche par nom/prénom/email du médecin
+- `limit` (optionnel) : Nombre de résultats (défaut: 50)
+- `offset` (optionnel) : Décalage pour la pagination (défaut: 0)
+
+### Réponse (200)
+```json
+{
+  "message": "Médecins trouvés avec succès",
+  "data": [
+    {
+      "idmedecin": "uuid",
+      "nom": "Martin",
+      "prenom": "Dr. Jean",
+      "email": "jean.martin@email.com",
+      "photoprofil": "https://res.cloudinary.com/...",
+      "experience": 5,
+      "biographie": "Médecin expérimenté...",
       "specialites": [
         {
           "idspecialite": "uuid",

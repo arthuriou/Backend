@@ -55,6 +55,19 @@ export class DossierMedicalService {
   async updateDocumentMeta(documentId: string, update: any) {
     return this.repository.updateDocumentMeta(documentId, update);
   }
+
+  // Méthodes pour l'endpoint viewDocument
+  async getDocumentById(documentId: string) {
+    return this.repository.getDocumentById(documentId);
+  }
+
+  async getDossierById(dossierId: string) {
+    return this.repository.getDossierById(dossierId);
+  }
+
+  async getPatientIdFromUserId(userId: string) {
+    return this.repository.getPatientIdFromUserId(userId);
+  }
 }
 
 

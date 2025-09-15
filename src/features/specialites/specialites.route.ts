@@ -16,8 +16,13 @@ router.post("/specialites",
   controller.createSpecialite.bind(controller)
 );
 
-// Récupérer toutes les spécialités
+// Récupérer toutes les spécialités (PUBLIC pour l'inscription)
 router.get("/specialites", 
+  controller.getAllSpecialites.bind(controller)
+);
+
+// Récupérer toutes les spécialités (AUTHENTIFIÉ pour les autres usages)
+router.get("/specialites/authenticated", 
   authenticateToken, 
   controller.getAllSpecialites.bind(controller)
 );
@@ -164,6 +169,12 @@ router.get("/specialites/:id/medecins",
 router.get("/specialites/:id/cabinets", 
   authenticateToken, 
   controller.searchCabinetsBySpecialite.bind(controller)
+);
+
+// Rechercher des médecins par mal
+router.get("/maux/:id/medecins", 
+  authenticateToken,
+  controller.searchMedecinsByMaux.bind(controller)
 );
 
 // ========================================
