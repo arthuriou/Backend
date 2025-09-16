@@ -320,6 +320,40 @@ export class RendezVousRepository {
   }
 
   // ========================================
+  // RELATIONS & MAPPINGS
+  // ========================================
+
+  async getMedecinIdByUserId(userId: string): Promise<string | null> {
+    const r = await db.query(`SELECT idMedecin FROM medecin WHERE utilisateur_id = $1`, [userId]);
+    return r.rows[0]?.idmedecin || null;
+  }
+
+  async getPatientIdByUserId(userId: string): Promise<string | null> {
+    const r = await db.query(`SELECT idPatient FROM patient WHERE utilisateur_id = $1`, [userId]);
+    return r.rows[0]?.idpatient || null;
+  }
+
+  async isPatientOfMedecinByEntities(patientId: string, medecinId: string): Promise<boolean> {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM rendezvous r
+        WHERE r.patient_id = $1
+          AND r.medecin_id = $2
+          AND r.statut IN ('CONFIRME','EN_COURS','TERMINE')
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM consultation c
+        WHERE c.patient_id = $1
+          AND c.medecin_id = $2
+      ) AS related;
+    `;
+    const result = await db.query<{ related: boolean }>(query, [patientId, medecinId]);
+    return Boolean(result.rows[0]?.related);
+  }
+
+  // ========================================
   // MÉTHODES UTILITAIRES
   // ========================================
 

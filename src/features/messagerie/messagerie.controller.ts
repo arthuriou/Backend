@@ -3,6 +3,7 @@ import { MessagerieService } from "./messagerie.service";
 import { SocketService } from "../../shared/services/socket.service";
 import { AuthRepository } from "../auth/auth.repository";
 import { getMissingFields } from "../../shared/utils/validator";
+import { uploadImageToCloudinary, uploadToCloudinary } from "../../shared/utils/cloudinary";
 
 export class MessagerieController {
   private service: MessagerieService;
@@ -11,6 +12,13 @@ export class MessagerieController {
   constructor(socketService?: SocketService) {
     this.service = new MessagerieService(socketService);
     this.authRepository = new AuthRepository();
+  }
+
+  private toAbsoluteUrl(req: Request, maybeUrl?: string): string | undefined {
+    if (!maybeUrl) return undefined;
+    if (/^https?:\/\//i.test(maybeUrl)) return maybeUrl;
+    const base = `${req.protocol}://${req.get('host')}`;
+    return `${base}${maybeUrl.startsWith('/') ? '' : '/'}${maybeUrl}`;
   }
 
   // ========================================
@@ -205,16 +213,67 @@ export class MessagerieController {
         return;
       }
 
+      let fichierUrl: string | undefined;
+      let fichierNom: string | undefined;
+      let fichierTaille: number | undefined;
+      let typeMessage: string;
+
+      if (file) {
+        // Upload vers Cloudinary
+        try {
+          // Déterminer le type de ressource Cloudinary
+          let resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto';
+          if (file.mimetype?.startsWith('image/')) {
+            resourceType = 'image';
+            typeMessage = 'IMAGE';
+          } else if (file.mimetype?.startsWith('audio/')) {
+            resourceType = 'raw';
+            typeMessage = 'VOICE';
+          } else if (file.mimetype?.startsWith('video/')) {
+            resourceType = 'video';
+            typeMessage = 'FICHIER';
+          } else {
+            resourceType = 'raw';
+            typeMessage = 'FICHIER';
+          }
+
+          const cloudinaryResult = await uploadToCloudinary(
+            file.buffer, 
+            'messages',
+            file.originalname,
+            resourceType
+          );
+          fichierUrl = cloudinaryResult.url;
+          fichierNom = file.originalname;
+          fichierTaille = file.size;
+        } catch (cloudinaryError) {
+          console.error('Erreur Cloudinary, fallback local:', cloudinaryError);
+          // Fallback vers stockage local
+          fichierUrl = `/uploads/messages/${file.filename}`;
+          fichierNom = file.originalname;
+          fichierTaille = file.size;
+          typeMessage = file.mimetype?.startsWith('image/') ? 'IMAGE' : 
+                      (file.mimetype?.startsWith('audio/') ? 'VOICE' : 'FICHIER');
+        }
+      } else {
+        typeMessage = 'TEXTE';
+      }
+
       const payload = {
         conversation_id: body.conversation_id || body.conversationId,
-        contenu: body.contenu || (file ? '' : undefined),
-        type_message: file ? 'FICHIER' : 'TEXTE',
-        fichier_url: file ? `/uploads/messages/${file.filename}` : undefined,
-        fichier_nom: file ? file.originalname : undefined,
-        fichier_taille: file ? file.size : undefined
+        contenu: body.contenu || (file ? (file.originalname || '') : undefined) || '',
+        type_message: typeMessage,
+        fichier_url: fichierUrl,
+        fichier_nom: fichierNom,
+        fichier_taille: fichierTaille
       };
 
       const message = await this.service.sendMessage(payload as any, userId, userRole);
+
+      // Absolutiser les URLs fichiers (seulement si c'est un fichier local)
+      if (message && (message as any).fichier_url && !(message as any).fichier_url.startsWith('http')) {
+        (message as any).fichier_url = this.toAbsoluteUrl(req, (message as any).fichier_url);
+      }
       
       res.status(201).json({
         message: "Message envoyé avec succès",
@@ -245,10 +304,18 @@ export class MessagerieController {
         parseInt(limit as string), 
         parseInt(offset as string)
       );
+
+      // Absolutiser les URLs fichiers des messages (seulement si c'est un fichier local)
+      const data = messages.map(m => ({
+        ...m,
+        fichier_url: (m as any).fichier_url && !(m as any).fichier_url.startsWith('http') 
+          ? this.toAbsoluteUrl(req, (m as any).fichier_url)
+          : (m as any).fichier_url
+      }));
       
       res.status(200).json({
         message: "Messages récupérés avec succès",
-        data: messages
+        data
       });
     } catch (error: any) {
       res.status(500).json({

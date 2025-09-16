@@ -25,9 +25,10 @@ const storage: StorageEngine = multer.diskStorage({
 });
 
 function fileFilter(_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  // Autoriser tous les fichiers image + quelques types communs, et fallback sur octet-stream
+  // Autoriser tous les fichiers image + audio + quelques types communs, et fallback sur octet-stream
   const mime = file.mimetype || '';
   if (mime.startsWith('image/')) return cb(null, true);
+  if (mime.startsWith('audio/')) return cb(null, true);
   const allowed = [
     'application/pdf','text/plain',
     'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',

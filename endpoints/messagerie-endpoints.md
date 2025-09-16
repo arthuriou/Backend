@@ -4,6 +4,15 @@
 http://localhost:3000/api/messagerie
 ```
 
+## Sécurité et Accès
+- Authentification: `Bearer <token>` requise pour tous les endpoints.
+- Règles de Communication (serveur):
+  - **Patient ↔ Médecin**: AUTORISÉ uniquement si le patient est lié au médecin (au moins un RDV confirmé/en_cours/terminé OU une consultation existante entre eux).
+  - **Patient ↔ AdminCabinet**: Autorisé.
+  - **Médecin ↔ AdminCabinet**: Autorisé (même cabinet à raffiner si besoin).
+  - **SuperAdmin**: Peut communiquer avec tous.
+  - Interdits par défaut: **Patient↔Patient**, **Médecin↔Médecin** (hors groupe cabine), **AdminCabinet↔AdminCabinet** (hors canaux dédiés).
+
 ## Index (URLs complètes)
 - POST  http://localhost:3000/api/messagerie/conversations/private
 - GET   http://localhost:3000/api/messagerie/conversations
@@ -16,19 +25,6 @@ http://localhost:3000/api/messagerie
 - PUT   http://localhost:3000/api/messagerie/messages/:id
 - DELETE http://localhost:3000/api/messagerie/messages/:id
 - POST  http://localhost:3000/api/messagerie/messages/:id/read
-
-## Règles de Communication
-
-### ✅ **Autorisées :**
-- **Patient ↔ Médecin** : Communication directe
-- **Patient ↔ AdminCabinet** : Support et questions
-- **Médecin ↔ AdminCabinet** : Communication interne du cabinet
-- **SuperAdmin ↔ Tous** : Support technique et annonces
-
-### ❌ **Interdites :**
-- **Patient ↔ Patient** : Pas de communication entre patients
-- **Médecin ↔ Médecin** : Sauf via AdminCabinet
-- **AdminCabinet ↔ AdminCabinet** : Communication via SuperAdmin
 
 ## 1. Créer ou récupérer une conversation privée
 **POST** `/conversations/private`
@@ -46,34 +42,14 @@ Content-Type: application/json
 }
 ```
 
+### Notes d’accès
+- Patient↔Médecin: refusé (403) si non liés.
+
 ### Réponse (200)
 ```json
 {
   "message": "Conversation récupérée avec succès",
-  "data": {
-    "idconversation": "uuid",
-    "type_conversation": "PRIVEE",
-    "titre": null,
-    "cabinet_id": null,
-    "participants": [
-      {
-        "idParticipant": "uuid",
-        "utilisateur_id": "uuid",
-        "role_participant": "MEMBRE",
-        "dateRejointe": "2024-01-15T10:00:00Z",
-        "actif": true,
-        "utilisateur": {
-          "idutilisateur": "uuid",
-          "nom": "Dupont",
-          "prenom": "Jean",
-          "email": "jean.dupont@email.com",
-          "role": "PATIENT"
-        }
-      }
-    ],
-    "dernier_message": null,
-    "nombre_messages_non_lus": 0
-  }
+  "data": { /* conversation */ }
 }
 ```
 
@@ -82,32 +58,12 @@ Content-Type: application/json
 
 ### Headers
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <token)
 ```
 
 ### Réponse (200)
 ```json
-{
-  "message": "Conversations récupérées avec succès",
-  "data": [
-    {
-      "idconversation": "uuid",
-      "type_conversation": "PRIVEE",
-      "titre": null,
-      "participants": [...],
-      "dernier_message": {
-        "idmessage": "uuid",
-        "contenu": "Bonjour, j'ai une question...",
-        "dateEnvoi": "2024-01-15T11:30:00Z",
-        "expediteur": {
-          "nom": "Martin",
-          "prenom": "Dr. Marie"
-        }
-      },
-      "nombre_messages_non_lus": 2
-    }
-  ]
-}
+{ "message": "Conversations récupérées avec succès", "data": [ /* ... */ ] }
 ```
 
 ## 3. Récupérer une conversation par ID
@@ -120,15 +76,7 @@ Authorization: Bearer <token>
 
 ### Réponse (200)
 ```json
-{
-  "message": "Conversation récupérée avec succès",
-  "data": {
-    "idconversation": "uuid",
-    "type_conversation": "PRIVEE",
-    "participants": [...],
-    "dernier_message": {...}
-  }
-}
+{ "message": "Conversation récupérée avec succès", "data": { /* ... */ } }
 ```
 
 ## 4. Ajouter un participant à une conversation
@@ -142,24 +90,12 @@ Content-Type: application/json
 
 ### Body (JSON)
 ```json
-{
-  "participantId": "uuid"
-}
+{ "participantId": "uuid" }
 ```
 
 ### Réponse (200)
 ```json
-{
-  "message": "Participant ajouté avec succès",
-  "data": {
-    "idParticipant": "uuid",
-    "conversation_id": "uuid",
-    "utilisateur_id": "uuid",
-    "role_participant": "MEMBRE",
-    "dateRejointe": "2024-01-15T12:00:00Z",
-    "actif": true
-  }
-}
+{ "message": "Participant ajouté avec succès", "data": { /* ... */ } }
 ```
 
 ## 5. Retirer un participant d'une conversation
@@ -172,9 +108,7 @@ Authorization: Bearer <token>
 
 ### Réponse (200)
 ```json
-{
-  "message": "Participant retiré avec succès"
-}
+{ "message": "Participant retiré avec succès" }
 ```
 
 ## 6. Envoyer un message
@@ -188,41 +122,15 @@ Authorization: Bearer <token>
 ### Deux modes
 1) JSON (texte)
 ```json
-{
-  "conversation_id": "uuid",
-  "contenu": "Bonjour, j'ai une question concernant mon rendez-vous",
-  "type_message": "TEXTE",
-  "reponse_a": "uuid"
-}
+{ "conversation_id": "uuid", "contenu": "Bonjour" }
 ```
-
 2) Multipart (fichier)
 - Content-Type: `multipart/form-data`
-- form-data:
-  - `conversation_id`: uuid
-  - `file`: image/pdf/doc...
+- form-data: `conversation_id`, `file`
 
 ### Réponse (201)
 ```json
-{
-  "message": "Message envoyé avec succès",
-  "data": {
-    "idmessage": "uuid",
-    "conversation_id": "uuid",
-    "expediteur_id": "uuid",
-    "contenu": "Bonjour, j'ai une question concernant mon rendez-vous",
-    "type_message": "TEXTE",
-    "dateenvoi": "2024-01-15T12:00:00Z",
-    "expediteur": {
-      "idutilisateur": "uuid",
-      "nom": "Dupont",
-      "prenom": "Jean",
-      "email": "jean.dupont@email.com",
-      "role": "PATIENT"
-    },
-    "lu_par": []
-  }
-}
+{ "message": "Message envoyé avec succès", "data": { /* message */ } }
 ```
 
 ## 7. Récupérer les messages d'une conversation
@@ -233,50 +141,9 @@ Authorization: Bearer <token>
 Authorization: Bearer <token>
 ```
 
-### Query Parameters
-- `limit` (optionnel) : Nombre de messages à récupérer (défaut: 50)
-- `offset` (optionnel) : Décalage pour la pagination (défaut: 0)
-
 ### Réponse (200)
 ```json
-{
-  "message": "Messages récupérés avec succès",
-  "data": [
-    {
-      "idmessage": "uuid",
-      "conversation_id": "uuid",
-      "expediteur_id": "uuid",
-      "contenu": "Bonjour, j'ai une question...",
-      "type_message": "TEXTE",
-      "dateEnvoi": "2024-01-15T10:00:00Z",
-      "expediteur": {
-        "idutilisateur": "uuid",
-        "nom": "Dupont",
-        "prenom": "Jean",
-        "role": "PATIENT"
-      },
-      "reponse_a_message": {
-        "idmessage": "uuid",
-        "contenu": "Message précédent",
-        "expediteur": {
-          "nom": "Martin",
-          "prenom": "Dr. Marie"
-        }
-      },
-      "lu_par": [
-        {
-          "idMessageLu": "uuid",
-          "utilisateur_id": "uuid",
-          "dateLecture": "2024-01-15T10:05:00Z",
-          "utilisateur": {
-            "nom": "Martin",
-            "prenom": "Dr. Marie"
-          }
-        }
-      ]
-    }
-  ]
-}
+{ "message": "Messages récupérés avec succès", "data": [ /* ... */ ] }
 ```
 
 ## 8. Modifier un message
@@ -290,21 +157,12 @@ Content-Type: application/json
 
 ### Body (JSON)
 ```json
-{
-  "contenu": "Message modifié"
-}
+{ "contenu": "Message modifié" }
 ```
 
 ### Réponse (200)
 ```json
-{
-  "message": "Message modifié avec succès",
-  "data": {
-    "idmessage": "uuid",
-    "contenu": "Message modifié",
-    "datemodification": "2024-01-15T12:30:00Z"
-  }
-}
+{ "message": "Message modifié avec succès", "data": { /* ... */ } }
 ```
 
 ## 9. Supprimer un message
@@ -317,9 +175,7 @@ Authorization: Bearer <token>
 
 ### Réponse (200)
 ```json
-{
-  "message": "Message supprimé avec succès"
-}
+{ "message": "Message supprimé avec succès" }
 ```
 
 ## 10. Marquer une conversation comme lue
@@ -332,12 +188,7 @@ Authorization: Bearer <token>
 
 ### Réponse (200)
 ```json
-{
-  "message": "Conversation marquée comme lue",
-  "data": {
-    "messagesRead": 5
-  }
-}
+{ "message": "Conversation marquée comme lue", "data": { "messagesRead": 5 } }
 ```
 
 ## 11. Marquer un message comme lu
@@ -350,42 +201,44 @@ Authorization: Bearer <token>
 
 ### Réponse (200)
 ```json
-{
-  "message": "Message marqué comme lu",
-  "data": {
-    "idMessageLu": "uuid",
-    "message_id": "uuid",
-    "utilisateur_id": "uuid",
-    "dateLecture": "2024-01-15T12:00:00Z"
-  }
-}
+{ "message": "Message marqué comme lu", "data": { /* ... */ } }
+```
+
+## Événements Socket.IO
+- Émis par le serveur
+  - **message:new**: nouveau message dans `conversation:{conversationId}`
+  - **message:read**: message lu dans `conversation:{conversationId}`
+- Rooms utilisées automatiquement: `user:{userId}`, `role:{role}`; à l’ouverture d’une conversation, le client peut joindre `conversation:{conversationId}`.
+
+### Exemple intégration client
+```javascript
+import { io } from 'socket.io-client';
+const socket = io('http://<API_HOST>:3000', {
+  transports: ['websocket'],
+  auth: { token: jwtToken },
+});
+
+socket.on('message:new', payload => {
+  // rafraîchir la conversation si correspondante
+});
+
+// Lors de l’ouverture d’une conversation
+socket.emit('join-room', `conversation:${conversationId}`);
+// et à la fermeture
+socket.emit('leave-room', `conversation:${conversationId}`);
 ```
 
 ## Types de Messages
-- **TEXTE** : Message texte simple
-- **IMAGE** : Message avec image
-- **FICHIER** : Message avec fichier joint
-- **SYSTEME** : Message système (notifications automatiques)
+- **TEXTE**, **IMAGE**, **FICHIER**, **SYSTEME**
 
 ## Types de Conversations
-- **PRIVEE** : Conversation entre 2 utilisateurs
-- **GROUPE_CABINET** : Groupe pour un cabinet médical
-- **SUPPORT** : Conversation de support avec SuperAdmin
+- **PRIVEE**, **GROUPE_CABINET**, **SUPPORT**
 
 ## Permissions
-- **Modifier/Supprimer** : Seulement ses propres messages
-- **Ajouter participants** : AdminCabinet et SuperAdmin
-- **Retirer participants** : Admin de conversation ou se retirer soi-même
-- **SuperAdmin** : Toutes les permissions
+- Modifier/Supprimer: ses propres messages
+- Ajouter participants: AdminCabinet, SuperAdmin
+- Retirer participants: Admin de conversation ou soi-même
+- SuperAdmin: toutes permissions
 
 ## Codes d'erreur
-- **400** : Champs manquants ou invalides
-- **401** : Token d'accès requis
-- **403** : Permissions insuffisantes
-- **404** : Conversation/Message non trouvé
-- **500** : Erreur serveur
-
-## Événements Socket.IO
-- **message:new** : Nouveau message reçu
-- **message:read** : Message marqué comme lu
-- **conversation:updated** : Conversation mise à jour
+- 400, 401, 403, 404, 500

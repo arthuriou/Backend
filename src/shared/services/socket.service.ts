@@ -185,11 +185,7 @@ export class SocketService {
 
   // Nouveau message
   notifyNewMessage(conversationId: string, message: any) {
-    this.notifyRoom(`conversation:${conversationId}`, 'message:new', {
-      type: 'info',
-      message: 'Nouveau message reçu',
-      data: message
-    });
+    this.notifyRoom(`conversation:${conversationId}`, 'new_message', message);
   }
 
   // Message lu
@@ -198,6 +194,14 @@ export class SocketService {
       type: 'info',
       message: 'Message lu',
       data: { messageId, userId }
+    });
+  }
+
+  // Conversation lue (pour le statut "Lu")
+  notifyConversationRead(conversationId: string, readerId: string, otherParticipantId: string) {
+    this.notifyUser(otherParticipantId, 'conversation_read', {
+      conversation_id: conversationId,
+      reader_id: readerId
     });
   }
 

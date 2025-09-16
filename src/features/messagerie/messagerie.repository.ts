@@ -124,7 +124,17 @@ export class MessagerieRepository {
         dm.idmessage as dernier_message_id, dm.contenu as dernier_message_contenu, 
         dm.dateenvoi as dernier_message_date, dm.type_message as dernier_message_type,
         eu.nom as dernier_message_expediteur_nom, eu.prenom as dernier_message_expediteur_prenom,
-        COUNT(ml.idMessageLu) as messages_non_lus
+        (
+          SELECT COUNT(*)
+          FROM message m2
+          WHERE m2.conversation_id = c.idConversation
+            AND m2.actif = true
+            AND m2.expediteur_id != $1
+            AND NOT EXISTS (
+              SELECT 1 FROM message_lu ml2
+              WHERE ml2.message_id = m2.idMessage AND ml2.utilisateur_id = $1
+            )
+        ) as messages_non_lus
       FROM conversation c
       JOIN conversation_participant cp ON c.idConversation = cp.conversation_id
       JOIN utilisateur u ON cp.utilisateur_id = u.idUtilisateur
@@ -136,8 +146,6 @@ export class MessagerieRepository {
         LIMIT 1
       ) dm ON true
       LEFT JOIN utilisateur eu ON dm.expediteur_id = eu.idUtilisateur
-      LEFT JOIN message m2 ON c.idConversation = m2.conversation_id AND m2.actif = true
-      LEFT JOIN message_lu ml ON m2.idMessage = ml.message_id AND ml.utilisateur_id = $1
       WHERE c.actif = true 
         AND EXISTS (
           SELECT 1 FROM conversation_participant cp2 
@@ -145,7 +153,6 @@ export class MessagerieRepository {
             AND cp2.utilisateur_id = $1 
             AND cp2.actif = true
         )
-      GROUP BY c.idConversation, cp.idParticipant, u.idUtilisateur, dm.idMessage, eu.idUtilisateur
       ORDER BY dm.dateEnvoi DESC NULLS LAST, c.dateModification DESC
     `;
     
@@ -237,7 +244,8 @@ export class MessagerieRepository {
   async getMessagesByConversation(
     conversationId: string, 
     limit: number = 50, 
-    offset: number = 0
+    offset: number = 0,
+    currentUserId?: string
   ): Promise<MessageWithDetails[]> {
     const query = `
       SELECT 
@@ -246,7 +254,8 @@ export class MessagerieRepository {
         rm.idMessage as reponse_id, rm.contenu as reponse_contenu,
         ru.nom as reponse_expediteur_nom, ru.prenom as reponse_expediteur_prenom,
         ml.idMessageLu, ml.utilisateur_id as lu_par_user_id, ml.dateLecture,
-        lu.nom as lu_par_nom, lu.prenom as lu_par_prenom
+        lu.nom as lu_par_nom, lu.prenom as lu_par_prenom,
+        CASE WHEN m.expediteur_id = $2 THEN true ELSE false END as est_mien
       FROM message m
       JOIN utilisateur u ON m.expediteur_id = u.idUtilisateur
       LEFT JOIN message rm ON m.reponse_a = rm.idMessage
@@ -255,10 +264,10 @@ export class MessagerieRepository {
       LEFT JOIN utilisateur lu ON ml.utilisateur_id = lu.idUtilisateur
       WHERE m.conversation_id = $1 AND m.actif = true
       ORDER BY m.dateEnvoi ASC
-      LIMIT $2 OFFSET $3
+      LIMIT $3 OFFSET $4
     `;
     
-    const result = await db.query(query, [conversationId, limit, offset]);
+    const result = await db.query(query, [conversationId, currentUserId || '', limit, offset]);
     return this.mapMessagesWithDetails(result.rows);
   }
 
@@ -365,6 +374,36 @@ export class MessagerieRepository {
   // MÉTHODES UTILITAIRES
   // ========================================
 
+  /**
+   * Vérifie si deux utilisateurs ont une relation patient↔médecin
+   * Définition: au moins un rendez-vous (CONFIRME, EN_COURS, TERMINE)
+   * OU au moins une consultation entre eux.
+   */
+  async isPatientOfMedecin(userPatientId: string, userMedecinId: string): Promise<boolean> {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM rendezvous r
+        JOIN patient p ON p.idPatient = r.patient_id
+        JOIN medecin m ON m.idMedecin = r.medecin_id
+        WHERE p.utilisateur_id = $1
+          AND m.utilisateur_id = $2
+          AND r.statut IN ('CONFIRME','EN_COURS','TERMINE')
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM consultation c
+        JOIN patient p2 ON p2.idPatient = c.patient_id
+        JOIN medecin m2 ON m2.idMedecin = c.medecin_id
+        WHERE p2.utilisateur_id = $1
+          AND m2.utilisateur_id = $2
+      ) AS related;
+    `;
+
+    const result = await db.query<{ related: boolean }>(query, [userPatientId, userMedecinId]);
+    return Boolean(result.rows[0]?.related);
+  }
+
   private mapConversationsWithDetails(rows: any[]): ConversationWithDetails[] {
     const conversationMap = new Map<string, ConversationWithDetails>();
     
@@ -439,8 +478,10 @@ export class MessagerieRepository {
           fichier_taille: row.fichier_taille,
           reponse_a: row.reponse_a,
           dateenvoi: row.dateenvoi,
+          dateEnvoi: row.dateenvoi,
           supprime: row.supprime,
           actif: row.actif,
+          est_mien: row.est_mien || false,
           expediteur: {
             idutilisateur: row.expediteur_id,
             nom: row.nom,

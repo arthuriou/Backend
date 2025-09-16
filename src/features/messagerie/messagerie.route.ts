@@ -2,7 +2,7 @@ import { Router } from "express";
 import { MessagerieController } from "./messagerie.controller";
 import { authenticateToken, requireRole } from "../../shared/middlewares/auth.middleware";
 import { SocketService } from "../../shared/services/socket.service";
-import { upload, setUploadSegment } from "../../shared/utils/upload";
+import { upload, uploadMemory, setUploadSegment } from "../../shared/utils/upload";
 
 // Fonction pour créer les routes avec un contrôleur spécifique
 export const createMessagerieRoutes = (socketService?: SocketService) => {
@@ -58,7 +58,7 @@ export const createMessagerieRoutes = (socketService?: SocketService) => {
   router.post("/messages", 
     authenticateToken,
     setUploadSegment('messages'),
-    upload.single('file'),
+    uploadMemory.single('file'),
     controller.sendMessage.bind(controller)
   );
 

@@ -25,12 +25,13 @@ export interface Message {
   conversation_id: string;
   expediteur_id: string;
   contenu: string;
-  type_message: 'TEXTE' | 'IMAGE' | 'FICHIER' | 'SYSTEME';
+  type_message: 'TEXTE' | 'IMAGE' | 'FICHIER' | 'VOICE' | 'SYSTEME';
   fichier_url?: string;
   fichier_nom?: string;
   fichier_taille?: number;
   reponse_a?: string;
   dateenvoi?: Date;
+  dateEnvoi?: Date;
   supprime?: boolean;
   actif?: boolean;
 }
@@ -100,6 +101,7 @@ export interface ConversationWithDetails extends Conversation {
 }
 
 export interface MessageWithDetails extends Message {
+  est_mien?: boolean;
   expediteur: {
     idutilisateur: string;
     nom: string;

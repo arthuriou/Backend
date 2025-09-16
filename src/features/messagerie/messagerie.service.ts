@@ -42,10 +42,14 @@ export class MessagerieService {
       return true;
     }
 
-    // Patient ↔ Médecin
+    // Patient ↔ Médecin (restreint aux paires liées)
     if ((senderRole === 'PATIENT' && receiverRole === 'MEDECIN') ||
         (senderRole === 'MEDECIN' && receiverRole === 'PATIENT')) {
-      return true;
+      const isRelated = await this.repository.isPatientOfMedecin(
+        senderRole === 'PATIENT' ? senderId : receiverId,
+        senderRole === 'MEDECIN' ? senderId : receiverId
+      );
+      return isRelated;
     }
 
     // Patient ↔ AdminCabinet
@@ -54,10 +58,9 @@ export class MessagerieService {
       return true;
     }
 
-    // Médecin ↔ AdminCabinet (même cabinet)
+    // Médecin ↔ AdminCabinet (TODO: même cabinet)
     if ((senderRole === 'MEDECIN' && receiverRole === 'ADMINCABINET') ||
         (senderRole === 'ADMINCABINET' && receiverRole === 'MEDECIN')) {
-      // TODO: Vérifier qu'ils sont dans le même cabinet
       return true;
     }
 
@@ -75,7 +78,7 @@ export class MessagerieService {
     userRole1: string, 
     userRole2: string
   ): Promise<ConversationWithDetails> {
-    // Vérifier les règles de communication
+    // Vérifier les règles de communication (incluant le lien patient↔médecin)
     const canCommunicate = await this.checkCommunicationRules(userId1, userId2, userRole1, userRole2);
     if (!canCommunicate) {
       throw new Error("Communication non autorisée entre ces utilisateurs");
@@ -294,7 +297,7 @@ export class MessagerieService {
       throw new Error("Accès non autorisé à cette conversation");
     }
 
-    return await this.repository.getMessagesByConversation(conversationId, limit, offset);
+    return await this.repository.getMessagesByConversation(conversationId, limit, offset, userId);
   }
 
   // Modifier un message
@@ -340,7 +343,21 @@ export class MessagerieService {
 
   // Marquer une conversation comme lue
   async markConversationAsRead(conversationId: string, userId: string): Promise<number> {
-    return await this.repository.markConversationAsRead(conversationId, userId);
+    const updatedCount = await this.repository.markConversationAsRead(conversationId, userId);
+    
+    // Émettre l'événement conversation_read vers l'autre participant
+    if (this.socketService && updatedCount > 0) {
+      const conversation = await this.repository.getConversationById(conversationId);
+      if (conversation) {
+        // Trouver l'autre participant (celui qui n'a pas lu)
+        const otherParticipant = conversation.participants.find(p => p.utilisateur_id !== userId);
+        if (otherParticipant) {
+          this.socketService.notifyConversationRead(conversationId, userId, otherParticipant.utilisateur_id);
+        }
+      }
+    }
+    
+    return updatedCount;
   }
 
   // Marquer un message comme lu

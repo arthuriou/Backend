@@ -5,6 +5,26 @@
 http://localhost:3000/api/rendezvous
 ```
 
+## Sécurité et Accès (RBAC + Règles métier)
+- Authentification: `Bearer <token>` obligatoire sauf endpoints explicitement publics.
+- Rôles: `PATIENT`, `MEDECIN`, `ADMINCABINET`, `SUPERADMIN`.
+- Accès par endpoint:
+  - GET `/:id`: autorisé si vous êtes le patient du RDV, le médecin du RDV, `ADMINCABINET` ou `SUPERADMIN`.
+  - GET `/patient/:patientId`:
+    - `PATIENT`: uniquement ses propres RDV.
+    - `MEDECIN`: uniquement si ce patient est lié à ce médecin (au moins un RDV confirmé/en_cours/terminé ou une consultation entre eux).
+    - `ADMINCABINET`/`SUPERADMIN`: autorisés.
+  - GET `/medecin/:medecinId`:
+    - `MEDECIN`: uniquement ses propres RDV (même `medecinId`).
+    - `ADMINCABINET`/`SUPERADMIN`: autorisés.
+  - PUT `/:id`: modification autorisée au patient ou au médecin du RDV tant que non terminé/annulé.
+  - PUT `/:id/confirmer`: seul le médecin propriétaire du RDV (ou `SUPERADMIN` si élargi plus tard).
+  - PUT `/:id/annuler`: patient propriétaire ou médecin propriétaire.
+  - PUT `/:id/terminer`: seul le médecin propriétaire.
+- Définition “patient lié à un médecin”:
+  - existe un enregistrement `rendezvous` entre eux avec `statut` ∈ (`CONFIRME`,`EN_COURS`,`TERMINE`) OU
+  - existe une `consultation` entre eux.
+
 ## Index (URLs complètes)
 - POST  http://localhost:3000/api/rendezvous/
 - GET   http://localhost:3000/api/rendezvous/:id
@@ -194,7 +214,7 @@ Content-Type: application/json
 }
 ```
 
-## 6. Confirmer un rendez-vous (Médecin/AdminCabinet)
+## 6. Confirmer un rendez-vous (Médecin uniquement)
 **PUT** `/:id/confirmer`
 
 ### Headers
@@ -213,7 +233,7 @@ Authorization: Bearer <token>
 }
 ```
 
-## 7. Annuler un rendez-vous
+## 7. Annuler un rendez-vous (Patient ou Médecin propriétaire)
 **PUT** `/:id/annuler`
 
 ### Headers
@@ -228,7 +248,7 @@ Authorization: Bearer <token>
 }
 ```
 
-## 8. Terminer un rendez-vous (Médecin/AdminCabinet)
+## 8. Terminer un rendez-vous (Médecin uniquement)
 **PUT** `/:id/terminer`
 
 ### Headers
