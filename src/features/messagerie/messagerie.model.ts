@@ -94,6 +94,7 @@ export interface ConversationWithDetails extends Conversation {
       prenom: string;
       email: string;
       role: string;
+      photoprofil?: string;
     };
   }[];
   dernier_message?: MessageWithDetails;
@@ -108,6 +109,7 @@ export interface MessageWithDetails extends Message {
     prenom: string;
     email: string;
     role: string;
+    photoprofil?: string;
   };
   reponse_a_message?: {
     idmessage: string;
@@ -115,6 +117,7 @@ export interface MessageWithDetails extends Message {
     expediteur: {
       nom: string;
       prenom: string;
+      photoprofil?: string;
     };
   };
   lu_par: {

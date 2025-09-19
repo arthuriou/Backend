@@ -5,6 +5,8 @@ interface PushPayload {
   title: string;
   body: string;
   data?: Record<string, any>;
+  type_notification?: 'RENDEZ_VOUS' | 'MESSAGE' | 'RAPPEL' | 'SYSTEME' | 'URGENCE' | 'CABINET';
+  save_to_history?: boolean;
 }
 
 export class PushService {
@@ -54,6 +56,26 @@ export class PushService {
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Expo push error:', error);
+      }
+    }
+
+    // Sauvegarder dans l'historique si demandé
+    if (payload.save_to_history !== false) {
+      try {
+        // Import dynamique pour éviter la dépendance circulaire
+        const { NotificationHistoryService } = await import('../../features/notifications/notification-history.service');
+        const notificationService = new NotificationHistoryService();
+        
+        await notificationService.createNotification({
+          utilisateur_id: userId,
+          titre: payload.title,
+          contenu: payload.body,
+          type_notification: payload.type_notification || 'SYSTEME',
+          canal: 'PUSH',
+          data: payload.data
+        });
+      } catch (error) {
+        console.error('Erreur sauvegarde notification:', error);
       }
     }
   }

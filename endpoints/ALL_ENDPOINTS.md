@@ -99,6 +99,10 @@ Alias: `/api/v1/messagerie`, `/api/v1/mobile/messagerie`, `/api/v1/dashboard/mes
 - DELETE http://localhost:3000/api/messagerie/messages/:id
 - POST  http://localhost:3000/api/messagerie/messages/:id/read
 
+Notes:
+- Événements Socket.IO: `new_message`, `conversation_read`
+- Types de messages supportés: `TEXTE`, `IMAGE`, `FICHIER`, `SYSTEME`, `VOICE`
+
 ## Spécialités & Maux (`/api/specialites`)
 Alias: `/api/v1/specialites`, `/api/v1/mobile/specialites`, `/api/v1/dashboard/specialites`
 

@@ -206,8 +206,8 @@ Authorization: Bearer <token>
 
 ## Événements Socket.IO
 - Émis par le serveur
-  - **message:new**: nouveau message dans `conversation:{conversationId}`
-  - **message:read**: message lu dans `conversation:{conversationId}`
+  - **new_message**: nouveau message dans `conversation:{conversationId}`
+  - **conversation_read**: conversation marquée comme lue (émis à l'autre participant)
 - Rooms utilisées automatiquement: `user:{userId}`, `role:{role}`; à l’ouverture d’une conversation, le client peut joindre `conversation:{conversationId}`.
 
 ### Exemple intégration client
@@ -229,7 +229,7 @@ socket.emit('leave-room', `conversation:${conversationId}`);
 ```
 
 ## Types de Messages
-- **TEXTE**, **IMAGE**, **FICHIER**, **SYSTEME**
+- **TEXTE**, **IMAGE**, **FICHIER**, **SYSTEME**, **VOICE**
 
 ## Types de Conversations
 - **PRIVEE**, **GROUPE_CABINET**, **SUPPORT**
