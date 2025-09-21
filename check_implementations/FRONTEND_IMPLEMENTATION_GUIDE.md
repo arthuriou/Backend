@@ -525,10 +525,90 @@ class ApiService {
     return response.json();
   }
 
+  async sendOTP(data: { email: string }) {
+    const response = await fetch(`${this.baseURL}/auth/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async verifyOTP(data: { email: string; code: string }) {
+    const response = await fetch(`${this.baseURL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async createPatient(token: string, data: any) {
+    const response = await fetch(`${this.baseURL}/auth/register-patient`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  // Profil
+  async getProfile() {
+    const response = await fetch(`${this.baseURL}/auth/profile`, {
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async updateProfile(data: any) {
+    const response = await fetch(`${this.baseURL}/auth/profile`, {
+      method: 'PATCH',
+      headers: await this.getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async updateMedecinProfile(data: any) {
+    const response = await fetch(`${this.baseURL}/auth/profile/medecin`, {
+      method: 'PATCH',
+      headers: await this.getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async updatePatientProfile(data: any) {
+    const response = await fetch(`${this.baseURL}/auth/profile/patient`, {
+      method: 'PATCH',
+      headers: await this.getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async uploadProfilePhoto(file: any) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/auth/profile/photo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${await AsyncStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      },
+      body: formData
+    });
+    return response.json();
+  }
+
   // Recherche de médecins
   async searchDoctors(params: SearchDoctorsParams) {
     const queryString = new URLSearchParams(params).toString();
-    const response = await fetch(`${this.baseURL}/specialites/medecins/search?${queryString}`, {
+    const response = await fetch(`${this.baseURL}/auth/medecins/search?${queryString}`, {
       headers: await this.getHeaders()
     });
     return response.json();
@@ -551,6 +631,51 @@ class ApiService {
     return response.json();
   }
 
+  async getPatientAppointments(patientId: string) {
+    const response = await fetch(`${this.baseURL}/rendezvous/patient/${patientId}`, {
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async getAvailableSlots(medecinId: string) {
+    const response = await fetch(`${this.baseURL}/rendezvous/creneaux/disponibles?medecinId=${medecinId}`, {
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async getWaitingPatients() {
+    const response = await fetch(`${this.baseURL}/rendezvous/en-attente-consultation`, {
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async markPatientArrived(appointmentId: string) {
+    const response = await fetch(`${this.baseURL}/rendezvous/${appointmentId}/patient-arrive`, {
+      method: 'PUT',
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async startConsultation(appointmentId: string) {
+    const response = await fetch(`${this.baseURL}/rendezvous/${appointmentId}/commencer-consultation`, {
+      method: 'PUT',
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async endConsultation(appointmentId: string) {
+    const response = await fetch(`${this.baseURL}/rendezvous/${appointmentId}/cloturer-consultation`, {
+      method: 'PUT',
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
   // Messagerie
   async createPrivateConversation(participantId: string) {
     const response = await fetch(`${this.baseURL}/messagerie/conversations/private`, {
@@ -566,6 +691,20 @@ class ApiService {
       method: 'POST',
       headers: await this.getHeaders(),
       body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async getConversations() {
+    const response = await fetch(`${this.baseURL}/messagerie/conversations`, {
+      headers: await this.getHeaders()
+    });
+    return response.json();
+  }
+
+  async getMessages(conversationId: string) {
+    const response = await fetch(`${this.baseURL}/messagerie/conversations/${conversationId}/messages`, {
+      headers: await this.getHeaders()
     });
     return response.json();
   }
@@ -592,6 +731,13 @@ class ApiService {
         'Content-Type': 'multipart/form-data'
       },
       body: formData
+    });
+    return response.json();
+  }
+
+  async getMedicalDocuments(dossierId: string) {
+    const response = await fetch(`${this.baseURL}/dossier-medical/${dossierId}/documents`, {
+      headers: await this.getHeaders()
     });
     return response.json();
   }

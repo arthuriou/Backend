@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       // Appel API avec le bon format
-      const response = await apiService.login(email.trim(), password);
+      const response = await apiService.login({ email: email.trim(), password });
       
       // Sauvegarder les données
       await AsyncStorage.setItem('token', response.token);
@@ -1153,7 +1153,11 @@ export default function ChatScreen({ route, navigation }) {
     setSending(true);
 
     try {
-      const response = await apiService.sendMessage(conversationId, messageText);
+      const response = await apiService.sendMessage({
+        conversationId,
+        contenu: messageText,
+        type: 'TEXTE'
+      });
       setMessages(prev => [...prev, response.data]);
       scrollToBottom();
     } catch (error) {
@@ -1404,11 +1408,8 @@ class ApiService {
   }
 
   // Authentification
-  async login(email: string, password: string) {
-    return this.request('POST', '/auth/login', { 
-      email: email.trim(), 
-      motdepasse: password 
-    });
+  async login(credentials: { email: string; password: string }) {
+    return this.request('POST', '/auth/login', credentials);
   }
 
   async sendOTP(email: string) {
@@ -1421,21 +1422,23 @@ class ApiService {
 
   // Profil
   async getProfile() {
-    const user = await AsyncStorage.getItem('user');
-    const endpoint = user?.role === 'PATIENT' ? '/patients/me' : '/medecins/me';
-    return this.request('GET', endpoint);
+    return this.request('GET', '/auth/profile');
   }
 
   async updateProfile(data: any) {
-    const user = await AsyncStorage.getItem('user');
-    const endpoint = user?.role === 'PATIENT' ? '/patients/me' : '/medecins/me';
-    return this.request('PUT', endpoint, data);
+    return this.request('PATCH', '/auth/profile', data);
+  }
+
+  async updateMedecinProfile(data: any) {
+    return this.request('PATCH', '/auth/profile/medecin', data);
+  }
+
+  async updatePatientProfile(data: any) {
+    return this.request('PATCH', '/auth/profile/patient', data);
   }
 
   async changePassword(data: any) {
-    const user = await AsyncStorage.getItem('user');
-    const endpoint = user?.role === 'PATIENT' ? '/patients/change-password' : '/medecins/change-password';
-    return this.request('PUT', endpoint, data);
+    return this.request('POST', '/auth/change-password', data);
   }
 
   // Recherche
@@ -1445,7 +1448,7 @@ class ApiService {
 
   async searchDoctors(params: any) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request('GET', `/specialites/medecins/search?${queryString}`);
+    return this.request('GET', `/auth/medecins/search?${queryString}`);
   }
 
   // Rendez-vous

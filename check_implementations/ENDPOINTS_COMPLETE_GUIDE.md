@@ -155,12 +155,11 @@ Authorization: Bearer <token_otp>
 
 ### Base URL
 ```
-http://localhost:3000/api/patients (pour patients)
-http://localhost:3000/api/medecins (pour médecins)
+http://localhost:3000/api/auth
 ```
 
 ### 1. Récupérer le profil
-**GET** `/me`
+**GET** `/profile`
 
 #### Headers
 ```
@@ -191,8 +190,8 @@ Authorization: Bearer <token>
 }
 ```
 
-### 2. Mettre à jour le profil
-**PUT** `/me`
+### 2. Mettre à jour le profil (PATCH)
+**PATCH** `/profile`
 
 #### Headers
 ```
@@ -236,8 +235,131 @@ Content-Type: application/json
 }
 ```
 
-### 3. Changer le mot de passe
-**PUT** `/change-password`
+### 3. Mettre à jour le profil médecin (PATCH)
+**PATCH** `/profile/medecin`
+
+#### Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+#### Body (tous les champs sont optionnels)
+```json
+{
+  "nom": "Martin",
+  "prenom": "Dr. Pierre",
+  "email": "pierre.martin@example.com",
+  "telephone": "+22812345678",
+  "experience": 5,
+  "biographie": "Médecin expérimenté en cardiologie...",
+  "specialites": ["uuid_specialite1", "uuid_specialite2"]
+}
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Profil médecin mis à jour avec succès",
+  "data": {
+    "idmedecin": "uuid",
+    "nom": "Martin",
+    "prenom": "Dr. Pierre",
+    "email": "pierre.martin@example.com",
+    "telephone": "+22812345678",
+    "experience": 5,
+    "biographie": "Médecin expérimenté en cardiologie...",
+    "specialites": [
+      {
+        "idspecialite": "uuid",
+        "nom": "Cardiologie",
+        "description": "Spécialité médicale du cœur"
+      }
+    ]
+  }
+}
+```
+
+### 4. Mettre à jour le profil patient (PATCH)
+**PATCH** `/profile/patient`
+
+#### Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+#### Body (tous les champs sont optionnels)
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean.dupont@example.com",
+  "telephone": "+22812345678",
+  "dateNaissance": "1990-05-15",
+  "genre": "M",
+  "adresse": "123 Rue de la Paix, Lomé",
+  "groupeSanguin": "O+",
+  "poids": 70.5,
+  "taille": 175
+}
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Profil patient mis à jour avec succès",
+  "data": {
+    "idPatient": "uuid",
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "email": "jean.dupont@example.com",
+    "telephone": "+22812345678",
+    "dateNaissance": "1990-05-15",
+    "genre": "M",
+    "adresse": "123 Rue de la Paix, Lomé",
+    "groupeSanguin": "O+",
+    "poids": 70.5,
+    "taille": 175
+  }
+}
+```
+
+### 5. Mettre à jour le profil SuperAdmin (PATCH)
+**PATCH** `/super-admin/profile`
+
+#### Headers
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+#### Body (tous les champs sont optionnels)
+```json
+{
+  "nom": "Admin",
+  "prenom": "Super",
+  "email": "admin@example.com",
+  "telephone": "+22812345678"
+}
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Profil SuperAdmin mis à jour avec succès",
+  "data": {
+    "idSuperAdmin": "uuid",
+    "nom": "Admin",
+    "prenom": "Super",
+    "email": "admin@example.com",
+    "telephone": "+22812345678"
+  }
+}
+```
+
+### 6. Changer le mot de passe
+**POST** `/change-password`
 
 #### Headers
 ```
@@ -260,8 +382,8 @@ Content-Type: application/json
 }
 ```
 
-### 4. Upload photo de profil
-**POST** `/upload-photo`
+### 7. Upload photo de profil
+**POST** `/profile/photo`
 
 #### Headers
 ```
@@ -271,7 +393,11 @@ Content-Type: multipart/form-data
 
 #### Body (FormData)
 ```
+file: <fichier_image>
+ou
 photo: <fichier_image>
+ou
+image: <fichier_image>
 ```
 
 #### Réponse Succès (200)
@@ -281,6 +407,171 @@ photo: <fichier_image>
   "data": {
     "photoProfil": "https://res.cloudinary.com/.../photo_profil.jpg"
   }
+}
+```
+
+### 8. Récupérer un utilisateur par ID
+**GET** `/user/:id`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Utilisateur récupéré avec succès",
+  "data": {
+    "idUtilisateur": "uuid",
+    "email": "user@example.com",
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "role": "PATIENT",
+    "actif": true
+  }
+}
+```
+
+### 9. Récupérer tous les patients
+**GET** `/patients`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Query Parameters
+```
+limit=50&offset=0&q=nom_recherche
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Patients récupérés avec succès",
+  "data": [
+    {
+      "idPatient": "uuid",
+      "nom": "Dupont",
+      "prenom": "Jean",
+      "email": "jean.dupont@example.com",
+      "telephone": "+22812345678",
+      "statut": "APPROVED"
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "offset": 0,
+    "total": 1
+  }
+}
+```
+
+### 10. Récupérer tous les médecins
+**GET** `/medecins`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Query Parameters
+```
+limit=50&offset=0&q=nom_recherche&statut=APPROVED
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Médecins récupérés avec succès",
+  "data": [
+    {
+      "idmedecin": "uuid",
+      "nom": "Martin",
+      "prenom": "Dr. Pierre",
+      "email": "pierre.martin@example.com",
+      "statut": "APPROVED",
+      "specialites": [...]
+    }
+  ]
+}
+```
+
+### 11. Recherche publique des médecins
+**GET** `/medecins/search`
+
+#### Headers
+```
+Authorization: Bearer <token> (optionnel)
+```
+
+#### Query Parameters
+```
+q=cardiologie&specialite_id=uuid&cabinet_id=uuid&limit=20&offset=0
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Médecins trouvés avec succès",
+  "data": [
+    {
+      "idmedecin": "uuid",
+      "nom": "Martin",
+      "prenom": "Dr. Pierre",
+      "email": "pierre.martin@example.com",
+      "specialites": [...]
+    }
+  ]
+}
+```
+
+### 12. Récupérer tous les administrateurs
+**GET** `/admins`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Administrateurs récupérés avec succès",
+  "data": [
+    {
+      "idSuperAdmin": "uuid",
+      "nom": "Admin",
+      "prenom": "Super",
+      "email": "admin@example.com",
+      "role": "SUPERADMIN"
+    }
+  ]
+}
+```
+
+### 13. Récupérer les utilisateurs par rôle
+**GET** `/users/role/:role`
+
+#### Headers
+```
+Authorization: Bearer <token>
+```
+
+#### Réponse Succès (200)
+```json
+{
+  "message": "Utilisateurs récupérés avec succès",
+  "data": [
+    {
+      "idUtilisateur": "uuid",
+      "nom": "Dupont",
+      "prenom": "Jean",
+      "email": "jean.dupont@example.com",
+      "role": "PATIENT"
+    }
+  ]
 }
 ```
 
@@ -1024,15 +1315,33 @@ class ApiService {
 
   // Profil
   async getProfile() {
-    const response = await fetch(`${this.baseURL}/patients/me`, {
+    const response = await fetch(`${this.baseURL}/auth/profile`, {
       headers: this.getHeaders()
     });
     return response.json();
   }
 
   async updateProfile(data: any) {
-    const response = await fetch(`${this.baseURL}/patients/me`, {
-      method: 'PUT',
+    const response = await fetch(`${this.baseURL}/auth/profile`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async updateMedecinProfile(data: any) {
+    const response = await fetch(`${this.baseURL}/auth/profile/medecin`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+
+  async updatePatientProfile(data: any) {
+    const response = await fetch(`${this.baseURL}/auth/profile/patient`, {
+      method: 'PATCH',
       headers: this.getHeaders(),
       body: JSON.stringify(data)
     });
@@ -1042,7 +1351,7 @@ class ApiService {
   // Recherche médecins
   async searchDoctors(params: any) {
     const queryString = new URLSearchParams(params).toString();
-    const response = await fetch(`${this.baseURL}/specialites/medecins/search?${queryString}`, {
+    const response = await fetch(`${this.baseURL}/auth/medecins/search?${queryString}`, {
       headers: this.getHeaders()
     });
     return response.json();
