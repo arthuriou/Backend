@@ -167,7 +167,7 @@ router.get("/specialites/:id/medecins",
 
 // Rechercher des cabinets par spécialité
 router.get("/specialites/:id/cabinets", 
-  authenticateToken, 
+  authenticateToken,
   controller.searchCabinetsBySpecialite.bind(controller)
 );
 
@@ -175,6 +175,12 @@ router.get("/specialites/:id/cabinets",
 router.get("/maux/:id/medecins", 
   authenticateToken,
   controller.searchMedecinsByMaux.bind(controller)
+);
+
+// Recherche globale optimisée de médecins
+router.get("/medecins/search", 
+  authenticateToken,
+  controller.searchMedecinsGlobal.bind(controller)
 );
 
 // ========================================

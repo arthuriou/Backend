@@ -83,6 +83,10 @@ Alias: `/api/v1/rendezvous`, `/api/v1/mobile/rendezvous`, `/api/v1/dashboard/ren
 - GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/agendas (Public)
 - POST  http://localhost:3000/api/rendezvous/rappels/traiter    (SUPERADMIN, ADMINCABINET)
 - POST  http://localhost:3000/api/rendezvous/rappels            (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/en-attente-consultation (MÉDECIN)
+- GET   http://localhost:3000/api/rendezvous/en-cours (MÉDECIN)
+- GET   http://localhost:3000/api/rendezvous/aujourd-hui (MÉDECIN)
+- GET   http://localhost:3000/api/rendezvous/cette-semaine (MÉDECIN)
 
 ## Messagerie (`/api/messagerie`)
 Alias: `/api/v1/messagerie`, `/api/v1/mobile/messagerie`, `/api/v1/dashboard/messagerie`
@@ -129,6 +133,7 @@ Alias: `/api/v1/specialites`, `/api/v1/mobile/specialites`, `/api/v1/dashboard/s
 - GET   http://localhost:3000/api/specialites/specialites/:id/medecins (PATIENT OK, médecins APPROVED)
 - GET   http://localhost:3000/api/specialites/specialites/:id/cabinets
 - GET   http://localhost:3000/api/specialites/maux/:id/medecins (PATIENT OK, médecins APPROVED)
+- GET   http://localhost:3000/api/specialites/medecins/search (RECHERCHE GLOBALE OPTIMISÉE)
 - GET   http://localhost:3000/api/specialites/statistics
 
 ## Notifications - Préférences & Devices

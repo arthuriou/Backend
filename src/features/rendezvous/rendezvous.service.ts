@@ -1,6 +1,7 @@
 import { RendezVousRepository } from "./rendezvous.repository";
 import { SocketService } from "../../shared/services/socket.service";
 import { PushService } from "../../shared/services/push.service";
+import { TeleconsultationService } from "../../shared/services/teleconsultation.service";
 import { 
   RendezVous, 
   Creneau, 
@@ -12,13 +13,16 @@ import {
   CreateAgendaRequest,
   RendezVousWithDetails,
   CreneauWithDetails,
-  AgendaWithDetails
+  AgendaWithDetails,
+  CreateTeleconsultationRequest,
+  TeleconsultationInfo
 } from "./rendezvous.model";
 
 export class RendezVousService {
   private repository: RendezVousRepository;
   private socketService: SocketService;
   private pushService: PushService = new PushService();
+  private teleconsultationService: TeleconsultationService = new TeleconsultationService();
 
   constructor(socketService?: SocketService) {
     this.repository = new RendezVousRepository();
@@ -31,7 +35,7 @@ export class RendezVousService {
 
   // Créer un rendez-vous
   async createRendezVous(data: CreateRendezVousRequest): Promise<RendezVous> {
-    const { patient_id, medecin_id, dateheure, duree, motif, creneau_id } = data;
+    const { patient_id, medecin_id, dateheure, duree, motif, creneau_id, type_rdv, adresse_cabinet } = data;
 
     // Validation des champs requis
     if (!patient_id || !medecin_id || !dateheure || !duree || !motif) {
@@ -49,6 +53,11 @@ export class RendezVousService {
       throw new Error("La durée doit être positive");
     }
 
+    // Validation spécifique selon le type
+    if (type_rdv === 'PRESENTIEL' && !adresse_cabinet) {
+      throw new Error("L'adresse du cabinet est requise pour un RDV présentiel");
+    }
+
     // Si un créneau est spécifié, vérifier qu'il est disponible
     if (creneau_id) {
       const isCreneauAvailable = await this.verifierDisponibiliteCreneau(creneau_id);
@@ -64,8 +73,15 @@ export class RendezVousService {
       dateheure: dateRDV,
       duree,
       motif,
-      statut: 'EN_ATTENTE'
+      statut: 'EN_ATTENTE',
+      type_rdv: type_rdv || 'PRESENTIEL',
+      adresse_cabinet
     });
+
+    // Si c'est une téléconsultation, créer la salle virtuelle
+    if (type_rdv === 'TELECONSULTATION') {
+      await this.createTeleconsultationRoom(rendezVous.idrendezvous);
+    }
 
     // Créer un rappel automatique (24h avant)
     const dateRappel = new Date(dateRDV);
@@ -79,21 +95,42 @@ export class RendezVousService {
       });
     }
 
+    // Rappel spécifique pour téléconsultation (10 min avant)
+    if (type_rdv === 'TELECONSULTATION') {
+      const dateRappel10min = new Date(dateRDV);
+      dateRappel10min.setMinutes(dateRappel10min.getMinutes() - 10);
+      
+      if (dateRappel10min > new Date()) {
+        await this.repository.createRappel({
+          rendezvous_id: rendezVous.idrendezvous,
+          dateEnvoi: dateRappel10min,
+          canal: 'PUSH'
+        });
+      }
+    }
+
     // Notifications temps réel
     if (this.socketService) {
       this.socketService.notifyNewRendezVous(patient_id, medecin_id, rendezVous);
     }
 
     // Push: notifier patient et médecin s'ils l'ont activé
+    const notificationTitle = type_rdv === 'TELECONSULTATION' ? 'Nouvelle téléconsultation' : 'Nouveau rendez-vous';
     this.pushService.sendToUser(patient_id, {
-      title: 'Nouveau rendez-vous',
+      title: notificationTitle,
       body: motif || 'Vous avez un nouveau rendez-vous',
-      data: { rendezvous_id: rendezVous.idrendezvous }
+      data: { 
+        rendezvous_id: rendezVous.idrendezvous,
+        type_rdv: type_rdv || 'PRESENTIEL'
+      }
     });
     this.pushService.sendToUser(medecin_id, {
-      title: 'Nouveau rendez-vous',
+      title: notificationTitle,
       body: motif || 'Vous avez un nouveau rendez-vous',
-      data: { rendezvous_id: rendezVous.idrendezvous }
+      data: { 
+        rendezvous_id: rendezVous.idrendezvous,
+        type_rdv: type_rdv || 'PRESENTIEL'
+      }
     });
 
     return rendezVous;
@@ -396,5 +433,186 @@ export class RendezVousService {
       // Notifier l'utilisateur du conflit
       this.socketService.notifyCreneauConflict(userId, { creneauId });
     }
+  }
+
+  // ========================================
+  // TÉLÉCONSULTATION
+  // ========================================
+
+  // Créer une salle de téléconsultation
+  async createTeleconsultationRoom(rendezvous_id: string): Promise<TeleconsultationInfo> {
+    const teleconsultationInfo = await this.teleconsultationService.createTeleconsultationRoom({
+      rendezvous_id,
+      duree_minutes: 60 // Durée par défaut
+    });
+
+    // Sauvegarder les informations en base
+    await this.repository.updateTeleconsultationInfo(
+      rendezvous_id,
+      teleconsultationInfo.salle_virtuelle,
+      teleconsultationInfo.lien_video,
+      teleconsultationInfo.token_acces
+    );
+
+    return teleconsultationInfo;
+  }
+
+  // Récupérer les informations de téléconsultation
+  async getTeleconsultationInfo(rendezvous_id: string): Promise<TeleconsultationInfo | null> {
+    const info = await this.repository.getTeleconsultationInfo(rendezvous_id);
+    if (!info) return null;
+
+    return {
+      salle_virtuelle: info.salle_virtuelle,
+      lien_video: info.lien_video,
+      token_acces: info.token_acces,
+      date_expiration: new Date(Date.now() + 60 * 60 * 1000) // 1 heure par défaut
+    };
+  }
+
+  // Commencer une consultation (présentiel ou téléconsultation)
+  async commencerConsultation(rendezvous_id: string, user_id: string): Promise<boolean> {
+    const rdv = await this.repository.getRendezVousById(rendezvous_id);
+    if (!rdv) {
+      throw new Error("Rendez-vous non trouvé");
+    }
+
+    // Vérifier que l'utilisateur a le droit de commencer cette consultation
+    if (rdv.medecin.idmedecin !== user_id && rdv.patient.idpatient !== user_id) {
+      throw new Error("Vous n'avez pas le droit de commencer cette consultation");
+    }
+
+    // Vérifier que le RDV est confirmé
+    if (rdv.statut !== 'CONFIRME') {
+      throw new Error("Le rendez-vous doit être confirmé pour commencer la consultation");
+    }
+
+    // Mettre à jour le statut
+    const success = await this.repository.updateRendezVousStatut(rendezvous_id, 'EN_COURS');
+    
+    if (success && this.socketService) {
+      // Notifier les participants
+      this.socketService.notifyUser(rdv.patient.idpatient, 'consultation:started', {
+        rendezvous_id,
+        type: rdv.type_rdv || 'PRESENTIEL'
+      });
+      this.socketService.notifyUser(rdv.medecin.idmedecin, 'consultation:started', {
+        rendezvous_id,
+        type: rdv.type_rdv || 'PRESENTIEL'
+      });
+    }
+
+    return success;
+  }
+
+  // Clôturer une consultation
+  async cloturerConsultation(rendezvous_id: string, user_id: string): Promise<boolean> {
+    const rdv = await this.repository.getRendezVousById(rendezvous_id);
+    if (!rdv) {
+      throw new Error("Rendez-vous non trouvé");
+    }
+
+    // Vérifier que l'utilisateur a le droit de clôturer cette consultation
+    if (rdv.medecin.idmedecin !== user_id) {
+      throw new Error("Seul le médecin peut clôturer la consultation");
+    }
+
+    // Vérifier que la consultation est en cours
+    if (rdv.statut !== 'EN_COURS') {
+      throw new Error("La consultation doit être en cours pour être clôturée");
+    }
+
+    // Mettre à jour le statut
+    const success = await this.repository.updateRendezVousStatut(rendezvous_id, 'TERMINE');
+    
+    if (success && this.socketService) {
+      // Notifier les participants
+      this.socketService.notifyUser(rdv.patient.idpatient, 'consultation:ended', {
+        rendezvous_id,
+        type: rdv.type_rdv || 'PRESENTIEL'
+      });
+      this.socketService.notifyUser(rdv.medecin.idmedecin, 'consultation:ended', {
+        rendezvous_id,
+        type: rdv.type_rdv || 'PRESENTIEL'
+      });
+    }
+
+    return success;
+  }
+
+  // Marquer un patient comme arrivé (pour présentiel)
+  async marquerPatientArrive(rendezvous_id: string, user_id: string): Promise<boolean> {
+    const rdv = await this.repository.getRendezVousById(rendezvous_id);
+    if (!rdv) {
+      throw new Error("Rendez-vous non trouvé");
+    }
+
+    // Vérifier que l'utilisateur a le droit (médecin ou admin)
+    if (rdv.medecin.idmedecin !== user_id) {
+      throw new Error("Seul le médecin peut marquer le patient comme arrivé");
+    }
+
+    // Vérifier que c'est un RDV présentiel
+    if (rdv.type_rdv !== 'PRESENTIEL') {
+      throw new Error("Cette fonction est uniquement pour les RDV présentiels");
+    }
+
+    // Vérifier que le RDV est confirmé
+    if (rdv.statut !== 'CONFIRME') {
+      throw new Error("Le rendez-vous doit être confirmé");
+    }
+
+    // Mettre à jour le statut
+    const success = await this.repository.updateRendezVousStatut(rendezvous_id, 'EN_ATTENTE_CONSULTATION');
+    
+    if (success && this.socketService) {
+      // Notifier le patient
+      this.socketService.notifyUser(rdv.patient.idpatient, 'patient:arrived', {
+        rendezvous_id
+      });
+    }
+
+    return success;
+  }
+
+  // Récupérer les RDV en attente de consultation (pour le médecin)
+  async getRendezVousEnAttenteConsultation(medecin_id: string): Promise<RendezVous[]> {
+    return await this.repository.getRendezVousByMedecinAndStatut(medecin_id, 'EN_ATTENTE_CONSULTATION');
+  }
+
+  // Récupérer les RDV en cours (pour le médecin)
+  async getRendezVousEnCours(medecin_id: string): Promise<RendezVous[]> {
+    return await this.repository.getRendezVousByMedecinAndStatut(medecin_id, 'EN_COURS');
+  }
+
+  // Récupérer les RDV d'aujourd'hui pour un médecin
+  async getRendezVousAujourdhui(medecin_id: string): Promise<RendezVous[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return await this.repository.getRendezVousByMedecinAndDateRange(
+      medecin_id, 
+      today, 
+      tomorrow
+    );
+  }
+
+  // Récupérer les RDV de la semaine pour un médecin
+  async getRendezVousCetteSemaine(medecin_id: string): Promise<RendezVous[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    return await this.repository.getRendezVousByMedecinAndDateRange(
+      medecin_id, 
+      startOfWeek, 
+      endOfWeek
+    );
   }
 }

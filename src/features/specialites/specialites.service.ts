@@ -391,4 +391,19 @@ export class SpecialitesService {
       totalAssociationsSpecialiteMaux
     };
   }
+
+  // ========================================
+  // RECHERCHE GLOBALE OPTIMISÉE
+  // ========================================
+
+  // Recherche globale optimisée de médecins
+  async searchMedecinsGlobal(searchData: {
+    q?: string;
+    specialite_id?: string;
+    cabinet_id?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MedecinWithSpecialites[]> {
+    return await this.repository.searchMedecinsGlobal(searchData);
+  }
 }

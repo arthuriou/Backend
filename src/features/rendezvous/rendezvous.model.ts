@@ -10,7 +10,12 @@ export interface RendezVous {
   dateheure: Date;
   duree: number; // en minutes
   motif: string;
-  statut: 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE' | 'EN_COURS';
+  statut: 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE' | 'EN_COURS' | 'EN_ATTENTE_CONSULTATION';
+  type_rdv?: 'PRESENTIEL' | 'TELECONSULTATION';
+  lien_video?: string;
+  salle_virtuelle?: string;
+  token_acces?: string;
+  adresse_cabinet?: string;
 }
 
 export interface Creneau {
@@ -46,13 +51,17 @@ export interface CreateRendezVousRequest {
   duree: number;
   motif: string;
   creneau_id?: string;
+  type_rdv?: 'PRESENTIEL' | 'TELECONSULTATION';
+  adresse_cabinet?: string;
 }
 
 export interface UpdateRendezVousRequest {
   dateheure?: string;
   duree?: number;
   motif?: string;
-  statut?: 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE' | 'EN_COURS';
+  statut?: 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE' | 'EN_COURS' | 'EN_ATTENTE_CONSULTATION';
+  type_rdv?: 'PRESENTIEL' | 'TELECONSULTATION';
+  adresse_cabinet?: string;
 }
 
 export interface CreateCreneauRequest {
@@ -65,6 +74,27 @@ export interface CreateCreneauRequest {
 export interface CreateAgendaRequest {
   medecin_id: string;
   libelle: string;
+}
+
+// ========================================
+// TÉLÉCONSULTATION
+// ========================================
+
+export interface TeleconsultationInfo {
+  salle_virtuelle: string;
+  lien_video: string;
+  token_acces: string;
+  date_expiration: Date;
+}
+
+export interface CreateTeleconsultationRequest {
+  rendezvous_id: string;
+  duree_minutes?: number; // Durée de la salle (défaut: 60 min)
+}
+
+export interface JoinTeleconsultationRequest {
+  rendezvous_id: string;
+  token_acces: string;
 }
 
 // ========================================

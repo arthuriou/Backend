@@ -118,6 +118,70 @@ router.post("/rappels",
   controller.createRappel.bind(controller)
 );
 
+// ========================================
+// TÉLÉCONSULTATION
+// ========================================
+
+// Récupérer les informations de téléconsultation (Patient, Médecin, AdminCabinet)
+router.get("/:id/teleconsultation", 
+  authenticateToken, 
+  requireRole(['PATIENT', 'MEDECIN', 'ADMINCABINET']), 
+  controller.getTeleconsultationInfo.bind(controller)
+);
+
+// Commencer une consultation (Patient, Médecin)
+router.put("/:id/commencer-consultation", 
+  authenticateToken, 
+  requireRole(['PATIENT', 'MEDECIN']), 
+  controller.commencerConsultation.bind(controller)
+);
+
+// Clôturer une consultation (Médecin seulement)
+router.put("/:id/cloturer-consultation", 
+  authenticateToken, 
+  requireRole(['MEDECIN']), 
+  controller.cloturerConsultation.bind(controller)
+);
+
+// Marquer un patient comme arrivé (Médecin, AdminCabinet - présentiel seulement)
+router.put("/:id/patient-arrive", 
+  authenticateToken, 
+  requireRole(['MEDECIN', 'ADMINCABINET']), 
+  controller.marquerPatientArrive.bind(controller)
+);
+
+// ========================================
+// WORKFLOW PRÉSENTIEL - NOUVELLES ROUTES
+// ========================================
+
+// Récupérer les RDV en attente de consultation (médecin)
+router.get("/en-attente-consultation", 
+  authenticateToken, 
+  requireRole(['MEDECIN']), 
+  controller.getRendezVousEnAttenteConsultation.bind(controller)
+);
+
+// Récupérer les RDV en cours (médecin)
+router.get("/en-cours", 
+  authenticateToken, 
+  requireRole(['MEDECIN']), 
+  controller.getRendezVousEnCours.bind(controller)
+);
+
+// Récupérer les RDV d'aujourd'hui (médecin)
+router.get("/aujourd-hui", 
+  authenticateToken, 
+  requireRole(['MEDECIN']), 
+  controller.getRendezVousAujourdhui.bind(controller)
+);
+
+// Récupérer les RDV de la semaine (médecin)
+router.get("/cette-semaine", 
+  authenticateToken, 
+  requireRole(['MEDECIN']), 
+  controller.getRendezVousCetteSemaine.bind(controller)
+);
+
   return router;
 };
 

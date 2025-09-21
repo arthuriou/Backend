@@ -16,13 +16,25 @@ export class RendezVousRepository {
     duree: number;
     motif: string;
     statut: string;
+    type_rdv?: string;
+    adresse_cabinet?: string;
   }): Promise<RendezVous> {
     const query = `
-      INSERT INTO rendezvous (patient_id, medecin_id, creneau_id, dateheure, duree, motif, statut)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO rendezvous (patient_id, medecin_id, creneau_id, dateheure, duree, motif, statut, type_rdv, adresse_cabinet)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
-    const values = [data.patient_id, data.medecin_id, data.creneau_id, data.dateheure, data.duree, data.motif, data.statut];
+    const values = [
+      data.patient_id, 
+      data.medecin_id, 
+      data.creneau_id, 
+      data.dateheure, 
+      data.duree, 
+      data.motif, 
+      data.statut,
+      data.type_rdv || 'PRESENTIEL',
+      data.adresse_cabinet || null
+    ];
     const result = await db.query<RendezVous>(query, values);
     return result.rows[0];
   }
@@ -102,7 +114,7 @@ export class RendezVousRepository {
       ORDER BY rv.dateHeure DESC
     `;
     const result = await db.query(query, [patientId]);
-    return this.mapRendezVousWithDetails(result.rows);
+    return this.mapRendezVousWithDetails(result.rows) as RendezVousWithDetails[];
   }
 
   // Récupérer les rendez-vous d'un médecin
@@ -125,7 +137,7 @@ export class RendezVousRepository {
       ORDER BY rv.dateHeure ASC
     `;
     const result = await db.query(query, [medecinId]);
-    return this.mapRendezVousWithDetails(result.rows);
+    return this.mapRendezVousWithDetails(result.rows) as RendezVousWithDetails[];
   }
 
   // Modifier un rendez-vous
@@ -357,38 +369,6 @@ export class RendezVousRepository {
   // MÉTHODES UTILITAIRES
   // ========================================
 
-  private mapRendezVousWithDetails(rows: any[]): RendezVousWithDetails[] {
-    return rows.map(row => ({
-      idrendezvous: row.idrendezvous,
-      patient_id: row.patient_id,
-      medecin_id: row.medecin_id,
-      creneau_id: row.creneau_id,
-      dateheure: row.dateheure,
-      duree: row.duree,
-      motif: row.motif,
-      statut: row.statut,
-      patient: {
-        idpatient: row.idpatient,
-        nom: row.patient_nom,
-        prenom: row.patient_prenom,
-        telephone: row.patient_telephone,
-        email: row.patient_email
-      },
-      medecin: {
-        idmedecin: row.idmedecin,
-        nom: row.medecin_nom,
-        prenom: row.medecin_prenom,
-        specialites: []
-      },
-      creneau: row.idcreneau ? {
-        idcreneau: row.idcreneau,
-        agenda_id: row.idagenda,
-        debut: row.debut,
-        fin: row.fin,
-        disponible: row.disponible
-      } : undefined
-    }));
-  }
 
   private mapCreneauxWithDetails(rows: any[]): CreneauWithDetails[] {
     return rows.map(row => ({
@@ -442,9 +422,162 @@ export class RendezVousRepository {
     return Array.from(agendaMap.values());
   }
 
+  // ========================================
+  // TÉLÉCONSULTATION
+  // ========================================
+
+  // Mettre à jour les informations de téléconsultation
+  async updateTeleconsultationInfo(
+    rendezvous_id: string, 
+    salle_virtuelle: string, 
+    lien_video: string, 
+    token_acces: string
+  ): Promise<boolean> {
+    const query = `
+      UPDATE rendezvous 
+      SET salle_virtuelle = $2, lien_video = $3, token_acces = $4
+      WHERE idRendezVous = $1
+    `;
+    const result = await db.query(query, [rendezvous_id, salle_virtuelle, lien_video, token_acces]);
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Récupérer les informations de téléconsultation
+  async getTeleconsultationInfo(rendezvous_id: string): Promise<{
+    salle_virtuelle: string;
+    lien_video: string;
+    token_acces: string;
+    type_rdv: string;
+  } | null> {
+    const query = `
+      SELECT salle_virtuelle, lien_video, token_acces, type_rdv
+      FROM rendezvous 
+      WHERE idRendezVous = $1 AND type_rdv = 'TELECONSULTATION'
+    `;
+    const result = await db.query(query, [rendezvous_id]);
+    return result.rows[0] || null;
+  }
+
+  // Mettre à jour le statut d'un rendez-vous
+  async updateRendezVousStatut(rendezvous_id: string, statut: string): Promise<boolean> {
+    const query = `
+      UPDATE rendezvous 
+      SET statut = $2
+      WHERE idRendezVous = $1
+    `;
+    const result = await db.query(query, [rendezvous_id, statut]);
+    return (result.rowCount || 0) > 0;
+  }
+
   // Utilitaire pour requêtes brutes (scheduler)
   async queryRaw<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const res = await db.query(sql, params);
     return res.rows as T[];
+  }
+
+  // Récupérer les RDV d'un médecin par statut
+  async getRendezVousByMedecinAndStatut(medecin_id: string, statut: string): Promise<RendezVous[]> {
+    const query = `
+      SELECT 
+        rv.*,
+        p.idPatient, p.dateNaissance, p.genre, p.adresse, p.groupeSanguin, p.poids, p.taille,
+        u_p.nom as patient_nom, u_p.prenom as patient_prenom, u_p.email as patient_email, u_p.telephone as patient_telephone,
+        m.idMedecin, m.numeroOrdre, m.experience, m.biographie,
+        u_m.nom as medecin_nom, u_m.prenom as medecin_prenom, u_m.email as medecin_email, u_m.telephone as medecin_telephone,
+        a.idAgenda, a.libelle as agenda_libelle,
+        c.idCreneau, c.debut as creneau_debut, c.fin as creneau_fin
+      FROM rendezvous rv
+      LEFT JOIN patient p ON rv.patient_id = p.idPatient
+      LEFT JOIN utilisateur u_p ON p.utilisateur_id = u_p.idUtilisateur
+      LEFT JOIN medecin m ON rv.medecin_id = m.idMedecin
+      LEFT JOIN utilisateur u_m ON m.utilisateur_id = u_m.idUtilisateur
+      LEFT JOIN agenda a ON rv.agenda_id = a.idAgenda
+      LEFT JOIN creneau c ON rv.creneau_id = c.idCreneau
+      WHERE m.idMedecin = $1 AND rv.statut = $2
+      ORDER BY rv.dateheure ASC
+    `;
+    const result = await db.query(query, [medecin_id, statut]);
+    return this.mapRendezVousWithDetails(result.rows) as RendezVousWithDetails[];
+  }
+
+  // Récupérer les RDV d'un médecin par plage de dates
+  async getRendezVousByMedecinAndDateRange(medecin_id: string, dateDebut: Date, dateFin: Date): Promise<RendezVous[]> {
+    const query = `
+      SELECT 
+        rv.*,
+        p.idPatient, p.dateNaissance, p.genre, p.adresse, p.groupeSanguin, p.poids, p.taille,
+        u_p.nom as patient_nom, u_p.prenom as patient_prenom, u_p.email as patient_email, u_p.telephone as patient_telephone,
+        m.idMedecin, m.numeroOrdre, m.experience, m.biographie,
+        u_m.nom as medecin_nom, u_m.prenom as medecin_prenom, u_m.email as medecin_email, u_m.telephone as medecin_telephone,
+        a.idAgenda, a.libelle as agenda_libelle,
+        c.idCreneau, c.debut as creneau_debut, c.fin as creneau_fin
+      FROM rendezvous rv
+      LEFT JOIN patient p ON rv.patient_id = p.idPatient
+      LEFT JOIN utilisateur u_p ON p.utilisateur_id = u_p.idUtilisateur
+      LEFT JOIN medecin m ON rv.medecin_id = m.idMedecin
+      LEFT JOIN utilisateur u_m ON m.utilisateur_id = u_m.idUtilisateur
+      LEFT JOIN agenda a ON rv.agenda_id = a.idAgenda
+      LEFT JOIN creneau c ON rv.creneau_id = c.idCreneau
+      WHERE m.idMedecin = $1 
+        AND rv.dateheure >= $2 
+        AND rv.dateheure < $3
+      ORDER BY rv.dateheure ASC
+    `;
+    const result = await db.query(query, [medecin_id, dateDebut, dateFin]);
+    return this.mapRendezVousWithDetails(result.rows) as RendezVousWithDetails[];
+  }
+
+  private mapRendezVousWithDetails(rows: any[]): RendezVous[] {
+    return rows.map(row => ({
+      idrendezvous: row.idrendezvous,
+      patient_id: row.patient_id,
+      medecin_id: row.medecin_id,
+      agenda_id: row.agenda_id,
+      creneau_id: row.creneau_id,
+      dateheure: row.dateheure,
+      duree: row.duree,
+      motif: row.motif,
+      statut: row.statut,
+      type_rdv: row.type_rdv,
+      lien_video: row.lien_video,
+      salle_virtuelle: row.salle_virtuelle,
+      token_acces: row.token_acces,
+      adresse_cabinet: row.adresse_cabinet,
+      patient: {
+        idpatient: row.idpatient,
+        nom: row.patient_nom,
+        prenom: row.patient_prenom,
+        email: row.patient_email,
+        telephone: row.patient_telephone,
+        dateNaissance: row.datenaisance,
+        genre: row.genre,
+        adresse: row.adresse,
+        groupeSanguin: row.groupesanguin,
+        poids: row.poids,
+        taille: row.taille
+      },
+      medecin: {
+        idmedecin: row.idmedecin,
+        nom: row.medecin_nom,
+        prenom: row.medecin_prenom,
+        email: row.medecin_email,
+        telephone: row.medecin_telephone,
+        numeroOrdre: row.numeroordre,
+        experience: row.experience,
+        biographie: row.biographie
+      },
+      agenda: row.idagenda ? {
+        idagenda: row.idagenda,
+        medecin_id: row.medecin_id,
+        libelle: row.agenda_libelle
+      } : undefined,
+      creneau: row.idcreneau ? {
+        idcreneau: row.idcreneau,
+        agenda_id: row.agenda_id,
+        debut: row.creneau_debut,
+        fin: row.creneau_fin,
+        disponible: true
+      } : undefined
+    }));
   }
 }

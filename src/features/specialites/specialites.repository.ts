@@ -645,4 +645,96 @@ export class SpecialitesRepository {
 
     return medecinsWithSpecialites;
   }
+
+  // ========================================
+  // RECHERCHE GLOBALE OPTIMISÉE
+  // ========================================
+
+  // Recherche globale optimisée de médecins
+  async searchMedecinsGlobal(searchData: {
+    q?: string;
+    specialite_id?: string;
+    cabinet_id?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MedecinWithSpecialites[]> {
+    let query = `
+      SELECT DISTINCT m.idmedecin, u.nom, u.prenom, u.email, u.photoprofil, m.experience, m.biographie
+      FROM medecin m
+      JOIN utilisateur u ON m.utilisateur_id = u.idutilisateur
+    `;
+    
+    const conditions: string[] = [`m.statut = 'APPROVED'`];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    // Filtre par spécialité
+    if (searchData.specialite_id) {
+      query += ` JOIN medecin_specialite ms ON m.idmedecin = ms.medecin_id`;
+      conditions.push(`ms.specialite_id = $${paramIndex}`);
+      values.push(searchData.specialite_id);
+      paramIndex++;
+    }
+
+    // Filtre par cabinet
+    if (searchData.cabinet_id) {
+      query += ` JOIN medecin_cabinet mc ON m.idmedecin = mc.medecin_id`;
+      conditions.push(`mc.cabinet_id = $${paramIndex} AND mc.actif = true`);
+      values.push(searchData.cabinet_id);
+      paramIndex++;
+    }
+
+    // Recherche textuelle
+    if (searchData.q) {
+      conditions.push(`(
+        u.nom ILIKE $${paramIndex} OR 
+        u.prenom ILIKE $${paramIndex} OR 
+        u.email ILIKE $${paramIndex} OR
+        m.biographie ILIKE $${paramIndex}
+      )`);
+      values.push(`%${searchData.q}%`);
+      paramIndex++;
+    }
+
+    query += ` WHERE ${conditions.join(' AND ')}`;
+    query += ` ORDER BY u.nom ASC, u.prenom ASC`;
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    
+    values.push(searchData.limit || 20);
+    values.push(searchData.offset || 0);
+
+    const result = await db.query(query, values);
+    
+    // Pour chaque médecin, récupérer ses spécialités
+    const medecinsWithSpecialites: MedecinWithSpecialites[] = [];
+    
+    for (const medecin of result.rows) {
+      const specialites = await this.getSpecialitesByMedecin(medecin.idmedecin);
+      medecinsWithSpecialites.push({
+        idmedecin: medecin.idmedecin,
+        nom: medecin.nom,
+        prenom: medecin.prenom,
+        email: medecin.email,
+        photoprofil: medecin.photoprofil,
+        experience: medecin.experience,
+        biographie: medecin.biographie,
+        specialites
+      });
+    }
+
+    return medecinsWithSpecialites;
+  }
+
+  // Récupérer les spécialités d'un médecin
+  private async getSpecialitesByMedecin(medecinId: string): Promise<{ idspecialite: string; nom: string; description: string; }[]> {
+    const query = `
+      SELECT s.idSpecialite as idspecialite, s.nom, s.description
+      FROM specialite s
+      JOIN medecin_specialite ms ON s.idSpecialite = ms.specialite_id
+      WHERE ms.medecin_id = $1
+      ORDER BY s.nom ASC
+    `;
+    const result = await db.query(query, [medecinId]);
+    return result.rows;
+  }
 }

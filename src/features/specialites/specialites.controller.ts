@@ -560,6 +560,41 @@ export class SpecialitesController {
   }
 
   // ========================================
+  // RECHERCHE GLOBALE OPTIMISÉE
+  // ========================================
+
+  // Recherche globale optimisée de médecins
+  async searchMedecinsGlobal(req: Request, res: Response): Promise<void> {
+    try {
+      const { q, specialite_id, cabinet_id, limit = 20, offset = 0 } = req.query;
+      
+      const searchData = {
+        q: q as string,
+        specialite_id: specialite_id as string,
+        cabinet_id: cabinet_id as string,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      };
+      
+      const medecins = await this.service.searchMedecinsGlobal(searchData);
+      
+      res.status(200).json({
+        message: "Médecins trouvés avec succès",
+        data: medecins,
+        pagination: {
+          limit: searchData.limit,
+          offset: searchData.offset,
+          total: medecins.length
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur"
+      });
+    }
+  }
+
+  // ========================================
   // STATISTIQUES
   // ========================================
 

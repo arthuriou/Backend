@@ -483,4 +483,237 @@ export class RendezVousController {
       });
     }
   }
+
+  // ========================================
+  // TÉLÉCONSULTATION
+  // ========================================
+
+  // Récupérer les informations de téléconsultation
+  async getTeleconsultationInfo(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.userId;
+      
+      if (!userId) {
+        res.status(401).json({ message: "Utilisateur non authentifié" });
+        return;
+      }
+
+      const teleconsultationInfo = await this.service.getTeleconsultationInfo(id);
+      
+      if (!teleconsultationInfo) {
+        res.status(404).json({ message: "Informations de téléconsultation non trouvées" });
+        return;
+      }
+
+      res.json({
+        message: "Informations de téléconsultation récupérées",
+        data: teleconsultationInfo
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // Commencer une consultation
+  async commencerConsultation(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.userId;
+      
+      if (!userId) {
+        res.status(401).json({ message: "Utilisateur non authentifié" });
+        return;
+      }
+
+      const success = await this.service.commencerConsultation(id, userId);
+      
+      if (success) {
+        res.json({
+          message: "Consultation démarrée avec succès",
+          data: { rendezvous_id: id, statut: 'EN_COURS' }
+        });
+      } else {
+        res.status(400).json({ message: "Impossible de démarrer la consultation" });
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // Clôturer une consultation
+  async cloturerConsultation(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.userId;
+      
+      if (!userId) {
+        res.status(401).json({ message: "Utilisateur non authentifié" });
+        return;
+      }
+
+      const success = await this.service.cloturerConsultation(id, userId);
+      
+      if (success) {
+        res.json({
+          message: "Consultation clôturée avec succès",
+          data: { rendezvous_id: id, statut: 'TERMINE' }
+        });
+      } else {
+        res.status(400).json({ message: "Impossible de clôturer la consultation" });
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // Marquer un patient comme arrivé (présentiel)
+  async marquerPatientArrive(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.userId;
+      
+      if (!userId) {
+        res.status(401).json({ message: "Utilisateur non authentifié" });
+        return;
+      }
+
+      const success = await this.service.marquerPatientArrive(id, userId);
+      
+      if (success) {
+        res.json({
+          message: "Patient marqué comme arrivé",
+          data: { rendezvous_id: id, statut: 'EN_ATTENTE_CONSULTATION' }
+        });
+      } else {
+        res.status(400).json({ message: "Impossible de marquer le patient comme arrivé" });
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // ========================================
+  // WORKFLOW PRÉSENTIEL - NOUVEAUX ENDPOINTS
+  // ========================================
+
+  // Récupérer les RDV en attente de consultation (médecin)
+  async getRendezVousEnAttenteConsultation(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ message: "Non authentifié" });
+        return;
+      }
+
+      const medecinId = await this.repository.getMedecinIdByUserId(userId);
+      if (!medecinId) {
+        res.status(403).json({ message: "Accès refusé - Médecin requis" });
+        return;
+      }
+
+      const rdvs = await this.service.getRendezVousEnAttenteConsultation(medecinId);
+      
+      res.status(200).json({
+        message: "RDV en attente de consultation récupérés avec succès",
+        data: rdvs
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // Récupérer les RDV en cours (médecin)
+  async getRendezVousEnCours(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ message: "Non authentifié" });
+        return;
+      }
+
+      const medecinId = await this.repository.getMedecinIdByUserId(userId);
+      if (!medecinId) {
+        res.status(403).json({ message: "Accès refusé - Médecin requis" });
+        return;
+      }
+
+      const rdvs = await this.service.getRendezVousEnCours(medecinId);
+      
+      res.status(200).json({
+        message: "RDV en cours récupérés avec succès",
+        data: rdvs
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // Récupérer les RDV d'aujourd'hui (médecin)
+  async getRendezVousAujourdhui(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ message: "Non authentifié" });
+        return;
+      }
+
+      const medecinId = await this.repository.getMedecinIdByUserId(userId);
+      if (!medecinId) {
+        res.status(403).json({ message: "Accès refusé - Médecin requis" });
+        return;
+      }
+
+      const rdvs = await this.service.getRendezVousAujourdhui(medecinId);
+      
+      res.status(200).json({
+        message: "RDV d'aujourd'hui récupérés avec succès",
+        data: rdvs
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
+
+  // Récupérer les RDV de la semaine (médecin)
+  async getRendezVousCetteSemaine(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ message: "Non authentifié" });
+        return;
+      }
+
+      const medecinId = await this.repository.getMedecinIdByUserId(userId);
+      if (!medecinId) {
+        res.status(403).json({ message: "Accès refusé - Médecin requis" });
+        return;
+      }
+
+      const rdvs = await this.service.getRendezVousCetteSemaine(medecinId);
+      
+      res.status(200).json({
+        message: "RDV de la semaine récupérés avec succès",
+        data: rdvs
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Erreur Serveur",
+      });
+    }
+  }
 }
