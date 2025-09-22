@@ -775,7 +775,7 @@ Authorization: Bearer <token>
 ```
 
 ### 3. Récupérer les créneaux disponibles
-**GET** `/creneaux/disponibles`
+**GET** `/medecin/:medecinId/creneaux-disponibles`
 
 #### Headers
 ```
@@ -784,7 +784,7 @@ Authorization: Bearer <token>
 
 #### Query Parameters
 ```
-medecinId=uuid&dateDebut=2025-01-20&dateFin=2025-01-21
+dateDebut=2025-01-20&dateFin=2025-01-21
 ```
 
 #### Réponse Succès (200)
@@ -1351,7 +1351,7 @@ class ApiService {
   // Recherche médecins
   async searchDoctors(params: any) {
     const queryString = new URLSearchParams(params).toString();
-    const response = await fetch(`${this.baseURL}/auth/medecins/search?${queryString}`, {
+    const response = await fetch(`${this.baseURL}/specialites/medecins/search?${queryString}`, {
       headers: this.getHeaders()
     });
     return response.json();

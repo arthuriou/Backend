@@ -826,7 +826,11 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from '../services/apiService';
+
+const { user } = useUserContext(); // Ajouter le contexte utilisateur si disponible
+// Ou récupérer depuis AsyncStorage si pas de contexte global
 
 export default function BookAppointmentScreen({ route, navigation }) {
   const { doctor, selectedSlot } = route.params;
@@ -1448,12 +1452,12 @@ class ApiService {
 
   async searchDoctors(params: any) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request('GET', `/auth/medecins/search?${queryString}`);
+    return this.request('GET', `/specialites/medecins/search?${queryString}`);
   }
 
   // Rendez-vous
   async getAvailableSlots(medecinId: string, dateDebut: string, dateFin: string) {
-    return this.request('GET', `/rendezvous/creneaux/disponibles?medecinId=${medecinId}&dateDebut=${dateDebut}&dateFin=${dateFin}`);
+    return this.request('GET', `/rendezvous/medecin/${medecinId}/creneaux-disponibles?dateDebut=${dateDebut}&dateFin=${dateFin}`);
   }
 
   async createAppointment(data: any) {
