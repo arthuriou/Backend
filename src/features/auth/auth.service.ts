@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { generateOTP, sendOTPEmail, sendValidationEmail } from '../../shared/utils/mail';
 import { generateToken, JWTPayload, generateRefreshToken, verifyRefreshToken } from '../../shared/utils/jwt.utils';
 import db from '../../shared/database/client';
+import { AgendaService } from '../agenda/agenda.service';
 
 export class AuthService {
   private repository: AuthRepository;
@@ -286,15 +287,25 @@ export class AuthService {
   async validateMedecin(utilisateurId: string, action: 'APPROVED' | 'REJECTED'): Promise<boolean> {
     try {
       await this.repository.validateMedecin(utilisateurId, action);
-      
-      // Si approuvé, envoyer email de confirmation
+
       if (action === 'APPROVED') {
+        // Créer agenda automatiquement pour le nouveau médecin approuvé
+        const medecin = await this.repository.getMedecinByUserId(utilisateurId);
         const user = await this.repository.getUserById(utilisateurId);
-        if (user) {
+        if (medecin?.idmedecin && user) {
+          const agendaService = new AgendaService();
+          await agendaService.createAgenda(medecin.idmedecin, {
+            nom: `Agenda de ${user.nom} ${user.prenom || ''}`,
+            visible_en_ligne: true,
+            default_duration_min: 30,
+            timezone: 'Africa/Abidjan'
+          });
+
+          // Envoyer email de confirmation
           await sendValidationEmail(user.email, user.nom);
         }
       }
-      
+
       return true;
     } catch (error) {
       console.error('Erreur validation médecin:', error);
@@ -356,6 +367,16 @@ export class AuthService {
 
     // Associer le médecin au cabinet (avec idMedecin)
     await this.repository.associateMedecinToCabinet(medecin.idmedecin as any, cabinetId);
+
+    // Créer agenda automatiquement pour le médecin approuvé directement
+    const agendaService = new AgendaService();
+    await agendaService.createAgenda(medecin.idmedecin!, {
+      nom: `Agenda de ${newUser.nom} ${newUser.prenom || ''}`,
+      cabinet_id: cabinetId,
+      visible_en_ligne: true,
+      default_duration_min: 30,
+      timezone: 'Africa/Abidjan'
+    });
 
     // Récupérer les spécialités associées pour la réponse
     const specialites = await this.repository.getSpecialitesByMedecinId(medecin.idmedecin as any);

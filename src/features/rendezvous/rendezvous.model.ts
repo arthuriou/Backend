@@ -26,7 +26,7 @@ export interface Creneau {
   disponible: boolean;
 }
 
-export interface Agenda {
+export interface OldAgenda {
   idagenda: string;
   medecin_id: string;
   libelle: string;
@@ -53,6 +53,10 @@ export interface CreateRendezVousRequest {
   creneau_id?: string;
   type_rdv?: 'PRESENTIEL' | 'TELECONSULTATION';
   adresse_cabinet?: string;
+  // New agenda slot booking
+  agenda_id?: string;
+  slot_start_at?: string; // ISO string
+  slot_end_at?: string;   // ISO string
 }
 
 export interface UpdateRendezVousRequest {
@@ -130,7 +134,7 @@ export interface CreneauWithDetails extends Creneau {
   };
 }
 
-export interface AgendaWithDetails extends Agenda {
+export interface AgendaWithDetails extends OldAgenda {
   medecin: {
     idmedecin: string;
     nom: string;

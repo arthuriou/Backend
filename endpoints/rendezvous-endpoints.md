@@ -1,5 +1,109 @@
 # 📅 API Endpoints - Rendez-vous
 
+## ⚠️ CORRECTION : Module Agenda Séparé
+
+**Les fonctionnalités d'agenda ont été déplacées vers `/api/agenda`**
+
+Les anciennes routes créneaux/agendas sous `/api/rendezvous` ont été supprimées.
+Le nouveau système utilise uniquement :
+
+- **Gestion agenda complets** : `/api/agenda/*`
+- **Créneaux calculés** : `GET /api/agenda/:id/slots` et `GET /api/agenda/:id/slots/public`
+- **Réservation depuis slots** : `POST /api/rendezvous/` avec `agenda_id`, `slot_start_at`, `slot_end_at`
+
+Les routes natives RDV restent inchangées pour créer, confirmer, annuler, terminer, récupérer les RDV.
+
+---
+
+## Manipulation des Rendez-vous via l'agenda (médecin)
+
+Ces endpoints permettent au médecin (ou à l'admin cabinet) de déplacer/redimensionner un RDV depuis la vue agenda, en respectant les règles de disponibilités, les blocs d'indisponibilités, et les temps tampons configurés sur l'agenda.
+
+Tous nécessitent l'authentification JWT.
+
+---
+
+### Déplacer un rendez-vous (drag & drop)
+
+- Méthode: `PUT`
+- URL unifiée: `/api/agenda/rdv/:rendezvousId/move`
+- Rôles: `MEDECIN`, `ADMINCABINET`
+
+Body:
+```json
+{
+  "new_start_at": "2025-09-25T10:00:00Z",
+  "new_end_at": "2025-09-25T10:30:00Z"
+}
+```
+
+Règles métiers:
+- Vérifier que le médecin connecté est bien le propriétaire du RDV (ou admin du cabinet du RDV).
+- Empêcher les collisions avec d'autres RDV si `allow_double_booking=false`.
+- Respecter les `buffer_before_min` et `buffer_after_min` de l'agenda associé.
+- Interdire si la plage est couverte par un bloc d'indisponibilité.
+- Interdire si hors créneaux autorisés (selon type présentiel/téléconsultation et règles/extra visibles).
+
+Réponse 200:
+```json
+{
+  "message": "RDV déplacé",
+  "rendezvous": {
+    "idrendezvous": "uuid",
+    "dateheure": "2025-09-25T10:00:00Z",
+    "duree": 30,
+    "statut": "CONFIRME"
+  }
+}
+```
+
+---
+
+### Redimensionner un rendez-vous (étendre/réduire)
+
+- Méthode: `PUT`
+- URL unifiée: `/api/agenda/rdv/:rendezvousId/resize`
+- Rôles: `MEDECIN`, `ADMINCABINET`
+
+Body:
+```json
+{
+  "new_end_at": "2025-09-25T10:45:00Z"
+}
+```
+
+Règles métiers:
+- Même contraintes que pour le déplacement (collisions, buffers, blocks, types autorisés).
+- Mettre à jour la durée du RDV en conséquence.
+
+Réponse 200:
+```json
+{
+  "message": "RDV redimensionné",
+  "rendezvous": {
+    "idrendezvous": "uuid",
+    "dateheure": "2025-09-25T10:00:00Z",
+    "duree": 45,
+    "statut": "CONFIRME"
+  }
+}
+```
+
+---
+
+### Marquer un créneau présentiel en attente consultation (workflow cabinet)
+
+Rappel: déjà existant dans les routes RDV, utile depuis l'agenda (vue liste/salle d'attente).
+
+- Méthode: `PUT`
+- URL: `/api/rendezvous/:id/patient-arrive`
+- Rôles: `MEDECIN`, `ADMINCABINET`
+
+Réponse 200:
+```json
+{ "message": "Patient marqué arrivé", "statut": "EN_ATTENTE_CONSULTATION" }
+```
+
 ## Base URL
 ```
 http://localhost:3000/api/rendezvous

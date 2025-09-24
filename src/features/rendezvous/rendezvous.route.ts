@@ -68,37 +68,7 @@ router.put("/:id/terminer",
   controller.terminerRendezVous.bind(controller)
 );
 
-// ========================================
-// CRÉNEAUX
-// ========================================
-
-// Créer un créneau (Médecin, AdminCabinet)
-router.post("/creneaux", 
-  authenticateToken, 
-  requireRole(['MEDECIN', 'ADMINCABINET']), 
-  controller.createCreneau.bind(controller)
-);
-
-// Récupérer les créneaux disponibles d'un médecin (Public)
-router.get("/medecin/:medecinId/creneaux-disponibles", 
-  controller.getCreneauxDisponibles.bind(controller)
-);
-
-// ========================================
-// AGENDAS
-// ========================================
-
-// Créer un agenda (Médecin, AdminCabinet)
-router.post("/agendas", 
-  authenticateToken, 
-  requireRole(['MEDECIN', 'ADMINCABINET']), 
-  controller.createAgenda.bind(controller)
-);
-
-// Récupérer les agendas d'un médecin (Public)
-router.get("/medecin/:medecinId/agendas", 
-  controller.getAgendasByMedecin.bind(controller)
-);
+// Routes d'agenda et de créneaux ont été déplacées sous /api/agenda (module Agenda)
 
 // ========================================
 // RAPPELS

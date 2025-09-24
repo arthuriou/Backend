@@ -2,12 +2,13 @@ import { RendezVousRepository } from "./rendezvous.repository";
 import { SocketService } from "../../shared/services/socket.service";
 import { PushService } from "../../shared/services/push.service";
 import { TeleconsultationService } from "../../shared/services/teleconsultation.service";
-import { 
-  RendezVous, 
-  Creneau, 
-  Agenda, 
+import { AgendaService } from "../agenda/agenda.service";
+import {
+  RendezVous,
+  Creneau,
+  OldAgenda,
   Rappel,
-  CreateRendezVousRequest, 
+  CreateRendezVousRequest,
   UpdateRendezVousRequest,
   CreateCreneauRequest,
   CreateAgendaRequest,
@@ -35,22 +36,40 @@ export class RendezVousService {
 
   // Créer un rendez-vous
   async createRendezVous(data: CreateRendezVousRequest): Promise<RendezVous> {
-    const { patient_id, medecin_id, dateheure, duree, motif, creneau_id, type_rdv, adresse_cabinet } = data;
+    const { patient_id, medecin_id, dateheure, duree, motif, creneau_id, type_rdv, adresse_cabinet, agenda_id, slot_start_at, slot_end_at } = data;
 
-    // Validation des champs requis
-    if (!patient_id || !medecin_id || !dateheure || !duree || !motif) {
-      throw new Error("Tous les champs requis doivent être fournis");
-    }
+    let finalDateheure = dateheure;
+    let finalDuree = duree;
+    let dateRDV: Date;
 
-    // Vérifier que la date est dans le futur
-    const dateRDV = new Date(dateheure);
-    if (dateRDV <= new Date()) {
-      throw new Error("La date du rendez-vous doit être dans le futur");
-    }
+    // Validation pour le nouveau système d'agenda
+    if (agenda_id && slot_start_at && slot_end_at) {
+      // Vérifier que la slot est disponible
+      await this.validateSlotBooking(agenda_id, slot_start_at, slot_end_at, type_rdv);
 
-    // Vérifier que la durée est positive
-    if (duree <= 0) {
-      throw new Error("La durée doit être positive");
+      // Utiliser les horaires du slot
+      const startDate = new Date(slot_start_at);
+      const endDate = new Date(slot_end_at);
+      finalDuree = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)); // durée en minutes
+      finalDateheure = slot_start_at;
+      dateRDV = startDate;
+    } else {
+      // Ancien système ou manuel
+      // Validation des champs requis
+      if (!patient_id || !medecin_id || !dateheure || !duree || !motif) {
+        throw new Error("Tous les champs requis doivent être fournis");
+      }
+
+      // Vérifier que la date est dans le futur
+      dateRDV = new Date(dateheure);
+      if (dateRDV <= new Date()) {
+        throw new Error("La date du rendez-vous doit être dans le futur");
+      }
+
+      // Vérifier que la durée est positive
+      if (duree <= 0) {
+        throw new Error("La durée doit être positive");
+      }
     }
 
     // Validation spécifique selon le type
@@ -70,8 +89,8 @@ export class RendezVousService {
       patient_id,
       medecin_id,
       creneau_id,
-      dateheure: dateRDV,
-      duree,
+      dateheure: dateRDV || new Date(finalDateheure),
+      duree: finalDuree,
       motif,
       statut: 'EN_ATTENTE',
       type_rdv: type_rdv || 'PRESENTIEL',
@@ -359,7 +378,7 @@ export class RendezVousService {
   // ========================================
 
   // Créer un agenda
-  async createAgenda(data: CreateAgendaRequest): Promise<Agenda> {
+  async createAgenda(data: CreateAgendaRequest): Promise<OldAgenda> {
     const { medecin_id, libelle } = data;
 
     if (!medecin_id || !libelle) {
@@ -605,14 +624,47 @@ export class RendezVousService {
     today.setHours(0, 0, 0, 0);
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
-    
+
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 7);
 
     return await this.repository.getRendezVousByMedecinAndDateRange(
-      medecin_id, 
-      startOfWeek, 
+      medecin_id,
+      startOfWeek,
       endOfWeek
     );
+  }
+
+  // Valider la réservation d'une slot d'agenda
+  async validateSlotBooking(agendaId: string, slotStartAt: string, slotEndAt: string, type?: string): Promise<void> {
+    const agendaService = new AgendaService();
+
+    // Récupérer la période (par exemple 1 jour autour de la date)
+    const slotDate = new Date(slotStartAt);
+    const periodStart = new Date(slotDate);
+    periodStart.setDate(slotDate.getDate() - 1); // 1 jour avant
+
+    const periodEnd = new Date(slotDate);
+    periodEnd.setDate(slotDate.getDate() + 2); // 1 jour après pour couvrir
+
+    // Obtenir les slots disponibles
+    const availableSlots = await agendaService.getComputedSlots(agendaId, periodStart.toISOString(), periodEnd.toISOString(), type as any);
+
+    // Vérifier si la slot demandée est dans les disponibles
+    const requestedSlot = {
+      start_at: slotStartAt,
+      end_at: slotEndAt,
+      type: type || 'PRESENTIEL'
+    };
+
+    const isAvailable = availableSlots.some(slot =>
+      slot.start_at === slotStartAt &&
+      slot.end_at === slotEndAt &&
+      slot.type === requestedSlot.type
+    );
+
+    if (!isAvailable) {
+      throw new Error("Ce créneau n'est plus disponible");
+    }
   }
 }

@@ -11,8 +11,14 @@ import {
   AddParticipantRequest
 } from "./messagerie.model";
 import db from "../../utils/database";
+import { CryptoService } from "../../shared/services/crypto.service";
 
 export class MessagerieRepository {
+  private crypto: CryptoService;
+
+  constructor(cryptoService = new CryptoService()) {
+    this.crypto = cryptoService;
+  }
 
   // ========================================
   // CONVERSATIONS
@@ -100,7 +106,7 @@ export class MessagerieRepository {
         idmessage: conversation.dernier_message_id,
         conversation_id: conversationId,
         expediteur_id: conversation.dernier_message_expediteur_id,
-        contenu: conversation.dernier_message_contenu,
+        contenu: this.crypto.decryptOrPassThrough(conversation.dernier_message_contenu) ?? "",
         type_message: conversation.dernier_message_type,
         dateenvoi: conversation.dernier_message_date,
         expediteur: {
@@ -158,7 +164,11 @@ export class MessagerieRepository {
     `;
     
     const result = await db.query(query, [userId]);
-    return this.mapConversationsWithDetails(result.rows);
+    const rows = (result.rows as any[]).map(r => ({
+      ...r,
+      dernier_message_contenu: r.dernier_message_contenu ? this.crypto.decryptOrPassThrough(r.dernier_message_contenu) : r.dernier_message_contenu
+    }));
+    return this.mapConversationsWithDetails(rows);
   }
 
   // Vérifier si une conversation privée existe entre deux utilisateurs
@@ -227,10 +237,11 @@ export class MessagerieRepository {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
+    const encryptedContent = data.contenu ? this.crypto.encryptString(data.contenu) : null;
     const values = [
       data.conversation_id, 
       data.expediteur_id || '', 
-      data.contenu, 
+      encryptedContent, 
       data.type_message || 'TEXTE',
       data.fichier_url, 
       data.fichier_nom, 
@@ -238,7 +249,12 @@ export class MessagerieRepository {
       data.reponse_a
     ];
     const result = await db.query<Message>(query, values);
-    return result.rows[0];
+    const row = result.rows[0] as any;
+    // Retourner en clair côté API (compat clair/chiffré)
+    if (row && typeof row.contenu !== 'undefined') {
+      row.contenu = this.crypto.decryptOrPassThrough(row.contenu);
+    }
+    return row;
   }
 
   // Récupérer les messages d'une conversation
@@ -269,7 +285,13 @@ export class MessagerieRepository {
     `;
     
     const result = await db.query(query, [conversationId, currentUserId || '', limit, offset]);
-    return this.mapMessagesWithDetails(result.rows);
+    // Déchiffrer contenus (compat clair/chiffré)
+    const rows = result.rows.map((r: any) => ({
+      ...r,
+      contenu: this.crypto.decryptOrPassThrough(r.contenu),
+      reponse_contenu: this.crypto.decryptOrPassThrough(r.reponse_contenu)
+    }));
+    return this.mapMessagesWithDetails(rows);
   }
 
   // Récupérer un message par ID
@@ -292,7 +314,12 @@ export class MessagerieRepository {
     `;
     
     const result = await db.query(query, [messageId]);
-    const messages = this.mapMessagesWithDetails(result.rows);
+    const rows = result.rows.map((r: any) => ({
+      ...r,
+      contenu: this.crypto.decryptOrPassThrough(r.contenu),
+      reponse_contenu: this.crypto.decryptOrPassThrough(r.reponse_contenu)
+    }));
+    const messages = this.mapMessagesWithDetails(rows);
     return messages[0] || null;
   }
 
@@ -307,8 +334,15 @@ export class MessagerieRepository {
       throw new Error('Aucun champ valide à mettre à jour');
     }
 
+    // Chiffrer contenu si présent
+    const processed = fieldsToUpdate.map(field => {
+      if (field === 'contenu' && updateData.contenu) {
+        return this.crypto.encryptString(updateData.contenu);
+      }
+      return updateData[field as keyof UpdateMessageRequest] as any;
+    });
     const setClause = fieldsToUpdate.map((field, index) => `${field} = $${index + 2}`).join(', ');
-    const values = [messageId, ...fieldsToUpdate.map(field => updateData[field as keyof UpdateMessageRequest])];
+    const values = [messageId, ...processed];
 
     const query = `
       UPDATE message 
@@ -322,8 +356,9 @@ export class MessagerieRepository {
     if (result.rows.length === 0) {
       throw new Error('Message non trouvé');
     }
-
-    return result.rows[0];
+    const row = result.rows[0] as any;
+    if (row.contenu) row.contenu = this.crypto.decryptString(row.contenu);
+    return row;
   }
 
   // Supprimer un message (soft delete)
@@ -446,7 +481,7 @@ export class MessagerieRepository {
           idmessage: row.dernier_message_id,
           conversation_id: row.idconversation,
           expediteur_id: row.dernier_message_expediteur_id,
-          contenu: row.dernier_message_contenu,
+          contenu: this.crypto.decryptOrPassThrough(row.dernier_message_contenu) ?? "",
           type_message: row.dernier_message_type,
           dateenvoi: row.dernier_message_date,
           expediteur: {
@@ -513,7 +548,7 @@ export class MessagerieRepository {
         message.lu_par.push({
           idmessagelu: row.idmessagelu,
           utilisateur_id: row.lu_par_user_id,
-          datelecture: row.datelcture,
+          datelecture: row.datellecture || row.datelcture || row.datelecture,
           utilisateur: {
             nom: row.lu_par_nom,
             prenom: row.lu_par_prenom

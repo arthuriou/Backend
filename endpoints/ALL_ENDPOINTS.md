@@ -66,6 +66,28 @@ Alias: `/api/v1/cabinets`, `/api/v1/mobile/cabinets`, `/api/v1/dashboard/cabinet
 - POST  http://localhost:3000/api/cabinets/:id/medecins/:medecinId/reset-password (ADMINCABINET)
 - GET   http://localhost:3000/api/cabinets/:id/stats            (SUPERADMIN, ADMINCABINET)
 
+## Agenda (`/api/agenda`)
+Alias: `/api/v1/agenda`, `/api/v1/mobile/agenda`, `/api/v1/dashboard/agenda`
+
+**📋 Note: Les agendas sont créés automatiquement lors de l'approbation des médecins. Création manuelle supprimée.**
+
+- GET   http://localhost:3000/api/agenda/mine                      (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/agenda/:id                      (MEDECIN, ADMINCABINET)
+- PATCH http://localhost:3000/api/agenda/:id                      (MEDECIN, ADMINCABINET)
+- DELETE http://localhost:3000/api/agenda/:id                     (MEDECIN, ADMINCABINET)
+- POST  http://localhost:3000/api/agenda/:id/rules                (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/agenda/:id/rules                (MEDECIN, ADMINCABINET)
+- PATCH http://localhost:3000/api/agenda/:id/rules/:ruleId        (MEDECIN, ADMINCABINET)
+- DELETE http://localhost:3000/api/agenda/:id/rules/:ruleId       (MEDECIN, ADMINCABINET)
+- POST  http://localhost:3000/api/agenda/:id/blocks                (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/agenda/:id/blocks                (MEDECIN, ADMINCABINET)
+- DELETE http://localhost:3000/api/agenda/:id/blocks/:blockId      (MEDECIN, ADMINCABINET)
+- POST  http://localhost:3000/api/agenda/:id/extra                 (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/agenda/:id/extra                 (MEDECIN, ADMINCABINET)
+- DELETE http://localhost:3000/api/agenda/:id/extra/:extraId       (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/agenda/:id/slots                 (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/agenda/:id/slots/public          (Public - agenda.visible_en_ligne requis)
+
 ## Rendez-vous (`/api/rendezvous`)
 Alias: `/api/v1/rendezvous`, `/api/v1/mobile/rendezvous`, `/api/v1/dashboard/rendezvous`
 
@@ -77,16 +99,15 @@ Alias: `/api/v1/rendezvous`, `/api/v1/mobile/rendezvous`, `/api/v1/dashboard/ren
 - PUT   http://localhost:3000/api/rendezvous/:id/confirmer      (MEDECIN, ADMINCABINET)
 - PUT   http://localhost:3000/api/rendezvous/:id/annuler        (PATIENT, MEDECIN, ADMINCABINET)
 - PUT   http://localhost:3000/api/rendezvous/:id/terminer       (MEDECIN, ADMINCABINET)
-- POST  http://localhost:3000/api/rendezvous/creneaux           (MEDECIN, ADMINCABINET)
-- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/creneaux-disponibles (Public)
-- POST  http://localhost:3000/api/rendezvous/agendas            (MEDECIN, ADMINCABINET)
-- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/agendas (Public)
 - POST  http://localhost:3000/api/rendezvous/rappels/traiter    (SUPERADMIN, ADMINCABINET)
 - POST  http://localhost:3000/api/rendezvous/rappels            (MEDECIN, ADMINCABINET)
-- GET   http://localhost:3000/api/rendezvous/en-attente-consultation (MÉDECIN)
-- GET   http://localhost:3000/api/rendezvous/en-cours (MÉDECIN)
-- GET   http://localhost:3000/api/rendezvous/aujourd-hui (MÉDECIN)
-- GET   http://localhost:3000/api/rendezvous/cette-semaine (MÉDECIN)
+- GET   http://localhost:3000/api/rendezvous/en-attente-consultation (MÉDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/en-cours           (MÉDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/aujourd-hui        (MÉDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/rendezvous/cette-semaine      (MÉDECIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/rendezvous/:id/patient-arrive (MEDECIN, ADMINCABINET)
+- PUT   http://localhost:3000/api/rendezvous/:id/commencer-consultation (MEDECIN)
+- PUT   http://localhost:3000/api/rendezvous/:id/cloturer-consultation (MEDECIN)
 
 ## Messagerie (`/api/messagerie`)
 Alias: `/api/v1/messagerie`, `/api/v1/mobile/messagerie`, `/api/v1/dashboard/messagerie`

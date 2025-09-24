@@ -1,4 +1,4 @@
-import { RendezVous, Creneau, Agenda, Rappel, RendezVousWithDetails, CreneauWithDetails, AgendaWithDetails } from "./rendezvous.model";
+import { RendezVous, Creneau, OldAgenda, Rappel, RendezVousWithDetails, CreneauWithDetails, AgendaWithDetails } from "./rendezvous.model";
 import db from "../../utils/database";
 
 export class RendezVousRepository {
@@ -234,7 +234,7 @@ export class RendezVousRepository {
   async createAgenda(data: {
     medecin_id: string;
     libelle: string;
-  }): Promise<Agenda> {
+  }): Promise<OldAgenda> {
     const query = `
       INSERT INTO agenda (medecin_id, libelle)
       VALUES ($1, $2)
