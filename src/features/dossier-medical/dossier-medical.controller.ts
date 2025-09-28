@@ -233,25 +233,50 @@ export class DossierMedicalController {
           statusText: response.statusText
         });
         
-        // Si 401, essayer avec une URL signée
-        if (response.status === 401) {
+        // Si accès refusé/unauthorized/bad request, essayer avec une URL signée
+        if (response.status === 401 || response.status === 403 || response.status === 400) {
           console.log('🔄 Tentative avec URL signée...');
           try {
             const { v2: cloudinary } = await import('cloudinary');
             const { configureCloudinary } = await import('../../shared/utils/cloudinary');
             configureCloudinary();
             
-            // Extraire le public_id de l'URL
-            const urlParts = documentUrl.split('/');
-            const publicId = urlParts[urlParts.length - 1].replace(/\.[^.]+$/, '');
-            const folder = urlParts[urlParts.length - 2];
-            const fullPublicId = `${folder}/${publicId}`;
+            // Extraire resource_type et public_id complets depuis l'URL Cloudinary
+            // Exemple: https://res.cloudinary.com/<cloud>/<resource_type>/upload/v<version>/dossier/<...>/<public_id>.<ext>
+            const url = new URL(documentUrl);
+            const pathParts = url.pathname.split('/').filter(Boolean);
+            // pathParts: [ '<cloud_name?>', '<resource_type>', '<type>', 'v<version>?', ... publicId parts ... ]
+            const resourceType = pathParts[1] || 'auto';
+            const deliveryType = pathParts[2] || 'upload';
+            // Récupérer le segment après le type (upload/authenticated/private)
+            const typeIndex = pathParts.findIndex(p => p === 'upload' || p === 'authenticated' || p === 'private');
+            let afterUploadParts = typeIndex >= 0 ? pathParts.slice(typeIndex + 1) : [];
+            // Retirer éventuellement le segment de version 'v\d+'
+            if (afterUploadParts.length && /^v\d+$/.test(afterUploadParts[0])) {
+              afterUploadParts = afterUploadParts.slice(1);
+            }
+            // Recomposer le public_id (sans l'extension)
+            const lastPart = afterUploadParts[afterUploadParts.length - 1] || '';
+            const lastPartNoExt = lastPart.replace(/\.[^.]+$/, '');
+            const publicIdParts = [...afterUploadParts.slice(0, -1), lastPartNoExt];
+            const fullPublicId = publicIdParts.join('/');
+            const fileExtMatch = lastPart.match(/\.([^.]+)$/);
+            const fileExt = fileExtMatch ? fileExtMatch[1] : undefined;
             
+            // Extraire la version (ex: v1758696369) et la passer pour éviter le défaut v1
+            let versionNumber: number | undefined = undefined;
+            const versionSegment = afterUploadParts.length ? (pathParts.find(p => /^v\d+$/.test(p)) || '') : '';
+            if (/^v\d+$/.test(versionSegment)) {
+              versionNumber = Number(versionSegment.substring(1));
+            }
+
             // Générer une URL signée
-            const signedUrl = cloudinary.url(fullPublicId, {
-              resource_type: 'auto',
-              type: 'upload',
+            let signedUrl = cloudinary.url(fullPublicId, {
+              resource_type: (resourceType as any) || 'auto',
+              type: (deliveryType as any) || 'upload',
               sign_url: true,
+              secure: true,
+              ...(versionNumber ? { version: versionNumber } : {}),
               expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 heure
             });
             
@@ -261,6 +286,26 @@ export class DossierMedicalController {
               status: response.status,
               statusText: response.statusText
             });
+
+            // Si toujours 401 avec type 'upload', tenter type 'authenticated'
+            if (response.status === 401 && deliveryType === 'upload') {
+              console.log('🔁 Retry en authenticated...');
+              signedUrl = cloudinary.url(fullPublicId, {
+                resource_type: (resourceType as any) || 'auto',
+                type: 'authenticated',
+                sign_url: true,
+                secure: true,
+                ...(versionNumber ? { version: versionNumber } : {}),
+                ...(fileExt ? { format: fileExt } : {}),
+                expires_at: Math.floor(Date.now() / 1000) + 3600
+              });
+              console.log('🔐 URL signée (authenticated) générée:', signedUrl);
+              response = await fetch(signedUrl);
+              console.log('🌐 Cloudinary response (signed/authenticated):', {
+                status: response.status,
+                statusText: response.statusText
+              });
+            }
           } catch (signError) {
             console.error('❌ Erreur génération URL signée:', signError);
           }
