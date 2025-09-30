@@ -193,20 +193,106 @@ CREATE TABLE IF NOT EXISTS specialite_maux (
 -- AGENDA / CRENEAU
 -- ================================
 
-CREATE TABLE IF NOT EXISTS agenda (
-    idAgenda UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    medecin_id UUID REFERENCES medecin(idMedecin) ON DELETE CASCADE,
-    libelle TEXT
+-- CREATE TABLE IF NOT EXISTS agenda (
+--     idAgenda UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--     medecin_id UUID REFERENCES medecin(idMedecin) ON DELETE CASCADE,
+--     libelle TEXT
+-- );
+
+-- CREATE TABLE IF NOT EXISTS creneau (
+--     idCreneau UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--     agenda_id UUID REFERENCES agenda(idAgenda) ON DELETE CASCADE,
+--     debut TIMESTAMP NOT NULL,
+--     fin TIMESTAMP NOT NULL,
+--     disponible BOOLEAN DEFAULT true,
+--     CONSTRAINT creneau_debut_fin_chk CHECK (fin > debut)
+-- );
+
+-- Migration: Agenda (agendas, rules, blocks, extra availabilities)
+-- Date: 2025-09-22
+
+-- Extensions nécessaires pour UUID
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Table: agendas
+CREATE TABLE IF NOT EXISTS agendas (
+    idagenda UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    medecin_id UUID NOT NULL REFERENCES medecin(idMedecin) ON DELETE CASCADE,
+    cabinet_id UUID NULL REFERENCES cabinet(idCabinet) ON DELETE SET NULL,
+    nom TEXT NOT NULL,
+    visible_en_ligne BOOLEAN NOT NULL DEFAULT true,
+    default_duration_min INTEGER NOT NULL DEFAULT 30,
+    buffer_before_min INTEGER NOT NULL DEFAULT 0,
+    buffer_after_min INTEGER NOT NULL DEFAULT 0,
+    timezone TEXT NOT NULL DEFAULT 'Africa/Abidjan',
+    confirmation_mode TEXT NOT NULL CHECK (confirmation_mode IN ('AUTO','MANUELLE')) DEFAULT 'MANUELLE',
+    allow_double_booking BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS creneau (
-    idCreneau UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agenda_id UUID REFERENCES agenda(idAgenda) ON DELETE CASCADE,
-    debut TIMESTAMP NOT NULL,
-    fin TIMESTAMP NOT NULL,
-    disponible BOOLEAN DEFAULT true,
-    CONSTRAINT creneau_debut_fin_chk CHECK (fin > debut)
+CREATE INDEX IF NOT EXISTS idx_agendas_medecin_id ON agendas(medecin_id);
+CREATE INDEX IF NOT EXISTS idx_agendas_cabinet_id ON agendas(cabinet_id);
+
+-- Table: availability_rules
+CREATE TABLE IF NOT EXISTS availability_rules (
+    idrule UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agenda_id UUID NOT NULL REFERENCES agendas(idagenda) ON DELETE CASCADE,
+    weekday SMALLINT NOT NULL CHECK (weekday BETWEEN 0 AND 6),
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    duration_min INTEGER NOT NULL,
+    allowed_types TEXT NOT NULL CHECK (allowed_types IN ('PRESENTIEL','TELECONSULTATION','TOUS')) DEFAULT 'TOUS',
+    start_date DATE NULL,
+    end_date DATE NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (end_time > start_time)
 );
+
+CREATE INDEX IF NOT EXISTS idx_rules_agenda_id ON availability_rules(agenda_id);
+CREATE INDEX IF NOT EXISTS idx_rules_agenda_weekday ON availability_rules(agenda_id, weekday);
+
+-- Table: agenda_blocks (indisponibilités)
+CREATE TABLE IF NOT EXISTS agenda_blocks (
+    idblock UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agenda_id UUID NOT NULL REFERENCES agendas(idagenda) ON DELETE CASCADE,
+    start_at TIMESTAMPTZ NOT NULL,
+    end_at TIMESTAMPTZ NOT NULL,
+    reason TEXT NULL,
+    created_by UUID NOT NULL REFERENCES utilisateur(idUtilisateur) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (end_at > start_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_blocks_agenda_id ON agenda_blocks(agenda_id);
+CREATE INDEX IF NOT EXISTS idx_blocks_timerange ON agenda_blocks(agenda_id, start_at, end_at);
+
+-- Table: extra_availability (disponibilités ponctuelles)
+CREATE TABLE IF NOT EXISTS extra_availability (
+    idextra UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agenda_id UUID NOT NULL REFERENCES agendas(idagenda) ON DELETE CASCADE,
+    start_at TIMESTAMPTZ NOT NULL,
+    end_at TIMESTAMPTZ NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('PRESENTIEL','TELECONSULTATION')),
+    visible_en_ligne BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (end_at > start_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_extra_agenda_id ON extra_availability(agenda_id);
+CREATE INDEX IF NOT EXISTS idx_extra_timerange ON extra_availability(agenda_id, start_at, end_at);
+
+-- Commentaires
+COMMENT ON TABLE agendas IS 'Agendas des médecins (planning)';
+COMMENT ON TABLE availability_rules IS 'Règles récurrentes de disponibilités par jour de semaine';
+COMMENT ON TABLE agenda_blocks IS 'Indisponibilités (bloquages) sur des plages';
+COMMENT ON TABLE extra_availability IS 'Disponibilités ponctuelles (ouvertures exceptionnelles)';
+
+
+
+
+
 
 -- ================================
 -- RDV / CONSULTATIONS / ORDONNANCES
@@ -362,22 +448,66 @@ CREATE TABLE IF NOT EXISTS message_lu (
     UNIQUE(message_id, utilisateur_id)
 );
 
-CREATE TABLE IF NOT EXISTS consultation (
-    idConsultation UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    rendezvous_id UUID UNIQUE REFERENCES rendezvous(idRendezVous) ON DELETE CASCADE,
-    date TIMESTAMP,
-    diagnostic TEXT,
-    notes TEXT
+-- ================================
+-- CONSULTATIONS ET TEMPLATES (MODULE COMPLET)
+-- ================================
+
+-- Table pour les templates de consultation
+CREATE TABLE IF NOT EXISTS consultation_templates (
+    idtemplate UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nom TEXT NOT NULL,
+    specialite TEXT NOT NULL,
+    description TEXT,
+    diagnostique_template TEXT,
+    antecedents_template TEXT,
+    traitement_template TEXT,
+    prescriptions_template TEXT,
+    observations_template TEXT,
+    recommandations_template TEXT,
+    examens_template TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Table principal des consultations
+CREATE TABLE IF NOT EXISTS consultations (
+    idconsultation UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    rendezvous_id UUID NOT NULL REFERENCES rendezvous(idrendezvous) ON DELETE CASCADE,
+    medecin_id UUID NOT NULL REFERENCES medecin(idmedecin) ON DELETE CASCADE,
+    patient_id UUID NOT NULL REFERENCES patient(idpatient) ON DELETE CASCADE,
+    diagnostique TEXT NOT NULL,
+    antecedents TEXT,
+    traitement_propose TEXT,
+    prescriptions TEXT,
+    observations TEXT,
+    recommandations TEXT,
+    examens_complementaires TEXT,
+    date_consultation DATE NOT NULL DEFAULT CURRENT_DATE,
+    suite_rendezvous_id UUID REFERENCES rendezvous(idrendezvous) ON DELETE SET NULL,
+    statut TEXT NOT NULL CHECK (statut IN ('BROUILLON', 'FINALISE', 'ARCHIVE')) DEFAULT 'BROUILLON',
+    template_utilise TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finalise_le TIMESTAMPTZ
+);
+
+-- Table des ordonnances liées aux consultations
 CREATE TABLE IF NOT EXISTS ordonnance (
     idOrdonnance UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    consultation_id UUID REFERENCES consultation(idConsultation) ON DELETE CASCADE,
+    consultation_id UUID REFERENCES consultations(idconsultation) ON DELETE CASCADE,
     date DATE,
     dureeTraitement INT,
     renouvellements INT,
-    notes TEXT
+    notes TEXT,
+    template_utilise TEXT -- Support templates ordo
 );
+
+-- Index pour performances consultations
+CREATE INDEX IF NOT EXISTS idx_consultations_rendezvous_id ON consultations(rendezvous_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_medecin_id ON consultations(medecin_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_patient_id ON consultations(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_statut ON consultations(statut);
+CREATE INDEX IF NOT EXISTS idx_templates_specialite ON consultation_templates(specialite);
 
 CREATE TABLE IF NOT EXISTS ligne_ordonnance (
     idLigneOrdonnance UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -643,6 +773,49 @@ FROM (
 JOIN specialite s ON TRIM(LOWER(s.nom)) = TRIM(LOWER(v.specialite_nom))
 JOIN maux mx ON TRIM(LOWER(mx.nom)) = TRIM(LOWER(v.maux_nom))
 ON CONFLICT DO NOTHING;
+
+-- 7) Templates de consultations par spécialité
+INSERT INTO consultation_templates (nom, specialite, description, diagnostique_template, antecedents_template, traitement_template, prescriptions_template, observations_template, recommandations_template, examens_template)
+VALUES
+  ('Consultation generale adulte', 'Médecine générale',
+   'Template pour une consultation de routine chez l adulte',
+   'Patient en bon etat general. Pas de signe d urgence.',
+   'Antecedents medicaux a preciser.',
+   'Traitement symptomatique selon les symptomes presentes.',
+   'Prescriptions selon les besoins identifies.',
+   'Patient ecoute et informe.',
+   'Rendez-vous de suivi dans 3 mois si necessaire.',
+   'Aucun examen complementaire necessaire pour l instant.'),
+
+  ('Consultation cardiologie', 'Cardiologie',
+   'Template pour consultation cardiologique',
+   'Rythme cardiaque regulier. Pas de douleur thoracique.',
+   'Antecedents cardiaques familiaux a evaluer.',
+   'Regime alimentaire adapte et exercice physique regulier.',
+   'Medicaments cardiovasculaires si necessaire.',
+   'Tension arterielle et rythme cardiaque normaux.',
+   'Echocardiographie recommandee en fonction des antecedents.',
+   'ECG, echocardiographie selon les symptomes.'),
+
+  ('Consultation pediatrie', 'Pédiatrie',
+   'Template pour consultation pediatrique de routine',
+   'Enfant en bon developpement psychomoteur.',
+   'Vaccinations a jour. Croissance normale.',
+   'Hygiene de vie adaptee a l age.',
+   'Supplements vitaminiques si necessaire.',
+   'Vaccinations et croissance satisfaisantes.',
+   'Visite de controle dans 3 mois.',
+   'Bilan sanguin si malnutrition suspectee.'),
+
+  ('Consultation dermatologie', 'Dermatologie',
+   'Template pour consultation dermatologique',
+   'Lesions cutanees a caracteriser.',
+   'Antecedents dermatologiques personnels et familiaux.',
+   'Soins locaux adaptes au type de lesion.',
+   'Cremes et topiques selon prescription.',
+   'Examen clinique complet realise.',
+   'Controle evolutif selon evolution.',
+   'Biopsie cutanee si suspicion de lesion maligne.');
 
 -- ================================
 -- MESSAGE DE SUCCÈS

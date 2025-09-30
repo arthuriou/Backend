@@ -16,6 +16,7 @@ import devicesRoutes from "./features/notifications/devices.route";
 import dossierMedicalRoutes from "./features/dossier-medical/dossier-medical.route";
 import ordonnancesRoutes from "./features/ordonnances/ordonnances.route";
 import agendaRoutes from "./features/agenda/agenda.route";
+import consultationsRoutes from "./features/consultations/consultations.route";
 import { SocketService } from "./shared/services/socket.service";
 import path from "path";
 import { SchedulerService } from "./shared/services/scheduler.service";
@@ -91,8 +92,14 @@ app.use("/api/v1/notifications", devicesRoutes);
 // Routes Dossier Médical
 app.use("/api/dossier-medical", dossierMedicalRoutes);
 app.use("/api/v1/dossier-medical", dossierMedicalRoutes);
+
+// Routes Agenda
 app.use("/api/agenda", agendaRoutes);
 app.use("/api/v1/agenda", agendaRoutes);
+
+// Routes Consultations
+app.use("/api/consultations", consultationsRoutes);
+app.use("/api/v1/consultations", consultationsRoutes);
 
 // Aliases Mobile/Dashboard (pointent vers les mêmes routes pour l'instant)
 app.use("/api/v1/mobile/auth", authRoutes);
@@ -104,6 +111,8 @@ app.use("/api/v1/mobile/notifications/preferences", notificationPreferencesRoute
 app.use("/api/v1/mobile/notifications", devicesRoutes);
 app.use("/api/v1/mobile/dossier-medical", dossierMedicalRoutes);
 app.use("/api/v1/mobile/ordonnances", ordonnancesRoutes);
+app.use("/api/v1/mobile/agenda", agendaRoutes);
+app.use("/api/v1/mobile/consultations", consultationsRoutes);
 
 app.use("/api/v1/dashboard/auth", authRoutes);
 app.use("/api/v1/dashboard/cabinets", cabinetRoutes);
@@ -115,6 +124,7 @@ app.use("/api/v1/dashboard/notifications", devicesRoutes);
 app.use("/api/v1/dashboard/dossier-medical", dossierMedicalRoutes);
 app.use("/api/v1/dashboard/ordonnances", ordonnancesRoutes);
 app.use("/api/v1/dashboard/agenda", agendaRoutes);
+app.use("/api/v1/dashboard/consultations", consultationsRoutes);
 
 // Routes Ordonnances
 app.use("/api/ordonnances", ordonnancesRoutes);

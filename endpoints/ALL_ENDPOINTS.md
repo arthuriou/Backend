@@ -192,6 +192,25 @@ Alias: `/api/v1/ordonnances`, `/api/v1/mobile/ordonnances`, `/api/v1/dashboard/o
 - GET   http://localhost:3000/api/ordonnances/medecin/:medecinId
 - PUT   http://localhost:3000/api/ordonnances/:id/valider
 
+## Consultations (`/api/consultations`)
+Alias: `/api/v1/consultations`, `/api/v1/mobile/consultations`, `/api/v1/dashboard/consultations`
+
+- POST  http://localhost:3000/api/consultations/                          (MEDECIN)
+- POST  http://localhost:3000/api/consultations/from-template            (MEDECIN)
+- GET   http://localhost:3000/api/consultations/:id                      (MEDECIN, PATIENT*)
+- GET   http://localhost:3000/api/consultations/medecin/:medecinId       (MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/consultations/patient/:patientId       (PATIENT, MEDECIN, ADMINCABINET)
+- GET   http://localhost:3000/api/consultations/rendezvous/:rendezvousId (MEDECIN, PATIENT, ADMINCABINET)
+- PATCH http://localhost:3000/api/consultations/:id                      (MEDECIN propriétaire uniquement)
+- PUT   http://localhost:3000/api/consultations/:id/finalize             (MEDECIN propriétaire uniquement)
+- DELETE http://localhost:3000/api/consultations/:id                     (MEDECIN propriétaire uniquement)
+- POST  http://localhost:3000/api/consultations/templates                (ADMINCABINET, SUPERADMIN)
+- GET   http://localhost:3000/api/consultations/templates/specialite/:specialite
+- GET   http://localhost:3000/api/consultations/templates                (TOUS sauf PATIENT)
+- DELETE http://localhost:3000/api/consultations/templates/:id           (ADMINCABINET, SUPERADMIN)
+
+*PATIENT : seulement consultations finalisées
+
 ---
 
 Pour toute divergence entre cette liste et les fichiers spécifiques, considérez cette liste comme source de vérité et ouvrez une demande de mise à jour du fichier concerné.
