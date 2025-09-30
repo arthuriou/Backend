@@ -129,6 +129,7 @@ export class AuthController {
           user: result.user,
           token: result.token,
           refreshToken: result.refreshToken,
+          role: result.role,
           mustChangePassword: (result.user as any).mustchangepassword === true
         },
       });

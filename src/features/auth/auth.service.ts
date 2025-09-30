@@ -114,7 +114,7 @@ export class AuthService {
     } as User & { medecinId: string };
   }
 
-  async login(email: string, motdepasse: string): Promise<{ user: User; token: string; refreshToken: string }> {
+  async login(email: string, motdepasse: string): Promise<{ user: User; token: string; refreshToken: string; role: string }> {
     const user = await this.repository.getUserByEmail(email);
     if (!user) {
       throw { statusCode: 401, message: "Email ou mot de passe incorrect" };
@@ -149,7 +149,7 @@ export class AuthService {
     const token = generateToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
-    return { user, token, refreshToken };
+    return { user, token, refreshToken, role: userRole };
   }
 
   async refresh(refreshToken: string) {

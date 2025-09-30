@@ -262,11 +262,18 @@ export class MessagerieService {
 
     // Notifications temps réel
     if (this.socketService) {
-      // Notifier tous les participants de la conversation
+      // APPROCHE HYBRIDE OPTIMISEE :
+      // 1. Notifier directement chaque participant (plus fiable, fonctionne toujours)
       conversation.participants.forEach(participant => {
         if (participant.utilisateur_id !== senderId) {
-          this.socketService.notifyNewMessage(data.conversation_id, messageWithDetails);
-          // Push notification (si activée)
+          // Notification directe : Garantit que l'utilisateur reçoit le message
+          this.socketService.notifyUser(participant.utilisateur_id, 'message:new', {
+            type: 'info',
+            message: 'Nouveau message reçu',
+            data: messageWithDetails
+          });
+
+          // Push notification mobile
           this.pushService.sendToUser(participant.utilisateur_id, {
             title: "Nouveau message",
             body: messageWithDetails.contenu || "Pièce jointe",
@@ -274,6 +281,9 @@ export class MessagerieService {
           });
         }
       });
+
+      // 2. Aussi notifier la room conversation (optionnel, pour compatibilité)
+      this.socketService.notifyRoom(`conversation:${data.conversation_id}`, 'message:new', messageWithDetails);
     }
 
     return messageWithDetails;
