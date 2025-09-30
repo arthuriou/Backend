@@ -138,10 +138,6 @@ http://localhost:3000/api/rendezvous
 - PUT   http://localhost:3000/api/rendezvous/:id/confirmer
 - PUT   http://localhost:3000/api/rendezvous/:id/annuler
 - PUT   http://localhost:3000/api/rendezvous/:id/terminer
-- POST  http://localhost:3000/api/rendezvous/creneaux
-- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/creneaux-disponibles
-- POST  http://localhost:3000/api/rendezvous/agendas
-- GET   http://localhost:3000/api/rendezvous/medecin/:medecinId/agendas
 - POST  http://localhost:3000/api/rendezvous/rappels/traiter
 - POST  http://localhost:3000/api/rendezvous/rappels
 
@@ -371,129 +367,9 @@ Authorization: Bearer <token>
 }
 ```
 
-## 9. Créer un créneau (Médecin/AdminCabinet)
-**POST** `/creneaux`
 
-### Headers
-```
-Authorization: Bearer <token>
-Content-Type: application/json
-```
 
-### Body (JSON)
-```json
-{
-  "agenda_id": "uuid",
-  "debut": "2024-01-15T09:00:00Z",
-  "fin": "2024-01-15T09:30:00Z",
-  "disponible": true
-}
-```
-
-### Réponse (201)
-```json
-{
-  "message": "Créneau créé avec succès",
-  "data": {
-    "idcreneau": "uuid",
-    "agenda_id": "uuid",
-    "debut": "2024-01-15T09:00:00Z",
-    "fin": "2024-01-15T09:30:00Z",
-    "disponible": true
-  }
-}
-```
-
-## 10. Récupérer les créneaux disponibles d'un médecin (Public)
-**GET** `/medecin/:medecinId/creneaux-disponibles?dateDebut=2024-01-15&dateFin=2024-01-20`
-
-### Réponse (200)
-```json
-{
-  "message": "Créneaux disponibles récupérés avec succès",
-  "data": [
-    {
-      "idcreneau": "uuid",
-      "agenda_id": "uuid",
-      "debut": "2024-01-15T09:00:00Z",
-      "fin": "2024-01-15T09:30:00Z",
-      "disponible": true,
-      "agenda": {
-        "idagenda": "uuid",
-        "libelle": "Consultations matin",
-        "medecin": {
-          "idMedecin": "uuid",
-          "nom": "Martin",
-          "prenom": "Dr. Marie"
-        }
-      }
-    }
-  ]
-}
-```
-
-## 11. Créer un agenda (Médecin/AdminCabinet)
-**POST** `/agendas`
-
-### Headers
-```
-Authorization: Bearer <token>
-Content-Type: application/json
-```
-
-### Body (JSON)
-```json
-{
-  "medecin_id": "uuid",
-  "libelle": "Consultations matin"
-}
-```
-
-### Réponse (201)
-```json
-{
-  "message": "Agenda créé avec succès",
-  "data": {
-    "idagenda": "uuid",
-    "medecin_id": "uuid",
-    "libelle": "Consultations matin"
-  }
-}
-```
-
-## 12. Récupérer les agendas d'un médecin (Public)
-**GET** `/medecin/:medecinId/agendas`
-
-### Réponse (200)
-```json
-{
-  "message": "Agendas du médecin récupérés avec succès",
-  "data": [
-    {
-      "idagenda": "uuid",
-      "medecin_id": "uuid",
-      "libelle": "Consultations matin",
-      "medecin": {
-        "idMedecin": "uuid",
-        "nom": "Martin",
-        "prenom": "Dr. Marie",
-        "specialites": ["Médecine générale"]
-      },
-      "creneaux": [
-        {
-          "idcreneau": "uuid",
-          "agenda_id": "uuid",
-          "debut": "2024-01-15T09:00:00Z",
-          "fin": "2024-01-15T09:30:00Z",
-          "disponible": true
-        }
-      ]
-    }
-  ]
-}
-```
-
-## 13. Traiter les rappels à envoyer (Système/Admin)
+## 9. Traiter les rappels à envoyer (Système/Admin)
 **POST** `/rappels/traiter`
 
 ### Headers
@@ -517,7 +393,7 @@ Authorization: Bearer <token>
 }
 ```
 
-## 14. Créer un rappel personnalisé (Médecin/AdminCabinet)
+## 10. Créer un rappel personnalisé (Médecin/AdminCabinet)
 **POST** `/rappels`
 
 ### Headers

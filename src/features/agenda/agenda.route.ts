@@ -7,6 +7,9 @@ const controller = new AgendaController();
 
 // Agendas - created automatically on doctor approval
 router.get("/mine", authenticateToken, requireRole(['MEDECIN']), controller.getMyAgendas);
+
+// Administration - créer agendas pour médecins existants (temporaire)
+router.post("/setup-existing", authenticateToken, requireRole(['SUPERADMIN']), controller.createAgendasForExistingMedecins);
 router.get("/:id", authenticateToken, requireRole(['MEDECIN','ADMINCABINET']), controller.getAgendaById);
 router.patch("/:id", authenticateToken, requireRole(['MEDECIN','ADMINCABINET']), controller.updateAgenda);
 router.delete("/:id", authenticateToken, requireRole(['MEDECIN','ADMINCABINET']), controller.deleteAgenda);

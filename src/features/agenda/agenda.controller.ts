@@ -8,6 +8,77 @@ export class AgendaController {
     this.service = service;
   }
 
+  // Méthode pour créer automatiquement des agendas pour tous les médecins qui n'en ont pas
+  createAgendasForExistingMedecins = async (req: Request, res: Response) => {
+    try {
+      const { dryRun = false } = req.query; // Pour tester sans créer
+
+      const pool = require("../../shared/database/client");
+      const medecins = await pool.query(`
+        SELECT m.idmedecin, m.nom, u.email
+        FROM medecin m
+        JOIN utilisateur u ON m.utilisateur_id = u.idutilisateur
+        LEFT JOIN agendas a ON a.medecin_id = m.idmedecin
+        WHERE a.idagenda IS NULL
+        ORDER BY m.created_at DESC
+      `);
+
+      if (dryRun === 'true') {
+        return res.json({
+          mode: 'DRY_RUN',
+          count: medecins.rows.length,
+          medecins: medecins.rows.map((m: any) => ({
+            id: m.idmedecin,
+            nom: m.nom,
+            email: m.email
+          }))
+        });
+      }
+
+      const createdAgendas = [];
+      const errors = [];
+
+      for (let medecin of medecins.rows) {
+        try {
+          const agenda = await this.service.createAgenda(medecin.idmedecin, {
+            nom: `Agenda ${medecin.nom}`,
+            visible_en_ligne: true,
+            default_duration_min: 30,
+            buffer_before_min: 0,
+            buffer_after_min: 0,
+            timezone: 'Africa/Abidjan',
+            confirmation_mode: 'MANUELLE',
+            allow_double_booking: false
+          });
+
+          createdAgendas.push({
+            medecin_id: medecin.idmedecin,
+            medecin_nom: medecin.nom,
+            agenda_id: agenda.idagenda,
+            agenda_nom: agenda.nom
+          });
+
+          console.log(`Agenda créé pour ${medecin.nom}`);
+        } catch (error:any) {
+          errors.push({
+            medecin: medecin.nom,
+            error: error.message
+          });
+        }
+      }
+
+      res.json({
+        success: createdAgendas.length,
+        errors: errors.length,
+        created: createdAgendas,
+        failed: errors
+      });
+
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
   getMyAgendas = async (req: Request, res: Response) => {
     const medecinId = (req as any).user?.idmedecin || (req as any).user?.medecin_id || (req as any).user?.id;
     const agendas = await this.service.getMyAgendas(medecinId);

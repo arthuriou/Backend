@@ -15,8 +15,40 @@ export class AgendaService {
     return this.repo.createAgenda(medecinId, data);
   }
 
-  getMyAgendas(medecinId: string) {
-    return this.repo.getAgendasByMedecin(medecinId);
+  async getMyAgendas(medecinId: string) {
+    const agendas = await this.repo.getAgendasByMedecin(medecinId);
+
+    // Si le médecin n'a pas d'agenda, en créer un automatiquement
+    if (agendas.length === 0) {
+      try {
+        // Récupérer le nom du médecin pour le nom de l'agenda
+        const pool = require("../../shared/database/client");
+        const medecin = await pool.query(
+          "SELECT nom FROM medecin WHERE idmedecin = $1",
+          [medecinId]
+        );
+
+        if (medecin.rows[0]) {
+          console.log(`Création automatique d'agenda pour le médecin: ${medecin.rows[0].nom}`);
+          const newAgenda = await this.createAgenda(medecinId, {
+            nom: `Agenda ${medecin.rows[0].nom}`,
+            visible_en_ligne: true,
+            default_duration_min: 30,
+            buffer_before_min: 0,
+            buffer_after_min: 0,
+            timezone: 'Africa/Abidjan',
+            confirmation_mode: 'MANUELLE',
+            allow_double_booking: false
+          });
+
+          agendas.push(newAgenda);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la création automatique d'agenda:", error);
+      }
+    }
+
+    return agendas;
   }
 
   getAgenda(idagenda: string) {
