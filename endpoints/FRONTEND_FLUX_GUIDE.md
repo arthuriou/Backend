@@ -594,40 +594,776 @@ const handleApiError = (error) => {
 
 ---
 
-## 📊 **TABLEAU RÉCAPITULATIF FLUX**
-
-| **USER** | **APP** | **PRINCIPALES ACTIONS** | **ENDPOINTS MAJEURS** |
-|----------|---------|-------------------------|----------------------|
-| **Patient** | 📱 Mobile | - Recherche médecins<br>- Réservation RDV<br>- Suivi consultations | - `/specialites/*`<br>- `/agenda/*/slots/public`<br>- `/rendezvous/*` |
-| **Médecin** | 💻 Dashboard | - Gestion agenda<br>- Consultations<br>- Ordonnances | - `/agenda/*`<br>- `/rendezvous/*`<br>- `/ordonnances/*` |
-| **Admin Cabinet** | 💻 Dashboard | - Gestion équipe<br>- Supervision | - `/auth/admin/create-medecin`<br>- `/rendezvous/patient-arrive` |
-| **Super Admin** | 💻 Dashboard | - Gestion globale<br>- Validation médecins | - `/auth/super-admin/*`<br>- `/cabinets/*` |
+## 👥 **IV. WORKFLOWS PAR RÔLE UTILISATEUR***
 
 ---
 
-## 🚀 **CHECKLIST LANCEMENT PROJET**
+## 📱 **1. PATIENT - APPLICATION MOBILE EXCLUSIVE**
 
-### **PRÉPARATION BACKEND** ✅
-- [x] Endpoints API complets et testés
-- [x] Migration base de données appliquée
-- [x] Documentation mise à jour et cohérente
-- [x] Authentification JWT sécurisée
-
-### **ARCHITECTURE FRONTEND** ✅
-- [x] **Architecture 2 apps** : Mobile (Patient) + Dashboard Multi-rôles
-- [x] **Flux utilisateurs détaillés** et techniques
-- [x] **Temps réel intégré** via Socket.IO
-- [x] **Gestion erreurs complète** avec refresh token auto
-
-### **TECHNOLOGIES SUGGÉRÉES**
-- **Mobile** : **React Native** ou **Flutter**
-- **Dashboard** : **Next.js** ou **Vue 3 + Nuxt**
-- **State** : **Zustand**, **Redux Toolkit** ou **Pinia**
-- **UI** : **Expo**, **Material-UI**, **TailwindCSS**
+### **🛍️ APP NATURE** : React Native / Flutter - Mobile ONLY
+### **🌐 ENDPOINTS** : Version mobile ou v1/mobile exclusivement
+### **📱 ONBOARDING FLOW** : Inscription → OTP → App prête
 
 ---
 
-**🎯 L'architecture proposée est optimale : une app mobile dédiée patients pour UX native, et un dashboard web unifié pour les professions de santé !**
+### **🔐 ONBOARDING PATIENT - MOBILE**
+```javascript
+// 1. INSCRIPTION avec données complètes
+const signUp = async (userData) => {
+  await api.post('/api/auth/register-patient', {
+    email: userData.email,
+    motdepasse: userData.password,
+    nom: userData.nom,
+    prenom: userData.prenom,
+    telephone: userData.telephone,
+    datenaissance: userData.datenaissance,
+    genre: userData.genre,
+    adresse: userData.adresse,
+    groupesanguin: userData.groupesanguin,
+    poids: userData.poids,
+    taille: userData.taille
+  });
+  // → Status PENDING → Email OTP envoyé
+};
+
+// 2. VALIDATION OTP
+const verifyOTP = async (email, otp) => {
+  await api.post('/api/auth/verify-otp', { email, otp });
+  // → Status APPROVED → Token reçu → Première connexion
+};
+
+// 3. CONNEXION NORMALE
+const login = async (email, pwd) => {
+  const response = await api.post('/api/auth/login', {
+    email, motdepasse: pwd
+  });
+  // → Token + refreshToken stockés
+  await secureStore.setItemAsync('authToken', response.data.token);
+  await secureStore.setItemAsync('userRole', response.data.role);
+};
+```
+
+---
+
+### **🏠 ENDPOINTS UTILISÉS PAR PATIENT - MOBILE**
+
+##### **📧 INSCRIPTION & VALIDATION OTP (ONBOARDING)**
+- POST `/api/auth/register-patient` - Inscription initiale (envoi OTP automatique)
+- POST `/api/auth/send-otp` - Renvoi OTP si expiré
+- POST `/api/auth/verify-otp` - Validation compte avec OTP
+- POST `/api/auth/resend-otp` - Renvoi OTP dupliqué
+
+##### **🔐 CONNEXION & PROFIL**
+- POST `/api/auth/login` - Connexion utilisateur
+- POST `/api/auth/refresh` - Rafraîchissement token
+- GET `/api/auth/profile` - Profil personnel complet
+- PATCH `/api/auth/profile/patient` - Mise à jour données santé
+- PATCH `/api/auth/profile` - Mise à jour nom/prénom/téléphone
+- POST `/api/auth/profile/photo` - Upload photo profil
+- POST `/api/auth/forgot-password` - Demande reset mot de passe
+- POST `/api/auth/reset-password` - Reset mot de passe avec code
+- POST `/api/auth/change-password` - Changement mot de passe sécurisé
+
+#### **🔍 RECHERCHE & DÉCOUVERTES**
+- GET `/api/specialites/maux/search?q=symptome` - Recherche symptômes
+- GET `/api/specialites/maux/{id}/medecins` - Médecins par maux
+- GET `/api/specialites/medecins/search?q=nom` - Recherche médecins
+- GET `/api/specialites/specialites/{id}/medecins` - Médecins par spécialité
+- GET `/api/agenda/{agendaId}/slots/public` - **CRÉNEAUX VISIBLES** (sans auth)
+
+#### **📅 GESTION RDV**
+- POST `/api/rendezvous` - Prendre RDV
+- GET `/api/rendezvous/patient/{patientId}` - Liste RDV personnels
+- PUT `/api/rendezvous/{id}/annuler` - Annuler RDV
+- GET `/api/rendezvous/{id}/teleconsultation` - Infos téléconsultation
+
+#### **🏥 DOSSIER MÉDICAL & SUIVIS**
+- GET `/api/dossier-medical/dossier/me` - Son dossier médical
+- GET `/api/consultations/patient/{patientId}` - Historique consultations (finalisées)
+- GET `/api/ordonnances/patient/{patientId}` - Ses ordonnances
+- GET `/api/dossier-medical/documents` - Documents personnels
+
+#### **💬 COMMUNICATION**
+- GET `/api/messagerie/conversations` - Conversations actives
+- POST `/api/messagerie/conversations/private` - Nouveau message privé
+- GET `/api/messagerie/conversations/{id}/messages` - Messages conversation
+
+#### **📪 PRÉFÉRENCES NOTIFICATIONS**
+- GET `/api/notifications/preferences` - Préférences actuelles
+- POST `/api/notifications/preferences` - Modifier préférences
+- POST `/api/notifications/devices` - Enregistrer device push
+
+---
+
+### **📱 WORKFLOW COMPLET PATIENT MOBILE**
+
+#### **ÉTAPE 1 : PREMIÈRE OUVERTURE**
+1. **Splash screen** → Vérification token local
+2. **Si pas connecté** → Page inscription/connexion
+3. **Si connecté** → Chargement home avec données user
+
+#### **ÉTAPE 2 : RECHERCHE MÉDECIN**
+```javascript
+// Bottom tabs: Accueil | Recherche | RDV | Profil
+const handleSymptomSearch = async (symptom) => {
+  // API recherche symptômes
+  const symptoms = await api.get(`/api/specialites/maux/search?q=${symptom}`);
+
+  // Si trouvés → afficher médecins associés
+  const selectedSymptom = symptoms.data[0];
+  const doctors = await api.get(
+    `/api/specialites/maux/${selectedSymptom.idmaux}/medecins`
+  );
+
+  // Navigation vers liste médecins
+  navigation.navigate('DoctorsList', { doctors, originalSymptom: symptom });
+};
+```
+
+#### **ÉTAPE 3 : SÉLECTION MÉDECIN & RDV**
+```javascript
+const viewDoctorAgenda = async (doctorId, agendaId) => {
+  // Vérifier si agenda visible
+  const slots = await api.get(`/api/agenda/${agendaId}/slots/public`, {
+    params: { start: nextWeek, end: future }
+  });
+
+  if (slots.data.length === 0) {
+    // Agenda non visible publiquement
+    showToast('Médecin non disponible actuellement');
+    return;
+  }
+
+  // Navigation calendrier RDV
+  navigation.navigate('BookingCalendar', {
+    doctor: doctors.find(d => d.idmedecin === doctorId),
+    availableSlots: slots.data
+  });
+};
+
+const bookAppointment = async (selectedSlot, motif) => {
+  await api.post('/api/rendezvous', {
+    medecin_id: selectedSlot.doctor.idmedecin,
+    dateheure: selectedSlot.start_at,
+    duree: selectedSlot.duration_min,
+    motif: motif,
+    type_rdv: selectedSlot.type
+  });
+
+  showSuccess('RDV pris avec succès !');
+  navigation.reset({ routes: [{ name: 'MyAppointments' }] });
+};
+```
+
+#### **ÉTAPE 4 : GESTION RDV EXISTANTS**
+```javascript
+const loadAppointments = async () => {
+  const appointments = await api.get('/api/rendezvous/patient/' + user.id);
+
+  const categorized = {
+    upcoming: appointments.data.filter(a => a.statut === 'CONFIRME'),
+    past: appointments.data.filter(a => a.statut === 'TERMINE'),
+    pending: appointments.data.filter(a => a.statut === 'EN_ATTENTE')
+  };
+
+  setAppointments(categorized);
+  return categorized;
+};
+
+const cancelAppointment = async (appointment) => {
+  await api.put(`/api/rendezvous/${appointment.idrendezvous}/annuler`);
+  showToast('RDV annulé');
+  refreshAppointments();
+};
+```
+
+#### **ÉTAPE 5 : SUIVI POST-RDV**
+```javascript
+// Consultation finalisée = visible pour patient
+const viewMedicalHistory = async () => {
+  const [consultations, prescriptions] = await Promise.all([
+    api.get('/api/consultations/patient/' + user.id),
+    api.get('/api/ordonnances/patient/' + user.id)
+  ]);
+
+  // Afficher seulement consultations.finalisées
+  const finalConsultations = consultations.data.filter(c => c.statut === 'FINALISE');
+
+  return { finalConsultations, prescriptions: prescriptions.data };
+};
+```
+
+**🎯 PATIENT MOBILE ONLY** : Interface native optimisée pour prise RDV rapide et suivi médical personnel
+
+---
+
+---
+
+## 👨‍⚕️ **2. MÉDECIN - DASHBOARD WEB**
+
+### **🖥️ APP NATURE** : Web React/Vue - Dashboard partagé
+### **🌐 ENDPOINTS** : Version dashboard exclusivement
+### **🔄 ONBOARDING FLOW** : 2 scénarios selon provenance
+
+---
+
+### **🏥 WORKFLOW COMPLET MÉDECIN DASHBOARD**
+
+#### **A) AUTO-INSCRIPTION MÉDECIN (LONG FLOW)**
+
+##### **Étape 1 : Inscription (beaucoup plus tôt)**
+```javascript
+// MÉDECIN INSCRIT DIRECTEMENT (Avant toute validation !)
+const doctorSignUp = async (doctorData) => {
+  await api.post('/api/auth/register-doctor', {
+    email: doctorData.email,
+    motdepasse: doctorData.password,  // TEMPORAIRE
+    numOrdre: doctorData.numOrdre,
+    nom: doctorData.nom,
+    specialiteIds: doctorData.selectedSpecialities
+  });
+  // ✅ Status PENDING mais peut déjà utiliser forgot/reset password !
+};
+
+// **OBLIGATOIRE : Reset password disponible même en PENDING !**
+// Médecin peut FORGET SON MOT DE PASSE avant validation !
+const handleForgotPassword = async (email) => {
+  await api.post('/api/auth/forgot-password', { email });
+  // ✅ Email envoyé même si médecin en PENDING
+};
+
+// Puis reset avec code reçu
+const handleResetPassword = async (email, code, newPassword) => {
+  await api.post('/api/auth/reset-password', {
+    email, code, newPassword
+  });
+  // ✅ Mot de passe changé même en PENDING
+};
+```
+
+##### **Étape 2 : Attente validation**
+```javascript
+// ⚠️ FONCTIONNALITÉ CRITIQUE : Reset password possible même en PENDING !
+
+// 🔑 SI MÉDECIN OUBLIE SON MOT DE PASSE :
+const forgotPasswordEvenInPending = async () => {
+  await api.post('/api/auth/forgot-password', {
+    email: doctorEmail // Même en statut PENDING !
+  });
+  // ✅ Email avec code temporaire envoyé QUAND MÊME !
+
+  // Puis utilisation du code pour reset
+  await api.post('/api/auth/reset-password', {
+    email: doctorEmail,
+    code: '123456', // Code reçu par email
+    newPassword: 'NouveauMotDePasse123!'
+  });
+  // ✅ Mot de passe CHANGÉ avec succès !
+};
+
+// IMPORTANT : Le reset password fonctionne AVANT la validation AdminCabinet !
+// Le médecin peut gérer son accès même s'il est encore en attente d'approbation.
+```
+
+**🚨 NOTE IMPORTANTE :**
+```javascript
+// Même en status PENDING, le médecin peut :
+// ✅ Receive OTP initial (pour activation compte)
+// ✅ Demander forgot-password → recevoir code par email
+// ✅ Faire reset-password avec le code → changer mot de passe
+// ✅ Mais NE PEUT PAS se connecter tant qu'il n'est pas APPROVED par admin
+// → Login sera rejeté avec "en attente de validation"
+```
+
+##### **Étape 3 : Validation reçue**
+```javascript
+const checkValidationStatus = async () => {
+  const profile = await api.get('/api/auth/profile');
+  if (profile.role === 'MEDECIN' && profile.status === 'APPROVED') {
+    // Statut validé !
+    // Agenda automatique créé par backend
+    navigation.navigate('/dashboard/medecin/agenda');
+  }
+};
+```
+→ **Résultat** : Agenda généré, spécialités validées
+
+#### **B) CRÉATION PAR ADMIN CABINET (RAPID FLOW)**
+```javascript
+// Médecin reçoit email avec credentials temporaires
+// Première connexion force changement mot de passe
+const firstLoginAfterAdminCreation = async (tempPassword) => {
+  try {
+    const response = await api.post('/api/auth/login', {
+      email: doctorEmail, // fourni par admin
+      motdepasse: tempPassword // fourni par admin
+    });
+
+    if (response.data.mustChangePassword) {
+      // FORCÉ redirection changement mot de passe
+      navigation.navigate('/change-password-required', {
+        tempToken: response.data.token,
+        isFirstLogin: true
+      });
+    }
+  } catch (error) {
+    // Erreur première connexion
+  }
+};
+
+// 2. Changement mot de passe obligatoire
+const changeFirstPassword = async (newPassword) => {
+  await api.post('/api/auth/change-password', {
+    oldPassword: tempPasswordToken,
+    newPassword: newPassword
+  });
+
+  // Maintenant accès normal au dashboard
+  navigate('/dashboard/medecin/agenda');
+};
+```
+
+---
+
+### **💻 ENDPOINTS UTILISÉS PAR MÉDECIN - DASHBOARD**
+
+#### **🔐 PROFIL & ONBOARDING**
+- PATCH `/api/auth/profile/medecin` - Mise à jour expérience/biographie
+- POST `/api/auth/profile/photo` - Photo professionnelle
+- GET `/api/auth/profile` - Infos profil complet
+
+#### **📅 GESTION AGENDA COMPLEXE**
+- GET `/api/agenda/mine` - Agenda(s) du médecin
+- PATCH `/api/agenda/{id}` - Configuration agenda (visibilité, durée, buffers)
+- POST `/api/agenda/{id}/rules` - Ajouter règle horaire récurrente
+- GET `/api/agenda/{id}/rules` - Lister règles actuelles
+- PATCH `/api/agenda/{id}/rules/{ruleId}` - Modifier règle
+- DELETE `/api/agenda/{id}/rules/{ruleId}` - Supprimer règle
+
+#### **🚫 BLOQUAGES & DISPONIBILITÉS EXCEPTIONNELLES**
+- POST `/api/agenda/{id}/blocks` - Créer bloquage (congés/vacances)
+- GET `/api/agenda/{id}/blocks` - Lister blocages
+- DELETE `/api/agenda/{id}/blocks/{blockId}` - Supprimer bloquage
+- POST `/api/agenda/{id}/extra` - Créer disponibilité exceptionnelle
+- GET `/api/agenda/{id}/extra` - Lister extras
+- DELETE `/api/agenda/{id}/extra/{extraId}` - Supprimer extra
+
+#### **🕑 SLOTS CALCULÉS & GESTION RDV**
+- GET `/api/agenda/{id}/slots` - Générer créneaux privés (RDV à venir)
+- GET `/api/rendezvous/medecin/{medecinId}` - Tous RDV du médecin
+- PUT `/api/rendezvous/{id}/confirmer` - Confirmer RDV
+- PUT `/api/rendezvous/{id}/annuler` - Annuler RDV
+- PUT `/api/rendezvous/{id}/terminer` - Terminer RDV (admin)
+
+#### **🏥 CONSULTATIONS & ORDONNANCES**
+- POST `/api/consultations` - Créer consultation depuis RDV
+- POST `/api/consultations/from-template` - Depuis template + RDV
+- GET `/api/consultations/medecin/{medecinId}` - Historique consultations
+- PATCH `/api/consultations/{id}` - Mettre à jour CR (BROUILLON)
+- PUT `/api/consultations/{id}/finalize` - Finaliser CR
+- GET `/api/consultations/templates/specialite/{specialite}` - Templates disponibles
+- POST `/api/ordonnances` - Créer ordonnance depuis consultation
+- GET `/api/ordonnances/medecin/{medecinId}` - Ordonnances créées
+
+#### **👥 PATIENTS & SUIVI**
+- GET `/api/auth/patients` - Liste patients (recherche)
+- GET `/api/info/patient/{patientId}` - Détails patient
+- GET `/api/dossier-medical/{patientId}/documents` - Dossier patient
+- GET `/api/consultations/patient/{patientId}` - Historique consultations patient
+- GET `/api/ordonnances/patient/{patientId}` - Ordonnances patient
+
+#### **💬 COMMUNICATION & MESSAGERIE**
+- GET `/api/messagerie/conversations` - Conversations médecins
+- POST `/api/messagerie/conversations/private` - Nouveau message patient
+- POST `/api/messagerie/messages` - Envoyer message
+- GET `/api/messagerie/conversations/{id}/messages` - Messages conversation
+- PUT `/api/messagerie/messages/{id}` - Modifier message (droit médecin)
+
+---
+
+### **📱 INTERFACE DASHBOARD MÉDECIN**
+
+#### **NAVIGATION PRINCIPALE**
+```
+/dashboard/medecin/
+├── overview          → Tableau bord général
+├── agenda           → Planning visuel
+├── appointments     → Gestion RDV liste
+├── consultations    → Consultations & ordonnances
+├── patients         → Mes patients & dossiers
+├── messaging        → Messagerie pro
+├── templates        → Mes templates personnalisés
+└── settings         → Paramètres compte
+```
+
+#### **PAGE AGENDA (PRINCIPALE)**
+- **Vue calendrier** : Semaine/Mois/Jour toggle
+- **Créneaux affichés** : Rules + Extra - Blocks
+- **RDV overlay** : Boîtes colorées sur créneaux
+- **Actions drag** : Déplacer RDV avec vérifications conflits
+- **Clic créneau vide** : Créer RDV manuel
+- **Header stats** : RDV aujourd'hui, semaine, consultations pendantes
+
+#### **GESTION RDV**
+```javascript
+const handleAppointmentDrag = async (rdvId, newStart, newEnd) => {
+  try {
+    await api.put(`/api/agenda/rdv/${rdvId}/move`, {
+      new_start_at: newStart,
+      new_end_at: newEnd
+    });
+    refreshCalendar();
+  } catch (error) {
+    showError('Créneau non disponible');
+  }
+};
+
+const handleAppointmentClick = (appointment) => {
+  if (appointment.status === 'EN_ATTENTE') {
+    navigate('/dashboard/medecin/appointment-detail', {
+      appointmentId: appointment.idrendezvous
+    });
+  }
+};
+```
+
+**🎯 FOCUS MÉDECIN** : Agenda professionnel, gestion patients, consultations médicales
+
+---
+
+---
+
+## 🏢 **3. ADMINCABINET - DASHBOARD WEB**
+
+### **🖥️ APP NATURE** : Web React/Vue - Dashboard partagé
+### **🌐 ENDPOINTS** : Gestion cabinet et équipe
+### **🏗️ ROLE** : Administrateur secteur médical
+
+---
+
+### **👑 WORKFLOW COMPLET ADMIN CABINET**
+
+#### **ONBOARDING ADMIN CABINET**
+```javascript
+// Assigné automatiquement par SuperAdmin lors création cabinet
+// Reçoit credentials, statut direct APPROVED
+// Première connexion = accès dashboard complet
+```
+
+#### **GESTION CABINET & ÉQUIPE**
+```javascript
+// 1. Gestion cabinet physique
+const updateCabinet = async (cabinetData) => {
+  await api.put(`/api/cabinets/${myCabinetId}`, {
+    nom: cabinetData.nom,
+    adresse: cabinetData.adresse,
+    horairesOuverture: cabinetData.horaires
+  });
+};
+
+// 2. Recrutement médecins rapide
+const recruitDoctor = async (doctorData) => {
+  await api.post('/api/auth/admin/create-medecin', {
+    email: doctorData.email,
+    motdepasse: 'temp123auto', // temporaire auto
+    nom: doctorData.nom,
+    prenom: doctorData.prenom,
+    numOrdre: doctorData.numOrdre,
+    cabinetId: myCabinetId, // AUTO-ASSIGNÉ
+    experience: doctorData.experience,
+    biographie: doctorData.biographie
+  });
+  // → Médecin approuvé auto + force change pwd
+};
+
+// 3. Validation médecins externes
+const validatePendingDoctor = async (doctorId) => {
+  await api.post('/api/auth/admin/validate-medecin', {
+    utilisateurId: doctorId,
+    action: 'APPROVED' // ou 'REJECTED'
+  });
+  // → Si APPROVED, agenda créé + cabinet assigné
+};
+
+// 4. Supervision temps réel
+const monitorCabinetActivity = async () => {
+  const [rdvs, consultations] = await Promise.all([
+    api.get('/api/rendezvous?cabinet=' + myCabinetId),
+    api.get('/api/rendezvous/en-attente-consultation')
+  ]);
+  return { rdvsToday: rdvs.data, waitingConsultations: consultations.data };
+};
+```
+
+---
+
+### **💻 ENDPOINTS ADMIN CABINET - DASHBOARD**
+
+#### **🏢 GESTION CABINET**
+- GET `/api/cabinets/{myCabinetId}` - Infos cabinet
+- PUT `/api/cabinets/{myCabinetId}` - Modifier cabinet
+- GET `/api/cabinets/{myCabinetId}/medecins` - Équipe médicale
+- POST `/api/cabinets/{myCabinetId}/specialites` - Spécialités cabinet
+
+#### **👥 GESTION ÉQUIPE**
+- GET `/api/auth/medecins?cabinetId={myCabinetId}` - Liste médecins équipe
+- POST `/api/auth/admin/create-medecin` - Recruter médecin (APPROVED auto)
+- POST `/api/auth/admin/validate-medecin` - Valider demandes externes
+- PUT `/api/cabinets/{id}/medecins/{medecinId}/archive` - Désactiver médecin
+
+#### **📊 SUPERVISION OPÉRATIONNELLE**
+- GET `/api/cabinets/{myCabinetId}/stats` - Statistiques cabinet
+- GET `/api/rendezvous?cabinet={myCabinetId}&date=aujourd’hui` - RDV jour
+- GET `/api/rendezvous/en-attente-consultation` - Patients en salle attente
+- PUT `/api/rendezvous/{id}/patient-arrive` - Marquer arrivée patient
+- GET `/api/consultations/medecin/{medecinId}` - Suivi consultations équipe
+
+#### **🎯 ACTIONS ADMINISTRATIVES**
+- POST `/api/auth/super-admin/cabinets/{cabinetId}/admins` - ?? Ajouter admin supplémentaire
+- DELETE `/api/cabinets/{id}/medecins/{medecinId}` - Supprimer médecin cabinet
+- POST `/api/cabinets/{id}/medecins/{medecinId}/reset-password` - Reset pwd médecin
+
+---
+
+### **📱 INTERFACE DASHBOARD ADMIN CABINET**
+
+#### **NAVIGATION**
+```
+/dashboard/admin/
+├── cabinet           → Gestion cabinet physique
+├── equipe           → Gestion équipe médicale
+├── supervision      → Suivi activité temps réel
+├── rdvs             → Vue globale RDV cabinet
+├── stats            → Statistiques performance
+└── settings         → Configuration cabinet
+```
+
+#### **PAGE SUPERVISION (PRINCIPALE)**
+- **Live Dashboard** : Patients en attente par médecin
+- **Vue agenda global** : Occupation des salles/consultations
+- **Actions rapides** : Marquer arrivée, annuler RDV, appelé patient
+- **Notifications temps réel** : Arrivées, annulations, urgences
+
+**🎯 FOCUS ADMIN** : Gestion opérationnelle cabinet + équipe médicale + supervision clinique
+
+---
+
+---
+
+## 🌍 **4. SUPERADMIN - DASHBOARD WEB**
+
+### **🖥️ APP NATURE** : Web React/Vue - Dashboard partagé
+### **🌐 ENDPOINTS** : Contrôle système complet
+### **👑 ROLE** : Administrateur système global
+
+---
+
+### **👑 WORKFLOW COMPLET SUPERADMIN**
+
+#### **1. SETUP INITIAL SYSTÈME**
+```javascript
+// Exécuté une fois lors déploiement
+// Créé automatiquement via script PS
+// Email admin configuré dans .env
+```
+
+#### **2. GESTION CABINETS GLOBAUX**
+```javascript
+// Création nouveaux cabinets
+const createCabinet = async (cabinetData) => {
+  await api.post('/api/auth/super-admin/cabinets', {
+    nom: cabinetData.nom,
+    adresse: cabinetData.adresse,
+    telephone: cabinetData.telephone,
+    email: cabinetData.email,
+    specialites: cabinetData.specialites // IDs spécialités
+  });
+};
+
+// Attribution cabinet aux admin locaux
+const assignAdminToCabinet = async (adminId, cabinetId) => {
+  await api.post('/api/auth/super-admin/assign-cabinet', {
+    adminId,
+    cabinetId
+  });
+};
+```
+
+#### **3. GESTION VALIDATIONS GLOBALES**
+```javascript
+// Validation médecins demandeurs
+const loadPendingDoctors = async () => {
+  return await api.get('/api/auth/super-admin/pending-medecins');
+};
+
+const validateDoctor = async (doctorId, action) => {
+  await api.post('/api/auth/super-admin/validate-medecin', {
+    utilisateurId: doctorId,
+    action: action // 'APPROVED' ou 'REJECTED'
+  });
+  // SI APPROVED → agenda auto-créé + spécialités validées
+};
+
+// Validation admin cabinet candidats
+const createAdminCabinet = async (adminData) => {
+  await api.post('/api/auth/super-admin/create-admin', {
+    email: adminData.email,
+    motdepasse: 'temp_admin_pwd',
+    nom: adminData.nom,
+    prenom: adminData.prenom,
+    telephone: adminData.telephone,
+    cabinetId: adminData.targetCabinet
+  });
+};
+```
+
+#### **4. SURVEILLANCE SYSTÈME COMPLET**
+```javascript
+// Vue d'ensemble système
+const loadSystemOverview = async () => {
+  const [cabinets, pendingDoctors, admins, stats] = await Promise.all([
+    api.get('/api/auth/super-admin/cabinets'),
+    api.get('/api/auth/super-admin/pending-medecins'),
+    api.get('/api/auth/admins'),
+    api.get('/api/stats/system') // métriques générales
+  ]);
+
+  return {
+    totalCabinets: cabinets.data.length,
+    totalAdmins: admins.data.length,
+    pendingValidations: pendingDoctors.data.length,
+    systemLoad: stats.data
+  };
+};
+```
+
+---
+
+### **💻 ENDPOINTS SUPERADMIN - DASHBOARD**
+
+#### **🏢 GESTION GLOBALE CABINETS**
+- POST `/api/auth/super-admin/cabinets` - Créer cabinet
+- GET `/api/auth/super-admin/cabinets` - Tous cabinets
+- PUT `/api/auth/super-admin/cabinets/{id}` - Modifier cabinet
+- DELETE `/api/auth/super-admin/cabinets/{id}` - Supprimer cabinet
+- GET `/api/auth/super-admin/cabinets/{id}` - Détails cabinet
+
+#### **👥 GESTION ADMINS SYSTÈME**
+- POST `/api/auth/super-admin/create-admin` - Créer admin cabinet
+- GET `/api/auth/admins` - Tous admins système
+- GET `/api/auth/super-admin/admin-cabinets/{adminId}` - Cabinets d'un admin
+- GET `/api/auth/super-admin/cabinets/{cabinetId}/admins` - Admins d'un cabinet
+
+#### **🔗 ASSIGNATIONS CABINET/ADMIN**
+- POST `/api/auth/super-admin/assign-cabinet` - Attribuer cabinet à admin
+- DELETE `/api/auth/super-admin/assign-cabinet/{adminId}` - Retirer cabinet
+- GET `/api/auth/super-admin/admin-cabinets/{adminId}` - Cabinets assignés
+
+#### **👨‍⚕️ VALIDATION MÉDECINS GLOBAUX**
+- GET `/api/auth/super-admin/pending-medecins` - Médecins en attente validation
+- POST `/api/auth/super-admin/validate-medecin` - Approuver/rejeter
+- GET `/api/auth/medecins` - Tous médecins système (filtres cabinet/spécialité)
+
+#### **👤 GESTION UTILISATEURS SYSTÈME**
+- GET `/api/auth/users/role/{role}` - Utilisateurs par rôle
+- DELETE `/api/super/users/{id}` - Supprimer user (rôle extrême)
+- GET `/api/stats/global` - Statistiques système complet
+
+#### **⚙️ CONFIGURATION SYSTÈME**
+- PATCH `/api/auth/super-admin/profile` - Profil SuperAdmin
+- POST `/api/auth/super-admin/change-password` - Changer pwd SuperAdmin
+- GET `/api/audit-logs` - Logs système pour sécurité
+
+---
+
+### **📱 INTERFACE DASHBOARD SUPERADMIN**
+
+#### **NAVIGATION**
+```
+/dashboard/super-admin/
+├── overview          → Tableau bord système
+├── cabinets          → Gestion cabinets globaux
+├── admins            → Gestion todos les admin cabinet
+├── validations       → Médecins en attente (pending)
+├── users             → Gestion utilisateurs avancés
+├── stats             → Métriques & analytics
+└── system            → Configuration système
+```
+
+#### **PAGE VALIDATIONS (CRITIQUE)**
+```javascript
+const PendingValidationsPage = () => {
+  const [pendingDoctors, setPendingDoctors] = useState([]);
+
+  useEffect(() => {
+    loadPendingDoctors();
+  }, []);
+
+  const handleValidation = async (doctor, action) => {
+    await validateDoctor(doctor.idutilisateur, action);
+    // Si APPROVED → agenda auto-créé + email notification
+    toast.success(`${doctor.nom} ${action === 'APPROVED' ? 'approuvé' : 'rejeté'}`);
+    loadPendingDoctors(); // refresh liste
+  };
+
+  return (
+    <div className="validations-dashboard">
+      <h2>Validations Médecins - {pendingDoctors.length} en attente</h2>
+      {pendingDoctors.map(doctor => (
+        <DoctorValidationCard
+          key={doctor.idutilisateur}
+          doctor={doctor}
+          onApprove={() => handleValidation(doctor, 'APPROVED')}
+          onReject={() => handleValidation(doctor, 'REJECTED')}
+        />
+      ))}
+    </div>
+  );
+};
+```
+
+**🎯 FOCUS SUPERADMIN** : Contrôle système complet + approbations médicales critiques
+
+---
+
+## 📊 **TABLEAU RÉCAPITULATIF FLUX PAR RÔLES**
+
+| **RÔLE** | **APP** | **ONBOARDING** | **ENDPOINTS PRINCIPAUX** | **PRINCIPALES ACTIONS** |
+|----------|---------|----------------|---------------------------|------------------------|
+| **📱 Patient** | Mobile | Inscription→OTP→App | `- /specialites/maux`<br>`- /agenda/*/slots/public`<br>`- /rendezvous/*`<br>`- /consultations/patient/*` | Recherche, RDV, Suivi médical |
+| **👨‍⚕️ Médecin** | Dashboard | 2 flows: Auto-register (long) ou créé par Admin (rapide avec change pwd) | `- /agenda/*`<br>`- /rendezvous/medecin/*`<br>`- /consultations/*`<br>`- /ordonnances/medecin/*` | Agenda pro, Consultations, Ordonnances |
+| **🏢 Admin Cabinet** | Dashboard | Assigné auto par SuperAdmin | `- /cabinets/{id}/*`<br>`- /auth/admin/create-medecin`<br>`- /auth/admin/validate-medecin`<br>`- /rendezvous/en-attente-consultation` | Gestion cabinet, Équipe médicale, Supervision |
+| **🌍 SuperAdmin** | Dashboard | Auto-créé première déploiement | `- /auth/super-admin/cabinets`<br>`- /auth/super-admin/validate-medecin`<br>`- /auth/super-admin/create-admin`<br>`- /auth/super-admin/assign-cabinet` | Cabinet globaux, Admins système, Validations médicales |
+
+---
+
+## 🚀 **CHECKLIST LANCEMENT PROJET FINALISÉ**
+
+### **✅ BACKEND PRÊT**
+- ✅ Architecture rôles complète & sécurisée
+- ✅ Workflows par rôle correctement implémentés
+- ✅ Endpoints segmentés par utilisateur/application
+- ✅ Cas d'usage médicaux bien couverts
+
+### **🔧 FRONTEND PRÊT À DÉVELOPPER**
+- ✅ **Patient = Mobile dédié** (UX optimisée réservation)
+- ✅ **Pros santé = Dashboard web uni** (productivité médecins/admins)
+- ✅ **Onboarding différencié** (simple/mobile vs complex/validation)
+- ✅ **Flux métier sécurisés** (première connexion, validations, assignations)
+
+### **📋 GUIDE OPERATIONNEL COMPLET**
+- ✅ cas d'usage détaillés à l'utilisateur
+- ✅ endpoints listés par acteur
+- ✅ flux onboarding complets
+- ✅ examples code exécutables
+
+---
+
+**🎯 ARCHITECTURE IDÉALE : Mobile pure patient + Dashboard performant pros** 🏥✨
+
+
+Le système est maintenant parfaitement segmenté pour une implémentation front claire et sécurisée.
+</result>
 
 
 🎯 **Parfait ! J'ai créé le fichier complet `endpoints/FRONTEND_FLUX_GUIDE.md`** avec tout ce que tu demandes :
